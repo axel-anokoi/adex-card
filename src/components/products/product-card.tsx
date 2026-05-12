@@ -20,7 +20,7 @@ export function ProductCard({
   const outOfStock = stockAvailable <= 0;
 
   return (
-    <article className="group relative overflow-hidden rounded-xl border border-white/10 bg-[#1A1A28] p-5 card-hover">
+    <article className="group card-3d-hover card-neon-border relative overflow-hidden rounded-2xl border border-[#00E5FF]/15 bg-[rgba(26,26,40,0.85)] p-5">
       {/* Neon glow effect on hover */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00E5FF]/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
@@ -37,34 +37,39 @@ export function ProductCard({
         )}
       </div>
 
-      {/* Neon price badge */}
-      <div className="relative mb-2">
-        <h3 className="text-3xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
+      <div className="relative mb-3">
+        <div className="absolute -right-1 -top-2 rounded-full border border-[#00E5FF]/40 bg-[#00E5FF]/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#00E5FF]">
+          Prix
+        </div>
+        <h3 className="price-badge text-3xl font-bold text-white" style={{ fontFamily: "var(--font-display)" }}>
           {amount}€
           <span className="ml-1 text-xs font-normal text-[#00E5FF]">EUR</span>
         </h3>
       </div>
-      
+
       <p className="relative text-sm text-white/60">
-        Prix: <span className="font-semibold text-[#00E5FF]">{sellPrice.toFixed(2)}€</span>
+        FCFA estimé: <span className="font-semibold text-[#00E5FF]">{(sellPrice * 655).toLocaleString("fr-FR")} FCFA</span>
       </p>
       
-      <p className="mt-2 text-sm relative">
+      <p className="relative mt-2 text-sm">
         {outOfStock ? (
-          <span className="text-red-400">Rupture de stock</span>
+          <span className="rounded-full border border-red-400/40 bg-red-400/10 px-2 py-1 text-red-300">Rupture de stock</span>
         ) : (
           <span className="text-white/50">
-            <span className="font-medium text-[#00FF88]">{stockAvailable}</span> codes dispo
+            <span className="rounded-full border border-[#00FF88]/35 bg-[#00FF88]/10 px-2 py-1 font-medium text-[#00FF88]">
+              {stockAvailable}
+            </span>{" "}
+            codes dispo
           </span>
         )}
       </p>
 
       <Link
         href={`/shop/${slug}`}
-        className={`btn-press mt-4 relative inline-flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold transition-all ${
+        className={`btn-press mt-4 cta-neon relative inline-flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold transition-all ${
           outOfStock
-            ? "cursor-not-allowed border border-white/10 text-white/30 bg-white/5"
-            : "bg-gradient-to-r from-[#00E5FF] to-[#00B8D4] text-black hover:shadow-lg hover:shadow-[#00E5FF]/30"
+            ? "cursor-not-allowed border border-white/10 bg-white/5 text-white/30"
+            : "bg-gradient-to-r from-[#00E5FF] to-[#00B8D4] text-black hover:scale-[1.01] hover:shadow-lg hover:shadow-[#00E5FF]/35"
         }`}
       >
         {outOfStock ? "Indisponible" : "Acheter maintenant"}

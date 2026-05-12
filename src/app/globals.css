@@ -106,7 +106,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -801,8 +801,41 @@ a, button {
   .card-hover:hover {
     transform: scale(1.01);
   }
-  
+
   .step-connector::after {
     display: none;
+  }
+}
+
+/* =============================================
+   MOBILE-FIRST UTILITIES
+   ============================================= */
+
+button,
+a.cta,
+a[role="button"] {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.section {
+  padding: 4rem 1.25rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

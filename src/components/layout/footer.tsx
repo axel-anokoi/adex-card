@@ -17,27 +17,41 @@ export function Footer() {
     ],
   };
 
-return (
-    <footer className="border-t border-white/5 bg-[#07070D]">
-      <div className="mx-auto w-full max-w-6xl px-4 py-12">
-        <div className="grid gap-8 sm:grid-cols-3">
-          {/* Brand */}
-          <div className="flex flex-col gap-4">
-            <Link href="/" className="text-xl font-bold text-white hover:text-[#00E5FF] transition-all">
-              🎮 BabiCard CI
+  return (
+    <footer className="border-t border-white/10 bg-[#07070D]">
+      <div className="mx-auto w-full max-w-6xl px-4 py-14">
+        <div className="grid gap-10 md:grid-cols-4">
+          <div className="md:col-span-1">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-xl font-bold text-white transition-all hover:text-[#00E5FF]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#00E5FF] to-[#7B2FFF] text-sm text-black">
+                🎮
+              </span>
+              BabiCard <span className="text-[#FF8C00]">CI</span>
             </Link>
-<p className="text-sm text-white/40">
-              Tes cartes gaming livrées en 2 minutes. Paiement Djamo & Moov Money en Côte d&apos;Ivoire.
+            <p className="mt-4 text-sm leading-relaxed text-white/50">
+              La plateforme gaming ivoirienne pour acheter tes cartes cadeaux PSN, Xbox, Nintendo, iTunes.
+              Livraison instantanée, paiement local sécurisé.
             </p>
+            <div className="mt-4 flex items-center gap-2">
+              <span className="rounded-full border border-[#00FF88]/30 bg-[#00FF88]/10 px-3 py-1 text-xs text-[#00FF88]">
+                ⚡ Livraison {"<"} 2 min
+              </span>
+              <span className="rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 px-3 py-1 text-xs text-[#00E5FF]">
+                🔒 Paiement sécurisé
+              </span>
+            </div>
           </div>
 
-          {/* Shop Links */}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-semibold text-white">Boutique</h3>
-            <ul className="flex flex-col gap-2">
+          <div>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white/80">Produits</h3>
+            <ul className="space-y-2.5">
               {footerLinks.shop.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-white/40 hover:text-[#00E5FF] transition-colors">
+                  <Link href={link.href} className="text-sm text-white/45 transition-colors hover:text-[#00E5FF]">
                     {link.label}
                   </Link>
                 </li>
@@ -45,32 +59,41 @@ return (
             </ul>
           </div>
 
-          {/* Support Links */}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-semibold text-white">Support</h3>
-            <ul className="flex flex-col gap-2">
+          <div>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white/80">Informations</h3>
+            <ul className="space-y-2.5">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-white/40 hover:text-white transition-colors">
+                  <Link href={link.href} className="text-sm text-white/45 transition-colors hover:text-white">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white/80">Contact</h3>
+            <ul className="space-y-2.5 text-sm text-white/50">
+              <li>📍 Abidjan, Côte d’Ivoire</li>
+              <li>📧 support@babicard.ci</li>
+              <li>📱 WhatsApp: +225 07 05 89 80 80</li>
+              <li className="pt-1 text-xs text-white/35">Disponible 7j/7 — 8h à 22h</li>
+            </ul>
+            <div className="mt-4 flex items-center gap-2">
+              <span className="rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 px-2.5 py-1 text-xs text-[#00E5FF]">f</span>
+              <span className="rounded-full border border-[#7B2FFF]/30 bg-[#7B2FFF]/10 px-2.5 py-1 text-xs text-[#C29BFF]">ig</span>
+              <span className="rounded-full border border-white/20 bg-white/5 px-2.5 py-1 text-xs text-white/80">tiktok</span>
+            </div>
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 text-xs text-white/30 sm:flex-row">
-          <p>© {currentYear} BabiCard CI. Tous droits réservés.</p>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <span>💳</span>
-              <span className="text-white/50 font-medium">Djamo</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span>📱</span>
-              <span className="text-white/50 font-medium">Moov Money</span>
-            </span>
+        <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-7 text-xs text-white/35 sm:flex-row sm:items-center">
+          <p>© {currentYear} BabiCard.ci — Tous droits réservés.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 px-3 py-1 text-[#00E5FF]">💳 Djamo</span>
+            <span className="rounded-full border border-[#FF8C00]/30 bg-[#FF8C00]/10 px-3 py-1 text-[#FFD19A]">📱 Moov Money</span>
+            <span className="rounded-full border border-[#009A44]/30 bg-[#009A44]/10 px-3 py-1 text-[#8BE5B5]">🇨🇮 Paiement local</span>
           </div>
         </div>
       </div>
