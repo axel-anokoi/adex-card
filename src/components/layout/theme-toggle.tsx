@@ -4,8 +4,13 @@ import { useState } from "react";
 
 type Theme = "dark" | "light";
 
-function getInitialTheme(): Theme {
+function getThemeFromDomOrStorage(): Theme {
   if (typeof window === "undefined") return "dark";
+
+  const root = document.documentElement;
+  if (root.classList.contains("light")) return "light";
+  if (root.classList.contains("dark")) return "dark";
+
   const saved = localStorage.getItem("theme");
   return saved === "light" ? "light" : "dark";
 }
@@ -18,7 +23,7 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
+  const [theme, setTheme] = useState<Theme>(() => getThemeFromDomOrStorage());
 
   const toggle = () => {
     const next: Theme = theme === "dark" ? "light" : "dark";

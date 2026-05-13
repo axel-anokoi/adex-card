@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
-const productSchema = z.object({
-  category_id: z.string().uuid(),
-  amount: z.number().positive(),
-  sell_price: z.number().nonnegative(),
-  buy_price: z.number().nonnegative(),
+const categorySchema = z.object({
+  name: z.string().min(1, "Le nom est requis"),
+  slug: z.string().min(1, "Le slug est requis"),
+  logo_url: z.string().optional().nullable(),
   is_active: z.boolean().optional(),
 });
 
@@ -29,7 +28,7 @@ async function checkAdmin() {
   return { isAdmin: userData?.role === "admin", user, supabase };
 }
 
-// GET: List all products
+// GET: List all categories
 export async function GET() {
   try {
     const { isAdmin, supabase } = await checkAdmin();
@@ -39,18 +38,9 @@ export async function GET() {
     }
 
     const { data, error } = await supabase
-      .from("products")
-      .select(`
-        id,
-        category:category_id(id, name, slug),
-        amount,
-        sell_price,
-        buy_price,
-        stock_available,
-        is_active,
-        created_at
-      `)
-      .order("created_at", { ascending: false });
+      .from("categories")
+      .select("*")
+      .order("name");
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -58,12 +48,12 @@ export async function GET() {
 
     return NextResponse.json({ data });
   } catch (error) {
-    console.error("Products list error:", error);
-    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
+    console.error("Categories list error:", error);
+    return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });
   }
 }
 
-// POST: Create product
+// POST: Create category
 export async function POST(request: Request) {
   try {
     const { isAdmin, supabase } = await checkAdmin();
@@ -73,7 +63,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const parsed = productSchema.safeParse(body);
+    const parsed = categorySchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -83,23 +73,24 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await supabase
-      .from("products")
+      .from("categories")
       .insert(parsed.data)
-      .select();
+      .select()
+      .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-return NextResponse.json(data[0], { status: 201 });
+    return NextResponse.json({ data }, { status: 201 });
   } catch (error) {
-    console.error("Product creation error:", error);
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
+    console.error("Category creation error:", error);
+    return NextResponse.json({ error: "Failed to create category" }, { status: 500 });
   }
 }
 
-// PATCH: Update product
-export async function PATCH(request: Request) {
+// PUT: Update category
+export async function PUT(request: Request) {
   try {
     const { isAdmin, supabase } = await checkAdmin();
 
@@ -111,10 +102,10 @@ export async function PATCH(request: Request) {
     const { id, ...updateData } = body;
 
     if (!id) {
-      return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
     }
 
-    const parsed = productSchema.safeParse(updateData);
+    const parsed = categorySchema.safeParse(updateData);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -124,7 +115,7 @@ export async function PATCH(request: Request) {
     }
 
     const { data, error } = await supabase
-      .from("products")
+      .from("categories")
       .update(parsed.data)
       .eq("id", id)
       .select()
@@ -136,12 +127,12 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ data });
   } catch (error) {
-    console.error("Product update error:", error);
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+    console.error("Category update error:", error);
+    return NextResponse.json({ error: "Failed to update category" }, { status: 500 });
   }
 }
 
-// DELETE: Delete product
+// DELETE: Delete category
 export async function DELETE(request: Request) {
   try {
     const { isAdmin, supabase } = await checkAdmin();
@@ -154,11 +145,25 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
+    }
+
+    // Check if category has products
+    const { data: products } = await supabase
+      .from("products")
+      .select("id")
+      .eq("category_id", id)
+      .limit(1);
+
+    if (products && products.length > 0) {
+      return NextResponse.json(
+        { error: "Impossible de supprimer une catégorie avec des produits" },
+        { status: 400 }
+      );
     }
 
     const { error } = await supabase
-      .from("products")
+      .from("categories")
       .delete()
       .eq("id", id);
 
@@ -168,7 +173,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Product deletion error:", error);
-    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
+    console.error("Category deletion error:", error);
+    return NextResponse.json({ error: "Failed to delete category" }, { status: 500 });
   }
 }

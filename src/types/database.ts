@@ -27,12 +27,16 @@ export interface Database {
           updated_at: string;
         };
       };
-      users: {
+users: {
         Row: {
           id: string;
           email: string;
           role: "client" | "admin";
           is_blocked: boolean;
+          nom: string | null;
+          prenoms: string | null;
+          telephone: string | null;
+          photo_profile: string | null;
           created_at: string;
           updated_at: string;
         };
