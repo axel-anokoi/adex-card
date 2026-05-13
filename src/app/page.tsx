@@ -285,6 +285,8 @@ function HeroCarousel() {
 
           {/* Heading */}
           <h1
+            className="glitch-heading"
+            data-text="Cartes gaming"
             style={{
               fontSize: "clamp(2.4rem, 5vw, 3.8rem)",
               fontWeight: 800,
@@ -336,7 +338,10 @@ function HeroCarousel() {
         </div>
 
         {/* Right 3D card */}
-        <div style={{ opacity: animating ? 0 : 1, transform: animating ? "scale(0.94)" : "scale(1)", transition: "opacity 0.28s, transform 0.28s" }}>
+        <div
+          className="card-glitch-subtle"
+          style={{ opacity: animating ? 0 : 1, transform: animating ? "scale(0.94)" : "scale(1)", transition: "opacity 0.28s, transform 0.28s" }}
+        >
           <HeroCard platform={p} />
         </div>
       </div>
@@ -345,6 +350,126 @@ function HeroCarousel() {
         @keyframes dotPulse {
           0%,100% { transform: scale(1); opacity: 1; }
           50%      { transform: scale(1.5); opacity: 0.6; }
+        }
+
+        .glitch-heading {
+          position: relative;
+          display: inline-block;
+          animation: glitch-skew 2.2s infinite steps(1, end);
+        }
+
+        .glitch-heading::before,
+        .glitch-heading::after {
+          content: attr(data-text);
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          pointer-events: none;
+          opacity: 0;
+        }
+
+        .glitch-heading::before {
+          color: #00ffe0;
+          text-shadow: -3px 0 #00ffe0;
+          animation: glitch-layer-1 1.8s infinite steps(2, end);
+        }
+
+        .glitch-heading::after {
+          color: #ff2fd1;
+          text-shadow: 3px 0 #ff2fd1;
+          animation: glitch-layer-2 1.8s infinite steps(2, end);
+        }
+
+        @keyframes glitch-skew {
+          0%, 80%, 100% { transform: none; }
+          81% { transform: skewX(3deg); }
+          82% { transform: skewX(-4deg); }
+          83% { transform: skewX(2deg); }
+          84% { transform: skewX(-2deg); }
+        }
+
+        @keyframes glitch-layer-1 {
+          0%, 76%, 100% {
+            opacity: 0;
+            transform: translate(0);
+            clip-path: inset(0 0 0 0);
+          }
+          77% {
+            opacity: .95;
+            transform: translate(-4px, -2px);
+            clip-path: inset(6% 0 74% 0);
+          }
+          78% {
+            opacity: .9;
+            transform: translate(4px, 1px);
+            clip-path: inset(42% 0 30% 0);
+          }
+          79% {
+            opacity: .95;
+            transform: translate(-3px, 1px);
+            clip-path: inset(70% 0 10% 0);
+          }
+        }
+
+        @keyframes glitch-layer-2 {
+          0%, 76%, 100% {
+            opacity: 0;
+            transform: translate(0);
+            clip-path: inset(0 0 0 0);
+          }
+          77% {
+            opacity: .85;
+            transform: translate(3px, 2px);
+            clip-path: inset(14% 0 62% 0);
+          }
+          78% {
+            opacity: .8;
+            transform: translate(-4px, -2px);
+            clip-path: inset(56% 0 22% 0);
+          }
+          79% {
+            opacity: .85;
+            transform: translate(2px, 0);
+            clip-path: inset(76% 0 8% 0);
+          }
+        }
+
+        .card-glitch-subtle {
+          position: relative;
+          animation: card-glitch-jitter 5s infinite steps(1, end);
+          will-change: transform, filter;
+        }
+
+        .card-glitch-subtle::after {
+          content: "";
+          position: absolute;
+          inset: 6% 4%;
+          pointer-events: none;
+          border-radius: 20px;
+          background: repeating-linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.06) 0px,
+            rgba(255, 255, 255, 0.06) 1px,
+            transparent 2px,
+            transparent 4px
+          );
+          mix-blend-mode: screen;
+          opacity: 0;
+          animation: card-glitch-flash 5s infinite steps(1, end);
+        }
+
+        @keyframes card-glitch-jitter {
+          0%, 92%, 100% { transform: translate3d(0, 0, 0); filter: none; }
+          93% { transform: translate3d(-1px, 0, 0); filter: hue-rotate(6deg); }
+          94% { transform: translate3d(1px, -1px, 0); filter: hue-rotate(-6deg); }
+          95% { transform: translate3d(0, 1px, 0); filter: none; }
+        }
+
+        @keyframes card-glitch-flash {
+          0%, 92%, 100% { opacity: 0; }
+          93%, 94% { opacity: 0.25; }
+          95% { opacity: 0.12; }
         }
       `}</style>
     </section>
