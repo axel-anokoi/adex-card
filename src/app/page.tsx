@@ -1,306 +1,99 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-// FCFA conversion rate (1 EUR ≈ 655 FCFA)
+// FCFA conversion
 const EUR_TO_FCFA = 655;
 const toFCFA = (eur: number) => (eur * EUR_TO_FCFA).toLocaleString("fr-FR");
 
-type HeroProduct = {
-  category: string;
-  categorySlug: string;
-  categoryColor: string;
-  categoryTextColor: string;
-  icon: string;
-  iconBg: string;
-  name: string;
-  description: string;
-  amounts: number[];
-  borderClass: string;
-};
+// ─────────────────────────────────────────
+//  DATA
+// ─────────────────────────────────────────
 
-type Feature = {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  accent: string;
-  bg: string;
-  border: string;
-};
-
-type Category = {
-  name: string;
-  slug: string;
-  icon: string;
-  description: string;
-  gradient: string;
-  glow: string;
-  border: string;
-  count: string;
-};
-
-type Step = {
-  number: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-};
-
-type Testimonial = {
-  name: string;
-  city: string;
-  avatar: string;
-  avatarColor: string;
-  rating: number;
-  text: string;
-  product: string;
-};
-
-const heroProducts: HeroProduct[] = [
+const platforms = [
   {
-    category: "Apple",
-    categorySlug: "apple",
-    categoryColor: "bg-gray-600/80",
-    categoryTextColor: "text-gray-200",
-    icon: "🍎",
-    iconBg: "gradient-apple",
-    name: "iTunes App Store Cards",
-    description:
-      "Achetez apps, musiques, films, séries sur l'App Store et iTunes. Valable pour les comptes US.",
-    amounts: [5, 10, 25],
-    borderClass: "border-apple",
-  },
-  {
-    category: "PlayStation",
-    categorySlug: "playstation",
-    categoryColor: "bg-blue-600/80",
-    categoryTextColor: "text-blue-200",
-    icon: "🎮",
-    iconBg: "gradient-playstation",
-    name: "PlayStation Network Cards",
-    description:
-      "Rechargez votre wallet PSN pour acheter des jeux, DLC et abonnements PS Plus.",
-    amounts: [10, 20, 50],
-    borderClass: "border-playstation",
-  },
-  {
-    category: "Xbox",
-    categorySlug: "xbox",
-    categoryColor: "bg-green-700/80",
-    categoryTextColor: "text-green-200",
-    icon: "🎯",
-    iconBg: "gradient-xbox",
-    name: "Xbox Gift Cards",
-    description:
-      "Achetez des jeux, du contenu additionnel et souscrivez au Xbox Game Pass Ultimate.",
-    amounts: [10, 25, 50],
-    borderClass: "border-xbox",
-  },
-  {
-    category: "Nintendo",
-    categorySlug: "nintendo",
-    categoryColor: "bg-red-600/80",
-    categoryTextColor: "text-red-200",
-    icon: "🍄",
-    iconBg: "gradient-nintendo",
-    name: "Nintendo eShop Cards",
-    description:
-      "Achetez des jeux Nintendo Switch, DLC et abonnements Nintendo Switch Online.",
-    amounts: [10, 20, 35],
-    borderClass: "border-nintendo",
-  },
-];
-
-const features: Feature[] = [
-  {
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-        />
-      </svg>
-    ),
-    title: "Livraison < 2 min",
-    description: "Code livré instantanément par email après paiement",
-    accent: "text-[#00E5FF]",
-    bg: "bg-[#00E5FF]/10",
-    border: "border-[#00E5FF]/20",
-  },
-  {
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-        />
-      </svg>
-    ),
-    title: "Paiement sécurisé",
-    description: "Djamo, Moov Money & Wave acceptés",
-    accent: "text-[#7B2FFF]",
-    bg: "bg-[#7B2FFF]/10",
-    border: "border-[#7B2FFF]/20",
-  },
-  {
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-    title: "100% Officiel",
-    description: "Codes authentiques garantis, jamais utilisés",
-    accent: "text-[#00FF88]",
-    bg: "bg-[#00FF88]/10",
-    border: "border-[#00FF88]/20",
-  },
-  {
-    icon: (
-      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"
-        />
-      </svg>
-    ),
-    title: "Support 24/7",
-    description: "Assistance rapide sur WhatsApp",
-    accent: "text-[#FFB800]",
-    bg: "bg-[#FFB800]/10",
-    border: "border-[#FFB800]/20",
-  },
-];
-
-const categories: Category[] = [
-  {
-    name: "PlayStation",
     slug: "playstation",
+    badge: "🎮 PlayStation",
     icon: "🎮",
-    description: "PSN, PS Plus, PS Stars",
-    gradient: "gradient-playstation",
-    glow: "glow-playstation",
-    border: "border-playstation",
-    count: "12 cartes",
+    title: "PlayStation Network Cards",
+    subtitle: "PSN • Région US",
+    amounts: [10, 20, 50],
+    cardBg: "linear-gradient(145deg, #000d2e, #002870)",
+    cardBorder: "rgba(0,112,204,0.3)",
+    glowColor: "rgba(0,112,204,0.5)",
+    badgeBg: "rgba(0,112,204,0.2)",
+    badgeColor: "rgba(100,180,255,0.9)",
+    badgeBorder: "rgba(0,112,204,0.4)",
   },
   {
-    name: "Xbox",
     slug: "xbox",
+    badge: "🎯 Xbox",
     icon: "🎯",
-    description: "Xbox Live, Game Pass",
-    gradient: "gradient-xbox",
-    glow: "glow-xbox",
-    border: "border-xbox",
-    count: "8 cartes",
+    title: "Xbox Gift Cards",
+    subtitle: "Xbox Live • Game Pass",
+    amounts: [10, 25, 50],
+    cardBg: "linear-gradient(145deg, #001400, #0a3a0a)",
+    cardBorder: "rgba(82,176,67,0.3)",
+    glowColor: "rgba(82,176,67,0.5)",
+    badgeBg: "rgba(82,176,67,0.15)",
+    badgeColor: "rgba(130,220,100,0.9)",
+    badgeBorder: "rgba(82,176,67,0.4)",
   },
   {
-    name: "Nintendo",
     slug: "nintendo",
+    badge: "🍄 Nintendo",
     icon: "🍄",
-    description: "eShop, NSO",
-    gradient: "gradient-nintendo",
-    glow: "glow-nintendo",
-    border: "border-nintendo",
-    count: "6 cartes",
+    title: "Nintendo eShop Cards",
+    subtitle: "Switch • NSO",
+    amounts: [10, 20, 35],
+    cardBg: "linear-gradient(145deg, #200003, #540008)",
+    cardBorder: "rgba(228,0,15,0.3)",
+    glowColor: "rgba(228,0,15,0.5)",
+    badgeBg: "rgba(228,0,15,0.15)",
+    badgeColor: "rgba(255,100,100,0.9)",
+    badgeBorder: "rgba(228,0,15,0.4)",
   },
   {
-    name: "Apple",
     slug: "apple",
+    badge: "🍎 Apple",
     icon: "🍎",
-    description: "iTunes, App Store",
-    gradient: "gradient-apple",
-    glow: "glow-apple",
-    border: "border-apple",
-    count: "5 cartes",
+    title: "iTunes App Store Cards",
+    subtitle: "App Store • iTunes",
+    amounts: [5, 10, 25],
+    cardBg: "linear-gradient(145deg, #111111, #333333)",
+    cardBorder: "rgba(180,180,180,0.25)",
+    glowColor: "rgba(180,180,180,0.4)",
+    badgeBg: "rgba(180,180,180,0.12)",
+    badgeColor: "rgba(210,210,210,0.9)",
+    badgeBorder: "rgba(180,180,180,0.35)",
   },
 ];
 
-const steps: Step[] = [
-  {
-    number: "01",
-    title: "Choisissez votre carte",
-    description:
-      "Parcourez notre catalogue et sélectionnez la carte et le montant souhaités.",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"
-        />
-      </svg>
-    ),
-  },
-  {
-    number: "02",
-    title: "Payez en toute sécurité",
-    description:
-      "Réglez avec Djamo, Moov Money, Wave ou carte bancaire. 100% sécurisé.",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"
-        />
-      </svg>
-    ),
-  },
-  {
-    number: "03",
-    title: "Recevez votre code",
-    description:
-      "Votre code est livré par email en moins de 2 minutes. Prêt à l'emploi !",
-    icon: (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-        />
-      </svg>
-    ),
-  },
+const features = [
+  { icon: "⚡", title: "Livraison < 2 min",   desc: "Code livré instantanément par email après paiement", accent: "#00ffe0", dim: "rgba(0,255,224,0.1)" },
+  { icon: "🔐", title: "Paiement sécurisé",   desc: "Djamo, Moov Money & Wave acceptés",                  accent: "#7b2fff", dim: "rgba(123,47,255,0.1)" },
+  { icon: "✅", title: "100% Officiel",        desc: "Codes authentiques garantis, jamais utilisés",       accent: "#00ff88", dim: "rgba(0,255,136,0.1)" },
+  { icon: "💬", title: "Support 24/7",         desc: "Assistance rapide sur WhatsApp",                     accent: "#ffb800", dim: "rgba(255,184,0,0.1)" },
 ];
 
-const testimonials: Testimonial[] = [
-  {
-    name: "Kouamé A.",
-    city: "Abidjan",
-    avatar: "K",
-    avatarColor: "bg-blue-500",
-    rating: 5,
-    text:
-      "Incroyable ! J'ai reçu mon code PSN en moins d'une minute. Le paiement Djamo est super pratique. Je recommande à 100% !",
-    product: "PSN 20€",
-  },
-  {
-    name: "Fatou D.",
-    city: "Bouaké",
-    avatar: "F",
-    avatarColor: "bg-purple-500",
-    rating: 5,
-    text:
-      "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci BabiCard !",
-    product: "iTunes 10€",
-  },
-  {
-    name: "Yves K.",
-    city: "Abidjan",
-    avatar: "Y",
-    avatarColor: "bg-green-500",
-    rating: 5,
-    text:
-      "Le meilleur site pour acheter des cartes gaming en Côte d'Ivoire. Prix corrects et livraison ultra rapide. Mon go-to !",
-    product: "Xbox 25€",
-  },
+const categories = [
+  { slug: "playstation", name: "PlayStation", icon: "🎮", desc: "PSN, PS Plus, PS Stars",   cssClass: "gradient-psn  border-psn  glow-psn",  count: "12 cartes" },
+  { slug: "xbox",        name: "Xbox",        icon: "🎯", desc: "Xbox Live, Game Pass",     cssClass: "gradient-xbox border-xbox glow-xbox",  count: "8 cartes" },
+  { slug: "nintendo",    name: "Nintendo",    icon: "🍄", desc: "eShop, NSO",               cssClass: "gradient-nintendo border-nintendo glow-nintendo", count: "6 cartes" },
+  { slug: "apple",       name: "Apple",       icon: "🍎", desc: "iTunes, App Store",        cssClass: "gradient-apple border-apple glow-apple", count: "5 cartes" },
+];
+
+const steps = [
+  { num: "01", icon: "🛒", title: "Choisissez votre carte",  desc: "Parcourez le catalogue et sélectionnez la carte et le montant souhaités." },
+  { num: "02", icon: "💳", title: "Payez en sécurité",       desc: "Réglez avec Djamo, Moov Money ou Wave. 100% sécurisé et instantané." },
+  { num: "03", icon: "📧", title: "Recevez votre code",      desc: "Votre code est livré par email en moins de 2 minutes. Prêt à l'emploi !" },
+];
+
+const testimonials = [
+  { name: "Kouamé A.", city: "Abidjan", initials: "K", color: "#2563eb", rating: 5, text: "Incroyable ! J'ai reçu mon code PSN en moins d'une minute. Le paiement Djamo est super pratique. Je recommande à 100% !", product: "PSN 20€" },
+  { name: "Fatou D.",  city: "Bouaké",  initials: "F", color: "#7c3aed", rating: 5, text: "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci BabiCard !", product: "iTunes 10€" },
+  { name: "Yves K.",   city: "Abidjan", initials: "Y", color: "#16a34a", rating: 5, text: "Le meilleur site pour acheter des cartes gaming en Côte d'Ivoire. Prix corrects et livraison ultra rapide. Mon go-to !", product: "Xbox 25€" },
 ];
 
 const stats = [
@@ -310,326 +103,269 @@ const stats = [
   { value: "24/7", label: "Support disponible" },
 ];
 
+// ─────────────────────────────────────────
+//  HERO 3D CARD
+// ─────────────────────────────────────────
+
+function HeroCard({ platform }: { platform: typeof platforms[0] }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const shineRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [amtIdx, setAmtIdx] = useState(0);
+
+  function onMouseMove(e: React.MouseEvent) {
+    const card = cardRef.current;
+    const shine = shineRef.current;
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    const cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
+    const dx = (e.clientX - cx) / (r.width / 2);
+    const dy = (e.clientY - cy) / (r.height / 2);
+    card.style.transform = `perspective(1200px) rotateY(${dx * 18}deg) rotateX(${-dy * 18}deg) scale(1.04)`;
+    if (shine) {
+      const sx = ((dx + 1) / 2 * 100).toFixed(1);
+      const sy = ((dy + 1) / 2 * 100).toFixed(1);
+      shine.style.background = `radial-gradient(circle at ${sx}% ${sy}%, rgba(255,255,255,0.18), transparent 60%)`;
+    }
+  }
+
+  function onMouseLeave() {
+    const card = cardRef.current;
+    const shine = shineRef.current;
+    if (card) card.style.transform = "perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1)";
+    if (shine) shine.style.background = "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 60%)";
+  }
+
+  const amt = platform.amounts[amtIdx];
+
+  return (
+    <div ref={wrapRef} className="flex items-center justify-center" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+      <div style={{ position: "relative", width: 300 }}>
+        {/* Rainbow border glow */}
+        <div className="card-rainbow-border" />
+
+        {/* Card */}
+        <div
+          ref={cardRef}
+          style={{
+            width: 300,
+            height: 400,
+            borderRadius: 24,
+            background: platform.cardBg,
+            border: `1px solid ${platform.cardBorder}`,
+            position: "relative",
+            overflow: "hidden",
+            transformStyle: "preserve-3d",
+            transition: "transform 0.08s linear",
+            boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px ${platform.glowColor}`,
+          }}
+        >
+          {/* Scanlines */}
+          <div className="scanline-overlay" />
+          {/* Shine */}
+          <div ref={shineRef} style={{
+            position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", borderRadius: 24,
+            background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 60%)",
+            transition: "background 0.05s",
+          }} />
+
+          {/* Content */}
+          <div style={{ padding: 28, height: "100%", display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
+            {/* Badge */}
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: platform.badgeBg, border: `1px solid ${platform.badgeBorder}`,
+              color: platform.badgeColor,
+              padding: "6px 14px", borderRadius: 999,
+              fontSize: 12, fontWeight: 600, width: "fit-content", marginBottom: 8,
+            }}>
+              {platform.badge}
+            </div>
+
+            {/* Icon */}
+            <div style={{ fontSize: 56, margin: "auto 0", animation: "iconFloat 3s ease-in-out infinite", textShadow: "0 0 30px rgba(0,255,224,0.4)" }}>
+              {platform.icon}
+            </div>
+
+            {/* Info */}
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{platform.title}</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 14 }}>{platform.subtitle} · Livraison instantanée</div>
+
+              {/* Amount picker */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                {platform.amounts.map((a, i) => (
+                  <button
+                    key={a}
+                    onClick={() => setAmtIdx(i)}
+                    style={{
+                      padding: "6px 12px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "none",
+                      border: amtIdx === i ? "1px solid rgba(0,255,224,0.5)" : "1px solid rgba(255,255,255,0.1)",
+                      background: amtIdx === i ? "rgba(0,255,224,0.12)" : "rgba(255,255,255,0.04)",
+                      color: amtIdx === i ? "#00ffe0" : "rgba(255,255,255,0.7)",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {a}€
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ fontSize: 26, fontWeight: 800 }}>
+                <span style={{ background: "linear-gradient(135deg,#00ffe0,#7b2fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                  {amt}€
+                </span>
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginLeft: 8, WebkitTextFillColor: "rgba(255,255,255,0.4)" }}>
+                  → {toFCFA(amt)} FCFA
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom accent */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,transparent,#00ffe0,transparent)", opacity: 0.4 }} />
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes iconFloat {
+          0%,100% { transform: translateY(0) rotate(0deg); }
+          33%      { transform: translateY(-10px) rotate(2deg); }
+          66%      { transform: translateY(-5px) rotate(-2deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────
+//  HERO CAROUSEL
+// ─────────────────────────────────────────
+
 function HeroCarousel() {
-  const [current, setCurrent] = useState(0);
-  const [selectedAmount, setSelectedAmount] = useState(0);
+  const [idx, setIdx] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const [mouseX, setMouseX] = useState(0);
-  const [mouseY, setMouseY] = useState(0);
-  const [mouseVX, setMouseVX] = useState(0);
-  const [mouseVY, setMouseVY] = useState(0);
 
-  const product = heroProducts[current];
-
-  const goNext = useCallback(() => {
+  const goTo = useCallback((next: number) => {
     if (animating) return;
     setAnimating(true);
-    setTimeout(() => {
-      setCurrent((c) => (c + 1) % heroProducts.length);
-      setAnimating(false);
-    }, 300);
+    setTimeout(() => { setIdx(next); setAnimating(false); }, 280);
   }, [animating]);
 
-  const goPrev = useCallback(() => {
-    if (animating) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setCurrent((c) => (c - 1 + heroProducts.length) % heroProducts.length);
-      setAnimating(false);
-    }, 300);
-  }, [animating]);
+  const goNext = useCallback(() => goTo((idx + 1) % platforms.length), [idx, goTo]);
+  const goPrev = useCallback(() => goTo((idx - 1 + platforms.length) % platforms.length), [idx, goTo]);
 
   useEffect(() => {
-    const timer = setInterval(goNext, 5000);
-    return () => clearInterval(timer);
+    const t = setInterval(goNext, 5000);
+    return () => clearInterval(t);
   }, [goNext]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-    setMouseVX(x - mouseX);
-    setMouseVY(y - mouseY);
-    setMouseX(x);
-    setMouseY(y);
-  };
-
-  const handleMouseLeave = () => {
-    setMouseX(0);
-    setMouseY(0);
-    setMouseVX(0);
-    setMouseVY(0);
-  };
-
-  const amountOptions = product.amounts;
-  const selectedAmountIndex =
-    selectedAmount >= 0 && selectedAmount < amountOptions.length ? selectedAmount : 0;
-  const amount = amountOptions[selectedAmountIndex] ?? amountOptions[0];
+  const p = platforms[idx];
 
   return (
     <section
-      className="relative h-screen w-full overflow-hidden bg-[#0A0A0F]"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      style={{ minHeight: "calc(100vh - 64px)", background: "transparent", position: "relative", overflow: "hidden" }}
+      className="flex items-center justify-center px-4 py-16"
     >
-      {/* Animated background blobs */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        {/* Static mesh gradient base */}
-        <div className="absolute inset-0 bg-mesh-gradient" />
-        
-        {/* Primary cyan blob - follows cursor */}
+      <div style={{ maxWidth: 1100, width: "100%" }} className="grid gap-12 lg:grid-cols-2 items-center">
+
+        {/* Left text */}
         <div
-          className="pointer-events-none absolute h-96 w-96 rounded-full bg-[#00E5FF]/15 blur-3xl transition-transform duration-100"
           style={{
-            left: `calc(50% + ${mouseX * 150}px)`,
-            top: `calc(30% + ${mouseY * 120}px)`,
-            transform: "translate(-50%, -50%)",
+            opacity: animating ? 0 : 1,
+            transform: animating ? "translateX(16px)" : "translateX(0)",
+            transition: "opacity 0.28s, transform 0.28s",
           }}
-        />
-        
-        {/* Secondary violet blob - opposite direction */}
-        <div
-          className="pointer-events-none absolute h-80 w-80 rounded-full bg-[#7B2FFF]/12 blur-3xl transition-transform duration-150"
-          style={{
-            left: `calc(30% - ${mouseX * 80}px)`,
-            top: `calc(60% - ${mouseY * 80}px)`,
-            transform: "translate(-50%, -50%)",
-          }}
-        />
-        
-        {/* Tertiary cyan accent - slower movement */}
-        <div
-          className="pointer-events-none absolute h-72 w-72 rounded-full bg-[#00B8D4]/10 blur-3xl transition-transform duration-200"
-          style={{
-            left: `calc(70% + ${mouseX * 60}px)`,
-            top: `calc(70% + ${mouseY * 60}px)`,
-            transform: "translate(-50%, -50%)",
-          }}
-        />
-
-        {/* Grid overlay for depth */}
-        <div className="absolute inset-0 bg-grid opacity-20" />
-      </div>
-
-      {/* Content Container */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-7xl">
-          <div className="grid h-full gap-8 lg:gap-12 lg:grid-cols-2 lg:items-center">
-            {/* Left Content */}
-            <div
-              className={`flex flex-col justify-center transition-all duration-300 ${
-                animating ? "translate-x-4 opacity-0" : "translate-x-0 opacity-100"
-              }`}
-              style={{
-                transform: `translate(${mouseX * 6}px, ${mouseY * 6}px)`,
-              }}
-            >
-              {/* Category badges */}
-              <div className="mb-6 flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold backdrop-blur-sm ${product.categoryColor} ${product.categoryTextColor}`}
-                >
-                  <span className="text-base">{product.icon}</span>
-                  <span className="tracking-wider">{product.category.toUpperCase()}</span>
-                </span>
-                <span className="inline-flex animate-pulse items-center gap-2 rounded-full border border-[#00E5FF]/50 bg-[#00E5FF]/20 px-3 py-1.5 text-xs font-semibold text-[#00E5FF] shadow-[0_0_20px_rgba(0,229,255,0.3)]">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#00E5FF]" />
-                  En stock
-                </span>
-              </div>
-
-              {/* Main heading */}
-              <h1
-                className="mb-5 bg-gradient-to-r from-white via-[#00E5FF] to-[#00E5FF] bg-clip-text text-4xl font-bold leading-tight text-transparent sm:text-5xl lg:text-6xl xl:text-7xl"
-                style={{ fontFamily: "var(--font-display)" }}
-              >
-                {product.name}
-              </h1>
-
-              {/* Description */}
-              <p className="mb-8 max-w-lg text-base leading-relaxed text-white/70 sm:text-lg lg:text-base xl:text-lg">
-                {product.description}
-              </p>
-
-              {/* Amount selector */}
-              <div className="mb-9">
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-white/50">
-                  Choisissez un montant
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  {amountOptions.map((amt, i) => (
-                    <button
-                      key={amt}
-                      onClick={() => setSelectedAmount(i)}
-                      className={`price-option group rounded-lg border px-4 py-2.5 text-xs font-semibold transition-all duration-200 sm:px-5 sm:py-3 sm:text-sm ${
-                        selectedAmountIndex === i
-                          ? "border-[#00E5FF]/60 bg-[#00E5FF]/20 text-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.3)]"
-                          : "border-white/15 bg-white/8 text-white/80 hover:border-white/30 hover:bg-white/12 hover:text-white"
-                      }`}
-                    >
-                      <span className="font-bold">{amt}€</span>
-                      <span className="ml-2 text-white/60 opacity-80">→ {toFCFA(amt)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                <Link
-                  href={`/shop?category=${product.categorySlug}`}
-                  className="btn-press cta-neon group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#00B8D4] px-6 py-3 text-sm font-bold text-black transition-all hover:scale-105 sm:px-8 sm:py-4"
-                >
-                  <span>Acheter {amount}€</span>
-                  <svg
-                    className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                    />
-                  </svg>
-                </Link>
-                <Link
-                  href="/shop"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/8 px-6 py-3 text-sm font-medium text-white/80 transition-all hover:border-white/40 hover:bg-white/15 hover:text-white sm:px-8 sm:py-4"
-                >
-                  Voir tout
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Product Card */}
-            <div className="flex items-center justify-center">
-              <div
-                className={`relative w-full max-w-sm transition-all duration-300 ${
-                  animating ? "scale-95 opacity-0" : "scale-100 opacity-100"
-                }`}
-                style={{
-                  transform: `perspective(1200px) rotateY(${mouseX * 10}deg) rotateX(${mouseY * -10}deg) scale(${
-                    1 + Math.abs(mouseVX) * 0.02 + Math.abs(mouseVY) * 0.02
-                  })`,
-                }}
-              >
-                {/* Glow effect behind card */}
-                <div
-                  className={`absolute -inset-2 rounded-3xl opacity-40 blur-2xl transition-opacity duration-300 ${product.borderClass}`}
-                  style={{
-                    background: `linear-gradient(135deg, ${
-                      product.categorySlug === "apple"
-                        ? "#888888"
-                        : product.categorySlug === "playstation"
-                          ? "#2563eb"
-                          : product.categorySlug === "xbox"
-                            ? "#15803d"
-                            : "#dc2626"
-                    } 0%, transparent 100%)`,
-                  }}
-                />
-
-                {/* Card */}
-                <div
-                  className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br from-[#1A1A28] to-[#0F0F15] p-8 backdrop-blur-sm shadow-2xl ${product.borderClass}`}
-                >
-                  {/* Background gradient overlay */}
-                  <div className={`absolute inset-0 opacity-20 ${product.iconBg}`} />
-
-                  {/* Content */}
-                  <div className="relative z-10">
-                    {/* Icon container */}
-                    <div
-                      className={`mb-8 flex h-24 w-24 items-center justify-center rounded-2xl ${product.iconBg} shadow-xl`}
-                    >
-                      <span className="text-5xl drop-shadow-lg">{product.icon}</span>
-                    </div>
-
-                    {/* Category name */}
-                    <h3 className="mb-2 text-lg font-bold text-white">
-                      {product.category} Card
-                    </h3>
-
-                    {/* Description */}
-                    <p className="mb-6 text-sm leading-relaxed text-white/60">
-                      Carte officielle • Livraison instantanée
-                    </p>
-
-                    {/* Quick info */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-white/50">
-                        <span>✓ 100% Authentique</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-white/50">
-                        <span>✓ Jamais utilisé</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-white/50">
-                        <span>✓ Livraison &lt; 2 min</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom accent line */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#00E5FF] to-transparent opacity-30" />
-                </div>
-              </div>
-            </div>
+        >
+          {/* Live badge */}
+          <div className="badge badge-cyan animate-badge" style={{ marginBottom: 24 }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#00ffe0", animation: "dotPulse 1.5s ease-in-out infinite", display: "inline-block" }} />
+            En stock · Livraison instantanée
           </div>
-        </div>
 
-        {/* Navigation controls */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 sm:gap-6">
-          <button
-            onClick={goPrev}
-            aria-label="Produit précédent"
-            className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white/80 transition hover:border-white/40 hover:bg-white/20 sm:px-4 sm:py-3"
+          {/* Heading */}
+          <h1
+            style={{
+              fontSize: "clamp(2.4rem, 5vw, 3.8rem)",
+              fontWeight: 800,
+              lineHeight: 1.1,
+              color: "#fff",
+              marginBottom: 20,
+              letterSpacing: "-1px",
+              fontFamily: "var(--font-display)",
+            }}
           >
-            ←
-          </button>
-          <div className="flex gap-2 sm:gap-3">
-            {heroProducts.map((_, idx) => (
+            Cartes gaming<br />
+            <span className="text-gradient-cyan">Côte d&apos;Ivoire</span>
+          </h1>
+
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 16, lineHeight: 1.75, marginBottom: 32, maxWidth: 440 }}>
+            {p.title} — payez avec Djamo ou Moov Money. Code livré en moins de 2 minutes.
+          </p>
+
+          {/* CTAs */}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Link href={`/shop?category=${p.slug}`} className="btn-primary animate-cta">
+              Acheter maintenant
+              <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
+            <Link href="/shop" className="btn-outline">Voir le catalogue</Link>
+          </div>
+
+          {/* Platform dots */}
+          <div style={{ display: "flex", gap: 12, marginTop: 36, alignItems: "center" }}>
+            {/* Nav arrows */}
+            <button onClick={goPrev} style={{ cursor: "none", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", color: "rgba(255,255,255,0.7)", transition: "all 0.2s" }}>←</button>
+            {platforms.map((_, i) => (
               <button
-                key={idx}
-                aria-label={`Aller au produit ${idx + 1}`}
-                onClick={() => setCurrent(idx)}
-                className={`transition-all ${
-                  idx === current
-                    ? "h-3 w-8 rounded-full bg-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.5)]"
-                    : "h-2.5 w-2.5 rounded-full bg-white/30 hover:bg-white/50"
-                }`}
+                key={i}
+                onClick={() => goTo(i)}
+                style={{
+                  cursor: "none",
+                  width: i === idx ? 32 : 8, height: 8, borderRadius: 999,
+                  background: i === idx ? "#00ffe0" : "rgba(255,255,255,0.2)",
+                  boxShadow: i === idx ? "0 0 12px rgba(0,255,224,0.6)" : "none",
+                  border: "none", transition: "all 0.3s",
+                }}
               />
             ))}
+            <button onClick={goNext} style={{ cursor: "none", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", color: "rgba(255,255,255,0.7)", transition: "all 0.2s" }}>→</button>
           </div>
-          <button
-            onClick={goNext}
-            aria-label="Produit suivant"
-            className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white/80 transition hover:border-white/40 hover:bg-white/20 sm:px-4 sm:py-3"
-          >
-            →
-          </button>
+        </div>
+
+        {/* Right 3D card */}
+        <div style={{ opacity: animating ? 0 : 1, transform: animating ? "scale(0.94)" : "scale(1)", transition: "opacity 0.28s, transform 0.28s" }}>
+          <HeroCard platform={p} />
         </div>
       </div>
+
+      <style>{`
+        @keyframes dotPulse {
+          0%,100% { transform: scale(1); opacity: 1; }
+          50%      { transform: scale(1.5); opacity: 0.6; }
+        }
+      `}</style>
     </section>
   );
 }
 
-function FeatureSection() {
+// ─────────────────────────────────────────
+//  SECTIONS
+// ─────────────────────────────────────────
+
+function FeaturesSection() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-14">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {features.map((feature) => (
-          <article
-            key={feature.title}
-            className={`glass-card rounded-xl border p-5 ${feature.border} hover:translate-y-[-2px]`}
-          >
-            <div className={`mb-3 inline-flex rounded-lg p-2 ${feature.bg} ${feature.accent}`}>
-              {feature.icon}
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 1.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-sm:grid-cols-2">
+        {features.map((f) => (
+          <article key={f.title} className="feat-card">
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: f.dim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>
+              {f.icon}
             </div>
-            <h3 className="mb-1 text-sm font-semibold text-white">{feature.title}</h3>
-            <p className="text-sm text-white/60">{feature.description}</p>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 4 }}>{f.title}</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>{f.desc}</div>
           </article>
         ))}
       </div>
@@ -639,30 +375,26 @@ function FeatureSection() {
 
 function CategoriesSection() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="mb-7 flex items-end justify-between gap-3">
-        <div>
-          <p className="mb-1 text-xs uppercase tracking-[0.2em] text-white/40">Catégories</p>
-          <h2 className="text-2xl font-bold text-white">Par plateforme</h2>
-        </div>
-        <Link href="/shop" className="text-sm font-medium text-[#00E5FF] hover:text-[#7B2FFF]">
-          Voir tout
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem 3rem" }}>
+      <p className="section-label">Catégories</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+        <h2 className="section-title">Par plateforme</h2>
+        <Link href="/shop" style={{ color: "#00ffe0", fontSize: 14, fontWeight: 500, textDecoration: "none", cursor: "none" }}>
+          Voir tout →
         </Link>
       </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-sm:grid-cols-2">
         {categories.map((cat) => (
           <Link
             key={cat.slug}
             href={`/shop?category=${cat.slug}`}
-            className={`glass-card group rounded-xl border p-5 ${cat.border} ${cat.glow} transition hover:scale-[1.01]`}
+            style={{ textDecoration: "none", cursor: "none", borderRadius: 18, padding: 22, display: "block", transition: "all 0.3s" }}
+            className={cat.cssClass}
           >
-            <div className={`mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl text-xl ${cat.gradient}`}>
-              {cat.icon}
-            </div>
-            <h3 className="mb-1 font-semibold text-white">{cat.name}</h3>
-            <p className="mb-2 text-sm text-white/60">{cat.description}</p>
-            <p className="text-xs text-white/40">{cat.count}</p>
+            <span style={{ fontSize: 36, display: "block", marginBottom: 12 }}>{cat.icon}</span>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{cat.name}</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{cat.desc}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>{cat.count}</div>
           </Link>
         ))}
       </div>
@@ -672,18 +404,16 @@ function CategoriesSection() {
 
 function StepsSection() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-14">
-      <div className="mb-8 text-center">
-        <p className="mb-1 text-xs uppercase tracking-[0.2em] text-white/40">Processus</p>
-        <h2 className="text-2xl font-bold text-white">Comment ça marche</h2>
-      </div>
-      <div className="grid gap-5 md:grid-cols-3">
-        {steps.map((step) => (
-          <article key={step.number} className="glass-card rounded-xl p-6">
-            <p className="mb-3 text-xs font-bold tracking-wider text-[#00E5FF]">{step.number}</p>
-            <div className="mb-4 text-[#00E5FF]">{step.icon}</div>
-            <h3 className="mb-2 text-lg font-semibold text-white">{step.title}</h3>
-            <p className="text-sm leading-relaxed text-white/60">{step.description}</p>
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 1.5rem" }}>
+      <p className="section-label">Processus</p>
+      <h2 className="section-title" style={{ marginBottom: "1.5rem" }}>Comment ça marche</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="max-sm:grid-cols-1">
+        {steps.map((s) => (
+          <article key={s.num} className="step-card">
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#00ffe0", marginBottom: 14 }}>{s.num}</p>
+            <div style={{ fontSize: 28, marginBottom: 14 }}>{s.icon}</div>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: "#fff", marginBottom: 8 }}>{s.title}</h3>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.65 }}>{s.desc}</p>
           </article>
         ))}
       </div>
@@ -691,46 +421,23 @@ function StepsSection() {
   );
 }
 
-function TrustBandSection() {
-  return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-8">
-      <div className="rounded-2xl border border-[#00E5FF]/20 bg-[#12121A]/70 p-5 backdrop-blur-sm">
-        <div className="grid gap-4 md:grid-cols-5">
-          {features.map((feature) => (
-            <article key={feature.title} className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className={`mb-2 inline-flex rounded-lg p-2 ${feature.bg} ${feature.accent}`}>{feature.icon}</div>
-              <h3 className="text-sm font-semibold text-white">{feature.title}</h3>
-              <p className="text-xs text-white/60">{feature.description}</p>
-            </article>
-          ))}
-          <article className="rounded-xl border border-[#00FF88]/30 bg-[#00FF88]/10 p-4">
-            <p className="text-xs uppercase tracking-wider text-[#00FF88]">Aujourd’hui</p>
-            <p className="mt-1 text-2xl font-bold text-white">+287</p>
-            <p className="text-xs text-white/70">codes livrés</p>
-          </article>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function PaymentSection() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-14">
-      <div className="rounded-2xl border border-white/10 bg-[#12121A]/80 p-6 sm:p-8">
-        <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/40">Paiements locaux</p>
-        <h2 className="text-2xl font-bold text-white">Paiement 100% local, sécurisé et instantané</h2>
-        <p className="mt-2 max-w-2xl text-sm text-white/65">
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem" }}>
+      <div style={{ borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(18,18,30,0.8)", padding: "2rem 2.5rem", backdropFilter: "blur(12px)" }}>
+        <p className="section-label">Paiements locaux</p>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "6px 0 8px" }}>Paiement 100% local, sécurisé et instantané</h2>
+        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", maxWidth: 540, lineHeight: 1.7, marginBottom: 20 }}>
           Réglez facilement avec Djamo et Moov Money. Vos transactions sont protégées et validées en temps réel.
         </p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-[#00E5FF]/25 bg-[#00E5FF]/10 p-5">
-            <p className="text-sm font-semibold text-white">💳 Djamo</p>
-            <p className="mt-1 text-sm text-white/70">Paiement rapide, simple et fiable.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+          <div style={{ borderRadius: 14, border: "1px solid rgba(0,229,255,0.2)", background: "rgba(0,229,255,0.07)", padding: "18px 20px" }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginBottom: 4 }}>💳 Djamo</p>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Paiement rapide, simple et fiable.</p>
           </div>
-          <div className="rounded-xl border border-[#FF8C00]/30 bg-[#FF8C00]/10 p-5">
-            <p className="text-sm font-semibold text-white">📱 Moov Money</p>
-            <p className="mt-1 text-sm text-white/70">Moyen local populaire, instantané.</p>
+          <div style={{ borderRadius: 14, border: "1px solid rgba(255,140,0,0.25)", background: "rgba(255,140,0,0.07)", padding: "18px 20px" }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginBottom: 4 }}>📱 Moov Money</p>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Moyen local populaire, instantané.</p>
           </div>
         </div>
       </div>
@@ -739,71 +446,26 @@ function PaymentSection() {
 }
 
 function TestimonialsSection() {
-  const stars = useMemo(() => [1, 2, 3, 4, 5], []);
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setIndex((v) => (v + 1) % testimonials.length), 3500);
-    return () => clearInterval(t);
-  }, []);
-
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-14">
-      <div className="mb-8 text-center">
-        <p className="mb-1 text-xs uppercase tracking-[0.2em] text-white/40">Avis clients</p>
-        <h2 className="text-2xl font-bold text-white">Ils nous font confiance</h2>
-        <p className="mt-2 text-sm text-white/60">+1 200 clients satisfaits à Abidjan, Bouaké et partout en CI</p>
-      </div>
-
-      <div className="md:hidden">
-        {testimonials.map((t, i) => (
-          <article
-            key={t.name}
-            className={`testimonial-card rounded-xl p-5 transition-all ${i === index ? "block carousel-enter" : "hidden"}`}
-          >
-            <div className="mb-4 flex items-center gap-3">
-              <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${t.avatarColor}`}>
-                {t.avatar}
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-white">{t.name}</p>
-                <p className="text-xs text-white/50">{t.city}</p>
-              </div>
-            </div>
-            <div className="mb-3 flex gap-1">
-              {stars.map((s) => (
-                <span key={s} className={s <= t.rating ? "text-[#FFB800]" : "text-white/20"}>
-                  ★
-                </span>
-              ))}
-            </div>
-            <p className="mb-3 text-sm leading-relaxed text-white/70">{t.text}</p>
-            <p className="text-xs text-[#00E5FF]">{t.product}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="hidden gap-5 md:grid md:grid-cols-3">
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 1.5rem" }}>
+      <p className="section-label">Avis clients</p>
+      <h2 className="section-title" style={{ marginBottom: 6 }}>Ils nous font confiance</h2>
+      <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 24 }}>+1 200 clients satisfaits à Abidjan, Bouaké et partout en CI</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }} className="max-sm:grid-cols-1">
         {testimonials.map((t) => (
-          <article key={t.name} className="testimonial-card rounded-xl p-5">
-            <div className="mb-4 flex items-center gap-3">
-              <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${t.avatarColor}`}>
-                {t.avatar}
-              </span>
+          <article key={t.name} className="testi-card">
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: t.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#fff", flexShrink: 0 }}>
+                {t.initials}
+              </div>
               <div>
-                <p className="text-sm font-semibold text-white">{t.name}</p>
-                <p className="text-xs text-white/50">{t.city}</p>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{t.name}</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{t.city}</div>
               </div>
             </div>
-            <div className="mb-3 flex gap-1">
-              {stars.map((s) => (
-                <span key={s} className={s <= t.rating ? "text-[#FFB800]" : "text-white/20"}>
-                  ★
-                </span>
-              ))}
-            </div>
-            <p className="mb-3 text-sm leading-relaxed text-white/70">{t.text}</p>
-            <p className="text-xs text-[#00E5FF]">{t.product}</p>
+            <div style={{ color: "#ffb800", fontSize: 13, marginBottom: 10 }}>{"★".repeat(t.rating)}</div>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 10 }}>{t.text}</p>
+            <p style={{ fontSize: 12, color: "#00ffe0" }}>{t.product}</p>
           </article>
         ))}
       </div>
@@ -813,12 +475,16 @@ function TestimonialsSection() {
 
 function StatsSection() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="glass-card stat-item rounded-xl p-5 text-center">
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
-            <p className="mt-1 text-sm text-white/55">{stat.label}</p>
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem 5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-sm:grid-cols-2">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className="animate-count-up glass-cyan"
+            style={{ borderRadius: 14, padding: "22px 20px", textAlign: "center" }}
+          >
+            <p style={{ fontSize: 26, fontWeight: 800, color: "#fff", marginBottom: 4 }}>{s.value}</p>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -826,12 +492,15 @@ function StatsSection() {
   );
 }
 
+// ─────────────────────────────────────────
+//  PAGE
+// ─────────────────────────────────────────
+
 export default function HomePage() {
   return (
-    <main className="relative overflow-x-hidden bg-[#0A0A0F]">
+    <main style={{ background: "transparent", position: "relative" }}>
       <HeroCarousel />
-      <FeatureSection />
-      <TrustBandSection />
+      <FeaturesSection />
       <CategoriesSection />
       <StepsSection />
       <PaymentSection />
