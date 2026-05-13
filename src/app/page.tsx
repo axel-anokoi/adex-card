@@ -264,12 +264,12 @@ function HeroCarousel() {
 
   return (
     <section
-      style={{ minHeight: "calc(100vh - 64px)", background: "transparent", position: "relative", overflow: "hidden" }}
+      style={{ minHeight: "calc(100vh - 64px)", background: "var(--bg)", position: "relative", overflow: "hidden" }}
       className="flex items-center justify-center px-4 py-16"
     >
       <div style={{ maxWidth: 1100, width: "100%" }} className="grid gap-12 lg:grid-cols-2 items-center">
 
-        {/* Left text */}
+{/* Left text */}
         <div
           style={{
             opacity: animating ? 0 : 1,
@@ -279,7 +279,7 @@ function HeroCarousel() {
         >
           {/* Live badge */}
           <div className="badge badge-cyan animate-badge" style={{ marginBottom: 24 }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#00ffe0", animation: "dotPulse 1.5s ease-in-out infinite", display: "inline-block" }} />
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--cyan)", animation: "dotPulse 1.5s ease-in-out infinite", display: "inline-block" }} />
             En stock · Livraison instantanée
           </div>
 
@@ -289,7 +289,7 @@ function HeroCarousel() {
               fontSize: "clamp(2.4rem, 5vw, 3.8rem)",
               fontWeight: 800,
               lineHeight: 1.1,
-              color: "#fff",
+              color: "var(--text)",
               marginBottom: 20,
               letterSpacing: "-1px",
               fontFamily: "var(--font-display)",
@@ -299,7 +299,7 @@ function HeroCarousel() {
             <span className="text-gradient-cyan">Côte d&apos;Ivoire</span>
           </h1>
 
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 16, lineHeight: 1.75, marginBottom: 32, maxWidth: 440 }}>
+          <p style={{ color: "var(--text-muted)", fontSize: 16, lineHeight: 1.75, marginBottom: 32, maxWidth: 440 }}>
             {p.title} — payez avec Djamo ou Moov Money. Code livré en moins de 2 minutes.
           </p>
 
@@ -314,10 +314,10 @@ function HeroCarousel() {
             <Link href="/shop" className="btn-outline">Voir le catalogue</Link>
           </div>
 
-          {/* Platform dots */}
+{/* Platform dots */}
           <div style={{ display: "flex", gap: 12, marginTop: 36, alignItems: "center" }}>
             {/* Nav arrows */}
-            <button onClick={goPrev} style={{ cursor: "none", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", color: "rgba(255,255,255,0.7)", transition: "all 0.2s" }}>←</button>
+            <button onClick={goPrev} style={{ cursor: "none", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "var(--text-muted)", transition: "all 0.2s" }}>←</button>
             {platforms.map((_, i) => (
               <button
                 key={i}
@@ -325,13 +325,13 @@ function HeroCarousel() {
                 style={{
                   cursor: "none",
                   width: i === idx ? 32 : 8, height: 8, borderRadius: 999,
-                  background: i === idx ? "#00ffe0" : "rgba(255,255,255,0.2)",
-                  boxShadow: i === idx ? "0 0 12px rgba(0,255,224,0.6)" : "none",
+                  background: i === idx ? "var(--cyan)" : "var(--border)",
+                  boxShadow: i === idx ? "0 0 12px var(--cyan-glow)" : "none",
                   border: "none", transition: "all 0.3s",
                 }}
               />
             ))}
-            <button onClick={goNext} style={{ cursor: "none", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", color: "rgba(255,255,255,0.7)", transition: "all 0.2s" }}>→</button>
+            <button onClick={goNext} style={{ cursor: "none", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "var(--text-muted)", transition: "all 0.2s" }}>→</button>
           </div>
         </div>
 
@@ -364,8 +364,8 @@ function FeaturesSection() {
             <div style={{ width: 40, height: 40, borderRadius: 10, background: f.dim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>
               {f.icon}
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 4 }}>{f.title}</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>{f.desc}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>{f.title}</div>
+            <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.6 }}>{f.desc}</div>
           </article>
         ))}
       </div>
@@ -410,10 +410,10 @@ function StepsSection() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="max-sm:grid-cols-1">
         {steps.map((s) => (
           <article key={s.num} className="step-card">
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#00ffe0", marginBottom: 14 }}>{s.num}</p>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "var(--cyan)", marginBottom: 14 }}>{s.num}</p>
             <div style={{ fontSize: 28, marginBottom: 14 }}>{s.icon}</div>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: "#fff", marginBottom: 8 }}>{s.title}</h3>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.65 }}>{s.desc}</p>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>{s.title}</h3>
+            <p style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.65 }}>{s.desc}</p>
           </article>
         ))}
       </div>
@@ -424,20 +424,20 @@ function StepsSection() {
 function PaymentSection() {
   return (
     <section style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem" }}>
-      <div style={{ borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(18,18,30,0.8)", padding: "2rem 2.5rem", backdropFilter: "blur(12px)" }}>
+      <div style={{ borderRadius: 20, border: "1px solid var(--border)", background: "var(--bg-card)", padding: "2rem 2.5rem", backdropFilter: "blur(12px)" }}>
         <p className="section-label">Paiements locaux</p>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "6px 0 8px" }}>Paiement 100% local, sécurisé et instantané</h2>
-        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", maxWidth: 540, lineHeight: 1.7, marginBottom: 20 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", margin: "6px 0 8px" }}>Paiement 100% local, sécurisé et instantané</h2>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", maxWidth: 540, lineHeight: 1.7, marginBottom: 20 }}>
           Réglez facilement avec Djamo et Moov Money. Vos transactions sont protégées et validées en temps réel.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-          <div style={{ borderRadius: 14, border: "1px solid rgba(0,229,255,0.2)", background: "rgba(0,229,255,0.07)", padding: "18px 20px" }}>
-            <p style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginBottom: 4 }}>💳 Djamo</p>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Paiement rapide, simple et fiable.</p>
+          <div style={{ borderRadius: 14, border: "1px solid var(--payment-cyan)", background: "var(--payment-cyan-dim)", padding: "18px 20px" }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>💳 Djamo</p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Paiement rapide, simple et fiable.</p>
           </div>
-          <div style={{ borderRadius: 14, border: "1px solid rgba(255,140,0,0.25)", background: "rgba(255,140,0,0.07)", padding: "18px 20px" }}>
-            <p style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginBottom: 4 }}>📱 Moov Money</p>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Moyen local populaire, instantané.</p>
+          <div style={{ borderRadius: 14, border: "1px solid var(--payment-amber)", background: "var(--payment-amber-dim)", padding: "18px 20px" }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>📱 Moov Money</p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Moyen local populaire, instantané.</p>
           </div>
         </div>
       </div>
@@ -459,13 +459,13 @@ function TestimonialsSection() {
                 {t.initials}
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{t.name}</div>
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{t.city}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{t.name}</div>
+                <div style={{ fontSize: 12, color: "var(--text)" }}>{t.city}</div>
               </div>
             </div>
             <div style={{ color: "#ffb800", fontSize: 13, marginBottom: 10 }}>{"★".repeat(t.rating)}</div>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 10 }}>{t.text}</p>
-            <p style={{ fontSize: 12, color: "#00ffe0" }}>{t.product}</p>
+            <p style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6, marginBottom: 10 }}>{t.text}</p>
+            <p style={{ fontSize: 12, color: "var(--text)" }}>{t.product}</p>
           </article>
         ))}
       </div>
@@ -483,8 +483,8 @@ function StatsSection() {
             className="animate-count-up glass-cyan"
             style={{ borderRadius: 14, padding: "22px 20px", textAlign: "center" }}
           >
-            <p style={{ fontSize: 26, fontWeight: 800, color: "#fff", marginBottom: 4 }}>{s.value}</p>
-            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{s.label}</p>
+            <p style={{ fontSize: 26, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>{s.value}</p>
+            <p style={{ fontSize: 12, color: "var(--text)" }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -498,7 +498,7 @@ function StatsSection() {
 
 export default function HomePage() {
   return (
-    <main style={{ background: "transparent", position: "relative" }}>
+    <main style={{ background: "var(--bg)", position: "relative" }}>
       <HeroCarousel />
       <FeaturesSection />
       <CategoriesSection />

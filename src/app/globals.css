@@ -7,7 +7,8 @@
    ============================================= */
 
 
-:root {
+:root,
+html.dark {
   --bg:           #000005;
   --bg2:          #0a0a12;
   --bg3:          #12121e;
@@ -27,9 +28,21 @@
   --text-muted:   rgba(240, 240, 255, 0.5);
   --text-faint:   rgba(240, 240, 255, 0.25);
 
-  --border:       rgba(255, 255, 255, 0.06);
+--border:       rgba(255, 255, 255, 0.06);
   --border-hover: rgba(255, 255, 255, 0.15);
   --border-cyan:  rgba(0, 255, 224, 0.2);
+
+  /* ── Dark Mode Shadows ── */
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:    0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg:    0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl:    0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+
+  /* ── Payment Method Colors (Cyan/Teal & Amber) ── */
+  --payment-cyan:       rgba(0, 229, 255, 0.2);
+  --payment-cyan-dim:  rgba(0, 229, 255, 0.07);
+  --payment-amber:      rgba(255, 140, 0, 0.25);
+  --payment-amber-dim: rgba(255, 140, 0, 0.07);
 
   --font-display: 'Orbitron', sans-serif;
   --font-body:    'Barlow', Arial, sans-serif;
@@ -38,6 +51,43 @@
   --radius-md:  12px;
   --radius-lg:  18px;
   --radius-xl:  24px;
+}
+
+html.light {
+  --bg:           #fafbfc;
+  --bg2:          #f3f4f6;
+  --bg3:          #e5e7eb;
+  --bg-card:      rgba(255, 255, 255, 0.88);
+
+  --cyan:         #0d9488;
+  --cyan-dim:     rgba(13, 148, 136, 0.1);
+  --cyan-glow:    rgba(13, 148, 136, 0.2);
+  --violet:       #5d2ac9;
+  --violet-dim:   rgba(93, 42, 201, 0.1);
+  --pink:         #db2777;
+  --pink-dim:     rgba(219, 39, 119, 0.1);
+  --green:        #059669;
+  --amber:        #d97706;
+
+  --text:         #111827;
+  --text-muted:   rgba(17, 24, 39, 0.58);
+  --text-faint:   rgba(17, 24, 39, 0.35);
+
+  --border:       rgba(17, 24, 39, 0.1);
+  --border-hover: rgba(17, 24, 39, 0.22);
+  --border-cyan:  rgba(13, 148, 136, 0.3);
+
+  /* ── Light Mode Shadows ── */
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md:    0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg:    0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl:    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+
+  /* ── Payment Method Colors (Cyan/Teal & Amber) ── */
+  --payment-cyan:       rgba(13, 148, 136, 0.15);
+  --payment-cyan-dim:  rgba(13, 148, 136, 0.06);
+  --payment-amber:      rgba(217, 119, 6, 0.18);
+  --payment-amber-dim: rgba(217, 119, 6, 0.06);
 }
 
 @theme inline {
@@ -59,6 +109,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   cursor: none;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 a, button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -115,7 +166,7 @@ a, button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 
 .glass:hover {
   border-color: var(--border-hover);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
 }
 
 .glass-cyan {
@@ -291,14 +342,18 @@ a, button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
   padding: 14px 28px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-hover);
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.8);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  color: var(--text-muted);
   font-size: 15px;
   font-weight: 500;
   text-decoration: none;
   cursor: none;
 }
-.btn-outline:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.08); color: #fff; }
+.btn-outline:hover {
+  border-color: var(--border-hover);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--text);
+}
 
 .btn-sm {
   padding: 8px 18px;
@@ -311,7 +366,7 @@ a, button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 
 /* ── Feature cards ── */
 .feat-card {
-  background: rgba(255,255,255,0.03);
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -333,7 +388,7 @@ a, button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 
 /* ── Testimonial cards ── */
 .testi-card {
-  background: rgba(26, 26, 40, 0.8);
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 22px;
@@ -348,7 +403,7 @@ a, button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 
 /* ── Step cards ── */
 .step-card {
-  background: rgba(255,255,255,0.03);
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 28px;
@@ -356,15 +411,15 @@ a, button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 }
 .step-card:hover {
   border-color: var(--border-cyan);
-  background: rgba(0,255,224,0.02);
+  background: color-mix(in srgb, var(--cyan) 6%, var(--bg-card));
 }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,255,224,0.3); }
-* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) var(--bg); }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text) 22%, transparent); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--cyan) 35%, transparent); }
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) var(--bg); }
 
 /* ── Badge pills ── */
 .badge {

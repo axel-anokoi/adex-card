@@ -5,6 +5,18 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { GamingBackground } from "@/components/layout/gaming-background";
 
+const themeInitScript = `
+(function() {
+  try {
+    var saved = localStorage.getItem("theme");
+    var theme = saved === "light" ? "light" : "dark";
+    var root = document.documentElement;
+    root.classList.remove("dark", "light");
+    root.classList.add(theme);
+  } catch (e) {}
+})();
+`;
+
 const orbitron = Orbitron({
   variable: "--font-display",
   subsets: ["latin"],
@@ -31,8 +43,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="fr"
       className={`${orbitron.variable} ${barlow.variable} h-full antialiased dark`}
+      suppressHydrationWarning
     >
-      <body className="relative min-h-full flex flex-col overflow-x-hidden" style={{ background: "#000005", color: "#f0f0ff" }}>
+      <body
+        className="relative min-h-full flex flex-col overflow-x-hidden"
+        style={{ background: "var(--bg)", color: "var(--text)" }}
+      >
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {/* Particle canvas + custom cursor — mounts client-side only */}
         <GamingBackground />
 
