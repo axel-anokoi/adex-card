@@ -20,7 +20,7 @@ export function Footer() {
             <Link
               href="/"
               className="group inline-flex items-center gap-2 text-xl font-bold transition-colors hover:text-[var(--cyan)]"
-              style={{ color: "var(--text)", fontFamily: "var(--font-display)", cursor: "none" }}
+              style={{ color: "var(--text)", fontFamily: "var(--font-display)" }}
             >
               <span
                 className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black glitch-box"
@@ -59,7 +59,7 @@ export function Footer() {
                 <li key={l.href}>
                   <Link
                     href={l.href}
-                    style={{ cursor: "none", color: "var(--text-muted)", fontSize: 13 }}
+                    style={{ color: "var(--text-muted)", fontSize: 13 }}
                     className="transition-colors hover:text-[var(--cyan)]"
                   >
                     {l.label}
@@ -83,7 +83,7 @@ export function Footer() {
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    style={{ cursor: "none", color: "var(--text-muted)", fontSize: 13 }}
+                    style={{ color: "var(--text-muted)", fontSize: 13 }}
                     className="transition-colors hover:text-[var(--text)]"
                   >
                     {l.label}

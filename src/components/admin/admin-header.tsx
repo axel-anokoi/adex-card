@@ -81,7 +81,6 @@ export function AdminHeader({
             onClick={() => setSearchOpen(!searchOpen)}
             className="flex h-9 w-9 items-center justify-center rounded-lg transition-all"
             style={{
-              cursor: "none",
               background: searchOpen 
                 ? "color-mix(in srgb, var(--cyan) 10%, transparent)" 
                 : "transparent",
@@ -129,7 +128,6 @@ export function AdminHeader({
             onClick={() => setNotifOpen(!notifOpen)}
             className="relative flex h-9 w-9 items-center justify-center rounded-lg transition-all"
             style={{
-              cursor: "none",
               background: notifOpen 
                 ? "color-mix(in srgb, var(--cyan) 10%, transparent)" 
                 : "transparent",
@@ -197,7 +195,6 @@ export function AdminHeader({
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-2 rounded-lg p-1.5 transition-all"
             style={{
-              cursor: "none",
               background: profileOpen 
                 ? "color-mix(in srgb, var(--cyan) 10%, transparent)" 
                 : "transparent",
@@ -238,7 +235,7 @@ export function AdminHeader({
               <div className="p-1.5">
                 <button
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all"
-                  style={{ cursor: "none", color: "var(--text-muted)" }}
+                  style={{  color: "var(--text-muted)" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "color-mix(in srgb, var(--text) 6%, transparent)";
                     e.currentTarget.style.color = "var(--text)";
@@ -255,7 +252,7 @@ export function AdminHeader({
                 </button>
                 <button
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all"
-                  style={{ cursor: "none", color: "var(--text-muted)" }}
+                  style={{  color: "var(--text-muted)" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "color-mix(in srgb, var(--text) 6%, transparent)";
                     e.currentTarget.style.color = "var(--text)";
@@ -274,7 +271,7 @@ export function AdminHeader({
                 <div className="my-1 border-t" style={{ borderColor: "var(--border)" }} />
                 <button
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all"
-                  style={{ cursor: "none", color: "var(--pink)" }}
+                  style={{ color: "var(--pink)" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = "color-mix(in srgb, var(--pink) 10%, transparent)";
                   }}

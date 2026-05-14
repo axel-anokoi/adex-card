@@ -85,7 +85,7 @@ export default function CartPage() {
               >
                 <div style={{ 
                   position: "absolute", top: -20, right: -20, width: 120, height: 120, 
-                  background: "var(--cyan)", filter: "blur(60px)", opacity: 0.1, pointerEvents: "none" 
+                  background: "var(--cyan)", filter: "blur(60px)", opacity: 0.1, 
                 }} />
 
                 <h2 className="text-lg font-bold uppercase tracking-wider mb-6 relative z-10" style={{ color: "var(--text)" }}>Résumé</h2>

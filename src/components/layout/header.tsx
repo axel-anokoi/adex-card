@@ -73,7 +73,7 @@ export function Header() {
         <div className="header-inner">
 
           {/* ── Logo ── */}
-          <Link href="/" className="header-logo group" style={{ cursor: "none" }}>
+          <Link href="/" className="header-logo group">
             <div
               className="logo-box glitch-box"
               style={{
@@ -101,7 +101,6 @@ export function Header() {
               <button
                 onClick={() => setCatsOpen(!catsOpen)}
                 style={{
-                  cursor: "none",
                   color: catsOpen ? "var(--text)" : "var(--text-muted)",
                   background: catsOpen ? hoverSurface : "transparent",
                 }}
@@ -128,7 +127,7 @@ export function Header() {
                         onClick={() => setCatsOpen(false)}
                         role="menuitem"
                         className="dropdown-item"
-                        style={{ cursor: "none", color: "var(--text-muted)" }}
+                        style={{ color: "var(--text-muted)" }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = hoverSurface;
                           e.currentTarget.style.color = "var(--text)";
@@ -150,7 +149,7 @@ export function Header() {
                       onClick={() => setCatsOpen(false)}
                       role="menuitem"
                       className="dropdown-item"
-                      style={{ cursor: "none", color: "var(--text-muted)" }}
+                      style={{ color: "var(--text-muted)" }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = hoverSurface;
                         e.currentTarget.style.color = "var(--text)";
@@ -176,7 +175,6 @@ export function Header() {
                   key={link.href}
                   href={link.href}
                   style={{
-                    cursor: "none",
                     color: active ? "var(--text)" : "var(--text-muted)",
                     background: active ? hoverSurface : "transparent",
                   }}
@@ -207,7 +205,7 @@ export function Header() {
 
             <Link
               href="/cart"
-              style={{ cursor: "none", ...softSurface }}
+              style={{ ...softSurface }}
               className="cart-btn relative"
               aria-label="Panier"
               onMouseEnter={(e) => {
@@ -229,14 +227,13 @@ export function Header() {
               )}
             </Link>
 
-            <Link href="/login" style={{ cursor: "none" }} className="btn-sm btn-outline">
+            <Link href="/login" className="btn-sm btn-outline">
               Connexion
             </Link>
 
             <Link
               href="/register"
               style={{
-                cursor: "none",
                 background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
                 color: "#000",
                 fontWeight: 700,
@@ -254,7 +251,7 @@ export function Header() {
 
             <Link
               href="/cart"
-              style={{ cursor: "none", ...softSurface }}
+              style={{ ...softSurface }}
               className="cart-btn relative"
               aria-label="Panier"
             >
@@ -268,7 +265,6 @@ export function Header() {
               className="hamburger-btn"
               aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={mobileOpen}
-              style={{ cursor: "none" }}
             >
               <span className={`ham-line ${mobileOpen ? "ham-open-1" : ""}`} />
               <span className={`ham-line ${mobileOpen ? "ham-open-2" : ""}`} />
@@ -296,7 +292,7 @@ export function Header() {
                 key={cat.slug}
                 href={`/shop?category=${cat.slug}`}
                 onClick={() => setMobileOpen(false)}
-                style={{ cursor: "none", color: "var(--text-muted)" }}
+                style={{ color: "var(--text-muted)" }}
                 className="drawer-link"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = hoverSurface;
@@ -324,7 +320,6 @@ export function Header() {
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
                   style={{
-                    cursor: "none",
                     color: active ? "var(--text)" : "var(--text-muted)",
                     background: active ? hoverSurface : "transparent",
                   }}
@@ -341,7 +336,7 @@ export function Header() {
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
-                style={{ cursor: "none", ...softSurface, textAlign: "center" }}
+                style={{ ...softSurface, textAlign: "center" }}
                 className="drawer-auth-btn"
               >
                 Connexion
@@ -350,7 +345,6 @@ export function Header() {
                 href="/register"
                 onClick={() => setMobileOpen(false)}
                 style={{
-                  cursor: "none",
                   background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
                   color: "#000",
                 }}
@@ -462,7 +456,6 @@ export function Header() {
           font-size: 13px;
           transition: all 0.15s;
           text-decoration: none;
-          cursor: none;
         }
 
         /* ── Desktop actions ── */
@@ -573,7 +566,6 @@ export function Header() {
           font-size: 14px;
           transition: all 0.15s;
           text-decoration: none;
-          cursor: none;
         }
         .drawer-auth {
           display: flex;
@@ -590,7 +582,6 @@ export function Header() {
           text-align: center;
           text-decoration: none;
           transition: all 0.15s;
-          cursor: none;
           -webkit-tap-highlight-color: transparent;
         }
         .drawer-auth-register {

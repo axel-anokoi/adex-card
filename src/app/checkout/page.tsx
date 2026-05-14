@@ -131,7 +131,7 @@ export default function CheckoutPage() {
                       key={pm.id}
                       onClick={() => setSelectedPayment(pm.id)}
                       style={{
-                        borderRadius: 12, padding: "14px 12px", textAlign: "center", cursor: "none",
+                        borderRadius: 12, padding: "14px 12px", textAlign: "center",
                         border: selectedPayment === pm.id ? `1px solid ${pm.border}` : "1px solid var(--border)",
                         background: selectedPayment === pm.id ? pm.accent : "rgba(255,255,255,0.03)",
                         transition: "all 0.2s",

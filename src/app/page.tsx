@@ -1,5 +1,6 @@
 "use client";
 
+import { ProductModal } from "@/components/products/ProductModal";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -166,6 +167,7 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
       className="hero-card-wrapper"
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
+      style={{ perspective: "1200px", pointerEvents: "auto" }}
     >
       <div style={{ position: "relative", width: "100%" }}>
         {/* Rainbow border glow */}
@@ -187,43 +189,43 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
           <div
             ref={shineRef}
             style={{
-              position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", borderRadius: 24,
+              position: "absolute", inset: 0, zIndex: 3, borderRadius: 24,
               background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 60%)",
               transition: "background 0.05s",
             }}
           />
 
           {/* Content */}
-          <div style={{ padding: 28, height: "100%", display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
+          <div style={{ padding: 24, height: "100%", display: "flex", flexDirection: "column", position: "relative", zIndex: 2 }}>
             {/* Badge */}
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               background: platform.badgeBg, border: `1px solid ${platform.badgeBorder}`,
               color: platform.badgeColor,
-              padding: "6px 14px", borderRadius: 999,
-              fontSize: 12, fontWeight: 600, width: "fit-content", marginBottom: 8,
+              padding: "4px 12px", borderRadius: 999,
+              fontSize: 11, fontWeight: 600, width: "fit-content", marginBottom: 12,
             }}>
               {platform.badge}
             </div>
 
             {/* Icon */}
-            <div style={{ fontSize: 56, margin: "auto 0", animation: "iconFloat 3s ease-in-out infinite", textShadow: "0 0 30px rgba(0,255,224,0.4)" }}>
+            <div style={{ fontSize: 48, margin: "auto 0", animation: "iconFloat 3s ease-in-out infinite", textShadow: "0 0 30px rgba(0,255,224,0.4)" }}>
               {platform.icon}
             </div>
 
             {/* Info */}
             <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{platform.title}</div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 14 }}>{platform.subtitle} · Livraison instantanée</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{platform.title}</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 16 }}>{platform.subtitle} · Livraison instantanée</div>
 
               {/* Amount picker */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+              <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
                 {platform.amounts.map((a, i) => (
                   <button
                     key={a}
                     onClick={() => setAmtIdx(i)}
                     style={{
-                      padding: "6px 12px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "none",
+                      padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700,
                       border: amtIdx === i ? "1px solid rgba(0,255,224,0.5)" : "1px solid rgba(255,255,255,0.1)",
                       background: amtIdx === i ? "rgba(0,255,224,0.12)" : "rgba(255,255,255,0.04)",
                       color: amtIdx === i ? "#00ffe0" : "rgba(255,255,255,0.7)",
@@ -235,11 +237,11 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
                 ))}
               </div>
 
-              <div style={{ fontSize: 26, fontWeight: 800 }}>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>
                 <span style={{ background: "linear-gradient(135deg,#00ffe0,#7b2fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                   {amt}€
                 </span>
-                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginLeft: 8, WebkitTextFillColor: "rgba(255,255,255,0.4)" }}>
+                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginLeft: 8, WebkitTextFillColor: "rgba(255,255,255,0.4)" }}>
                   → {toFCFA(amt)} FCFA
                 </span>
               </div>
@@ -258,10 +260,10 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
           justify-content: center;
           width: 100%;
         }
-        .hero-card-wrapper > div {
-          width: min(300px, 85vw);
+.hero-card-wrapper > div {
+          width: min(220px, 85vw);
         }
-        .hero-card-inner {
+.hero-card-inner {
           width: 100%;
           aspect-ratio: 3 / 4;
           border-radius: 24px;
@@ -269,6 +271,16 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
           overflow: hidden;
           transform-style: preserve-3d;
           transition: transform 0.08s linear;
+        }
+        /* Tablet */
+        @media (min-width: 640px) and (max-width: 1023px) {
+          .hero-card-wrapper > div { width: min(240px, 85vw); }
+          .hero-card-inner { aspect-ratio: 2 / 3; }
+        }
+        /* Large Desktop */
+        @media (min-width: 1280px) {
+          .hero-card-wrapper > div { width: min(260px, 85vw); }
+          .hero-card-inner { aspect-ratio: 3 / 4; }
         }
         @keyframes iconFloat {
           0%,100% { transform: translateY(0) rotate(0deg); }
@@ -363,7 +375,6 @@ function HeroCarousel() {
                 onClick={() => goTo(i)}
                 aria-label={`Plateforme ${i + 1}`}
                 style={{
-                  cursor: "none",
                   width: i === idx ? 32 : 8, height: 8, borderRadius: 999,
                   background: i === idx ? "var(--cyan)" : "var(--border)",
                   boxShadow: i === idx ? "0 0 12px var(--cyan-glow)" : "none",
@@ -382,7 +393,12 @@ function HeroCarousel() {
         {/* Right 3D card */}
         <div
           className="card-glitch-subtle hero-card-col"
-          style={{ opacity: animating ? 0 : 1, transform: animating ? "scale(0.94)" : "scale(1)", transition: "opacity 0.28s, transform 0.28s" }}
+          style={{
+            opacity: animating ? 0 : 1,
+            transform: animating ? "scale(0.94)" : "scale(1)",
+            transition: "opacity 0.28s, transform 0.28s",
+            pointerEvents: "none"
+          }}
         >
           <HeroCard platform={p} />
         </div>
@@ -448,7 +464,6 @@ function HeroCarousel() {
           justify-content: center;
         }
         .dots-nav-btn {
-          cursor: none;
           background: var(--bg3);
           border: 1px solid var(--border);
           border-radius: 8px;
@@ -653,346 +668,272 @@ function FeaturesSection() {
   );
 }
 
-function CategoriesSection() {
-  const [activeCategory, setActiveCategory]   = useState<string | null>(null);
-  const [sliceAnimating, setSliceAnimating]   = useState<string | null>(null);
-  const [modalOpen, setModalOpen]             = useState(false);
 
-  const handleCategoryClick = (slug: string) => {
-    setActiveCategory(slug);
-    setSliceAnimating(slug);
-    window.setTimeout(() => {
-      setSliceAnimating(null);
-      setModalOpen(true);
-    }, 620);
+
+// Amélioration du composant ProductCard pour le mode light
+function ProductCard({ product, index, onProductClick }: { product: { id: string; name: string; eur: number; tag: string; image: string; cat: string }; index: number; onProductClick: (product: any) => void; }) {
+  const [added, setAdded] = useState(false);
+
+
+  const handleAdd = (e: React.MouseEvent) => {
+    alert('Ajouté au panier:' + product.name);
+    e.stopPropagation();
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
   };
 
-  const closeModal = () => setModalOpen(false);
+  const getCategoryClass = (cat: string) => {
+    switch(cat) {
+      case 'psn': return 'psn';
+      case 'xbox': return 'xbox';
+      case 'nintendo': return 'nintendo';
+      case 'apple': return 'apple';
+      default: return '';
+    }
+  };
 
-  const activeProducts = activeCategory ? productsByCategory[activeCategory] ?? [] : [];
+return (
+<div 
+      className={`prod-card ${getCategoryClass(product.cat)}`}
+      style={{ animationDelay: `${index * 0.04}s` }}
+      onClick={() => onProductClick(product)}
+    >
 
-  useEffect(() => {
-    if (!modalOpen) return;
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal(); };
-    window.addEventListener("keydown", onEsc);
-    return () => window.removeEventListener("keydown", onEsc);
-  }, [modalOpen]);
+      <div className="prod-media">
+        <span className="prod-icon">{product.image}</span>
+      </div>
+      
+      <div className="prod-badge">
+        {product.tag}
+      </div>
+      
+      <div className="prod-name">{product.name}</div>
+      
+      <div className="prod-price-row">
+        <span className="prod-eur">{product.eur}€</span>
+        <span className="prod-fcfa">
+          {toFCFA(product.eur)}<br />FCFA
+        </span>
+      </div>
+      
+      <button
+        className={`prod-btn ${added ? 'btn-added' : ''}`}
+        onClick={handleAdd}
+      >
+        {added ? (
+          <span className="btn-content">
+            <span className="btn-icon">✓</span> Ajouté !
+          </span>
+        ) : (
+          <span className="btn-content">
+            <span className="btn-icon">+</span> Ajouter au panier
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+function CategoriesSection() {
+  const [selected, setSelected] = useState<string[]>([]);
+
+    const [selectedProduct, setSelectedProduct] = useState(null);
+
+    // Fonction pour ajouter au panier depuis le modal
+  const handleAddToCart = (product: any) => {
+    // Votre logique d'ajout au panier ici
+    alert('Ajouté au panier:' + product.name);
+  };
+
+
+  const toggle = (slug: string) => {
+    setSelected(prev =>
+      prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
+    );
+  };
+
+  const clearFilters = () => setSelected([]);
+
+  const allProducts = Object.entries(productsByCategory).flatMap(([cat, items]) =>
+    items.map(p => ({ ...p, cat }))
+  );
+
+  const visible = selected.length === 0
+    ? allProducts
+    : allProducts.filter(p => selected.includes(p.cat));
 
   return (
     <section className="section-container">
-      <p className="section-label">Catégories</p>
+      <p className="section-label">Catalogue</p>
       <div className="section-header-row">
-        <h2 className="section-title">Par plateforme</h2>
+        <h2 className="section-title">Tous les produits</h2>
         <Link href="/shop" className="see-all-link">Voir tout →</Link>
       </div>
 
-      {/* 4 cols desktop/tablet, 2 cols mobile */}
-      <div className="grid-4-2-1" style={{ gap: 16 }}>
-        {categories.map((cat) => {
-          const isActive  = activeCategory === cat.slug;
-          const isSlicing = sliceAnimating === cat.slug;
-          return (
-            <button
-              key={cat.slug}
-              onClick={() => handleCategoryClick(cat.slug)}
-              style={{
-                textDecoration: "none", borderRadius: 18, padding: 22,
-                display: "block", transition: "all 0.3s",
-                border: "none", textAlign: "left", cursor: "none",
-              }}
-              className={`${cat.cssClass} category-glitch-card ${isSlicing ? "is-slicing" : ""} ${isActive ? "is-active" : ""}`}
-              data-title={cat.name}
-              aria-pressed={isActive}
-            >
-              <div className="category-slice-top" />
-              <div className="category-slice-bottom" />
-              <span style={{ fontSize: 36, display: "block", marginBottom: 12 }} className="category-glitch-icon">{cat.icon}</span>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }} className="category-glitch-title">{cat.name}</div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{cat.desc}</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>{cat.count}</div>
-            </button>
-          );
-        })}
+      {/* Filter chips */}
+      <div className="filter-chips">
+        <button
+          onClick={clearFilters}
+          className={`chip chip-all ${selected.length === 0 ? "active" : ""}`}
+        >
+          ✦ Tous
+        </button>
+        {categories.map(cat => (
+          <button
+            key={cat.slug}
+            onClick={() => toggle(cat.slug)}
+            className={`chip chip-${cat.slug} ${selected.includes(cat.slug) ? "active" : ""}`}
+          >
+            <span className="chip-dot" />
+            {cat.icon} {cat.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Results bar */}
+      <div className="results-bar">
+        <span className="results-count">{visible.length} produit{visible.length > 1 ? "s" : ""}</span>
+        {selected.length > 0 && (
+          <button onClick={clearFilters} className="clear-btn">Tout effacer ✕</button>
+        )}
+      </div>
+
+      {/* Product grid */}
+      <div className="products-grid">
+        {visible.map((p, i) => (
+          <ProductCard 
+            key={p.id} 
+            product={p} 
+            index={i} 
+            onProductClick={setSelectedProduct}
+          />
+        ))}
       </div>
 
       {/* Modal */}
-      {modalOpen && activeCategory && (
-        <div className="products-modal-backdrop" onClick={closeModal}>
-          <div className="products-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="products-modal-noise" />
-            <div className="products-modal-head">
-              <div>
-                <p className="section-label" style={{ marginBottom: 4 }}>Catalogue</p>
-                <h3 style={{ fontSize: 22, fontWeight: 800, color: "var(--text)", marginBottom: 6, lineHeight: 1.2, textTransform: "uppercase" }}>
-                  {categories.find((c) => c.slug === activeCategory)?.name}
-                </h3>
-              </div>
-              <button className="products-modal-close" onClick={closeModal} aria-label="Fermer">✕</button>
-            </div>
-
-            <div className="products-modal-grid">
-              {activeProducts.map((p) => (
-                <div key={p.id} className="products-modal-item">
-                  <div className="products-modal-item-media" aria-hidden="true">{p.image}</div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                    <span style={{ fontSize: 12, color: "var(--text)" }}>{p.tag}</span>
-                    <span style={{ fontSize: 11, color: "var(--cyan)" }}>{toFCFA(p.eur)} FCFA</span>
-                  </div>
-                  <div style={{ fontSize: 14, color: "var(--text)", fontWeight: 700, marginBottom: 6 }}>{p.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-faint)", marginBottom: 10, fontWeight: 800 }}>{p.eur}€</div>
-                  <button type="button" className="products-modal-add-btn" aria-label={`Ajouter ${p.name} au panier`}>
-                    Ajouter au panier
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="products-modal-foot">
-              <Link href={`/shop?category=${activeCategory}`} className="btn-primary" onClick={closeModal}>
-                Voir toute la catégorie
-              </Link>
-            </div>
-          </div>
-        </div>
+      {selectedProduct && (
+        <ProductModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={handleAddToCart}
+        />
       )}
 
       <style>{`
-        /* ── Section header row ── */
-        .section-header-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          margin-bottom: 20px;
-          flex-wrap: wrap;
-          gap: 8px;
+        /* ── Filter chips ── */
+        .filter-chips {
+          display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
         }
-        .see-all-link {
-          color: #00ffe0;
-          font-size: 14px;
-          font-weight: 500;
-          text-decoration: none;
-          cursor: none;
-          white-space: nowrap;
+        .chip {
+          display: flex; align-items: center; gap: 6px;
+          padding: 7px 13px; border-radius: 999px;
+          border: 1px solid var(--border);
+          background: rgba(255,255,255,0.04);
+          color: var(--text-muted); font-size: 12px; font-weight: 600;
+          cursor: pointer; transition: all 0.2s; user-select: none;
+          -webkit-tap-highlight-color: transparent;
         }
-
-        /* ── Category cards ── */
-        .category-glitch-card {
-          position: relative;
-          overflow: hidden;
-          transform: translateZ(0);
-          isolation: isolate;
-          will-change: transform, clip-path, filter;
+        .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .chip.active, .chip-all.active {
+          border-color: var(--border-cyan); background: rgba(0,255,224,0.1);
+          color: var(--cyan); box-shadow: 0 0 12px var(--cyan-glow);
         }
-        .category-slice-top,
-        .category-slice-bottom {
-          position: absolute; inset: 0;
-          border-radius: inherit; pointer-events: none; opacity: 0;
+        .chip-all.active {
+          background: rgba(123,47,255,0.15); border-color: rgba(123,47,255,0.4);
+          color: #b98aff; box-shadow: 0 0 12px rgba(123,47,255,0.2);
         }
-        .category-slice-top  { background: linear-gradient(120deg, rgba(0,255,224,0.2), transparent 55%); }
-        .category-slice-bottom { background: linear-gradient(300deg, rgba(255,47,209,0.2), transparent 55%); }
-        .category-glitch-card::before,
-        .category-glitch-card::after {
-          content: ""; position: absolute; inset: 0;
-          border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.2s ease;
-        }
-        .category-glitch-card::before {
-          background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 1px, transparent 2px, transparent 4px);
-          mix-blend-mode: screen;
-        }
-        .category-glitch-card::after {
-          box-shadow: inset -2px 0 0 rgba(0,255,255,0.35), inset 2px 0 0 rgba(255,0,153,0.3);
-        }
-        .category-glitch-title, .category-glitch-icon {
-          position: relative; display: inline-block;
-          will-change: transform, text-shadow, filter;
-        }
-        .category-glitch-card.is-active {
-          box-shadow: 0 0 24px rgba(0,255,224,0.18), 0 0 38px rgba(123,47,255,0.15);
-        }
-        .category-glitch-card.is-slicing {
-          animation: cat-oblique-slice 620ms cubic-bezier(.2,.7,.2,1) 1;
-        }
-        .category-glitch-card.is-slicing::before,
-        .category-glitch-card.is-slicing::after {
-          opacity: 1;
-          animation: cat-oblique-overlay 620ms steps(2, end) 1;
-        }
-        .category-glitch-card.is-slicing .category-slice-top {
-          opacity: 1; animation: cat-slice-top 620ms cubic-bezier(.2,.7,.2,1) 1;
-        }
-        .category-glitch-card.is-slicing .category-slice-bottom {
-          opacity: 1; animation: cat-slice-bottom 620ms cubic-bezier(.2,.7,.2,1) 1;
-        }
-        .category-glitch-card.is-slicing .category-glitch-title {
-          animation: cat-title-oblique-slice 620ms steps(2, end) 1;
-          text-shadow: -3px 0 rgba(0,255,255,0.95), 3px 0 rgba(255,0,153,0.9), 0 0 16px rgba(0,255,224,0.45);
-        }
-        .category-glitch-card.is-slicing .category-glitch-icon {
-          animation: cat-icon-oblique-slice 620ms steps(2, end) 1;
-          filter: drop-shadow(0 0 14px rgba(0,255,224,0.55));
-        }
-
-        /* ── Modal ── */
-        .products-modal-backdrop {
-          position: fixed; inset: 0;
-          background: color-mix(in srgb, var(--bg) 78%, transparent);
-          backdrop-filter: blur(7px);
-          z-index: 90;
-          display: flex; align-items: center; justify-content: center;
-          padding: 16px;
-          animation: modal-backdrop-in 260ms ease-out 1;
-        }
-        .products-modal-card {
-          width: min(820px, 100%);
-          max-height: 90vh;
-          overflow-y: auto;
-          border-radius: 20px;
-          border: 1px solid var(--border-cyan);
-          background: linear-gradient(145deg,
-            color-mix(in srgb, var(--bg2) 90%, transparent),
-            color-mix(in srgb, var(--bg3) 88%, transparent));
-          box-shadow: var(--shadow-xl), 0 0 0 1px color-mix(in srgb, var(--text) 6%, transparent), 0 0 30px var(--cyan-glow);
-          padding: 18px;
-          position: relative;
-          overflow: hidden;
-          animation: modal-card-in 320ms cubic-bezier(.2,.7,.2,1) 1;
-        }
-        .products-modal-noise {
-          position: absolute; inset: 0; pointer-events: none; opacity: 0.12;
-          background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 2px, transparent 4px);
-          mix-blend-mode: screen;
-          animation: modal-noise 1.2s steps(2, end) infinite;
-        }
-        .products-modal-head {
-          position: relative; z-index: 2;
-          display: flex; justify-content: space-between; align-items: flex-start;
+        /* Results bar */
+        .results-bar {
+          display: flex; justify-content: space-between; align-items: center;
           margin-bottom: 14px;
         }
-        .products-modal-close {
-          width: 34px; height: 34px; border-radius: 10px;
-          border: 1px solid var(--border);
-          background: color-mix(in srgb, var(--bg-card) 86%, transparent);
-          color: var(--text); cursor: none; flex-shrink: 0;
+        .results-count { font-size: 12px; color: var(--text-muted); }
+        .clear-btn {
+          font-size: 12px; color: var(--cyan); background: none;
+          border: none; cursor: pointer; padding: 0;
         }
-        /* Modal grid: 1 col mobile, 2 cols tablet, 3 cols desktop */
-        .products-modal-grid {
-          position: relative; z-index: 2;
+        /* Product grid — 2 cols mobile/tablet */
+        .products-grid {
           display: grid;
-          grid-template-columns: 1fr;
+          grid-template-columns: repeat(2, 1fr);
           gap: 12px;
         }
-        @media (min-width: 480px) {
-          .products-modal-grid { grid-template-columns: repeat(2, 1fr); }
-        }
         @media (min-width: 768px) {
-          .products-modal-grid { grid-template-columns: repeat(3, 1fr); }
+          .products-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
         }
-        .products-modal-item {
-          display: block; text-decoration: none;
-          border-radius: 12px; border: 1px solid var(--border);
-          background: color-mix(in srgb, var(--bg-card) 92%, transparent);
-          padding: 12px;
-          transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
-          cursor: none;
+        @media (min-width: 1024px) {
+          .products-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
         }
-        .products-modal-item:hover {
-          border-color: var(--border-cyan);
-          transform: translateY(-2px);
-          box-shadow: 0 0 14px var(--cyan-glow);
+        /* Product card */
+        .prod-card {
+          border-radius: 16px; border: 1px solid var(--border);
+          padding: 14px; position: relative; overflow: hidden;
+          transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+          cursor: pointer; animation: prodFadeIn 0.25s ease both;
         }
-        .products-modal-item-media {
-          width: 100%; height: 88px;
-          border-radius: 10px; border: 1px solid var(--border);
-          background: radial-gradient(circle at 30% 20%,
-            color-mix(in srgb, var(--cyan) 20%, transparent),
-            color-mix(in srgb, var(--violet) 14%, transparent) 45%,
-            color-mix(in srgb, var(--bg2) 88%, transparent));
+        .prod-card:hover { transform: translateY(-3px); }
+        .prod-card.psn    { background: linear-gradient(145deg, #000d2e, #071840); border-color: rgba(0,112,204,0.3); }
+        .prod-card.xbox   { background: linear-gradient(145deg, #001400, #081e08); border-color: rgba(82,176,67,0.3); }
+        .prod-card.nintendo { background: linear-gradient(145deg, #200003, #3a0005); border-color: rgba(228,0,15,0.3); }
+        .prod-card.apple  { background: linear-gradient(145deg, #111111, #1e1e1e); border-color: rgba(180,180,180,0.2); }
+        .prod-card::after {
+          content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+          height: 1px; opacity: 0.5;
+        }
+        .prod-card.psn::after    { background: linear-gradient(90deg, transparent, #0070cc, transparent); }
+        .prod-card.xbox::after   { background: linear-gradient(90deg, transparent, #52b043, transparent); }
+        .prod-card.nintendo::after { background: linear-gradient(90deg, transparent, #e4000f, transparent); }
+        .prod-card.apple::after  { background: linear-gradient(90deg, transparent, #b4b4b4, transparent); }
+        /* Card media */
+        .prod-media {
+          width: 100%; aspect-ratio: 1.6; border-radius: 10px;
           display: flex; align-items: center; justify-content: center;
-          font-size: 34px; margin-bottom: 10px;
-          box-shadow: inset 0 0 20px color-mix(in srgb, var(--cyan) 14%, transparent);
+          font-size: 28px; margin-bottom: 10px; border: 1px solid var(--border);
         }
-        .products-modal-add-btn {
-          width: 100%;
-          border: 1px solid var(--border-cyan);
-          background: linear-gradient(135deg,
-            color-mix(in srgb, var(--cyan) 24%, transparent),
-            color-mix(in srgb, var(--violet) 24%, transparent));
-          color: var(--text); border-radius: 10px;
-          padding: 8px 10px; font-size: 12px; font-weight: 700;
-          letter-spacing: 0.02em; cursor: none; transition: all .2s ease;
+        .prod-card.psn .prod-media    { background: radial-gradient(circle at 30% 30%, rgba(0,112,204,0.3), rgba(0,13,46,0.8)); }
+        .prod-card.xbox .prod-media   { background: radial-gradient(circle at 30% 30%, rgba(82,176,67,0.25), rgba(0,20,0,0.8)); }
+        .prod-card.nintendo .prod-media { background: radial-gradient(circle at 30% 30%, rgba(228,0,15,0.25), rgba(32,0,3,0.8)); }
+        .prod-card.apple .prod-media  { background: radial-gradient(circle at 30% 30%, rgba(180,180,180,0.2), rgba(17,17,17,0.9)); }
+        /* Badge */
+        .prod-badge {
+          display: inline-block; font-size: 9px; font-weight: 700;
+          letter-spacing: 0.06em; padding: 3px 7px; border-radius: 999px;
+          margin-bottom: 6px; text-transform: uppercase;
         }
-        .products-modal-add-btn:hover {
-          border-color: var(--cyan);
-          box-shadow: 0 0 14px var(--cyan-glow);
-          transform: translateY(-1px);
+        .prod-card.psn .prod-badge    { background: rgba(0,112,204,0.2); color: rgba(100,180,255,0.9); border: 1px solid rgba(0,112,204,0.35); }
+        .prod-card.xbox .prod-badge   { background: rgba(82,176,67,0.15); color: rgba(130,220,100,0.9); border: 1px solid rgba(82,176,67,0.35); }
+        .prod-card.nintendo .prod-badge { background: rgba(228,0,15,0.15); color: rgba(255,100,100,0.9); border: 1px solid rgba(228,0,15,0.35); }
+        .prod-card.apple .prod-badge  { background: rgba(180,180,180,0.12); color: rgba(210,210,210,0.9); border: 1px solid rgba(180,180,180,0.3); }
+        /* Name & price */
+        .prod-name { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px; line-height: 1.3; }
+        .prod-price-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+        .prod-eur {
+          font-size: 16px; font-weight: 800;
+          background: linear-gradient(135deg, #00ffe0, #7b2fff);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
-        .products-modal-foot {
-          position: relative; z-index: 2; margin-top: 14px;
-          display: flex; justify-content: flex-end;
+        .prod-fcfa { font-size: 9px; color: var(--text-muted); line-height: 1.4; text-align: right; }
+        /* Add button */
+        .prod-btn {
+          width: 100%; padding: 8px 0; border-radius: 9px; font-size: 11px; font-weight: 700;
+          letter-spacing: 0.03em; border: 1px solid var(--border-cyan);
+          background: rgba(0,255,224,0.08); color: var(--cyan); cursor: pointer;
+          transition: all 0.2s;
         }
-
-        /* ── Category keyframes ── */
-        @keyframes cat-oblique-slice {
-          0%   { transform: translate3d(0,0,0) skewX(0deg); filter: none saturate(1); clip-path: polygon(0 0,100% 0,100% 100%,0 100%); }
-          12%  { transform: translate3d(-4px,2px,0) skewX(-12deg); filter: hue-rotate(12deg) saturate(1.3); clip-path: polygon(0 0,100% 0,92% 35%,0 58%); }
-          24%  { transform: translate3d(5px,-3px,0) skewX(14deg); filter: hue-rotate(-15deg) saturate(1.4) brightness(1.15); clip-path: polygon(0 15%,100% 0,100% 95%,0 72%); }
-          38%  { transform: translate3d(-3px,1px,0) skewX(-10deg); filter: hue-rotate(8deg) saturate(1.2); clip-path: polygon(0 8%,100% 5%,100% 88%,0 82%); }
-          50%  { transform: translate3d(4px,-2px,0) skewX(11deg); filter: hue-rotate(-10deg) saturate(1.25) brightness(1.1); clip-path: polygon(0 25%,100% 10%,100% 85%,0 60%); }
-          66%  { transform: translate3d(-2px,2px,0) skewX(-8deg); filter: hue-rotate(6deg) saturate(1.15); clip-path: polygon(0 5%,100% 12%,100% 92%,0 78%); }
-          82%  { transform: translate3d(3px,-1px,0) skewX(6deg); filter: hue-rotate(-8deg) saturate(1.2) brightness(1.08); clip-path: polygon(0 18%,100% 8%,100% 88%,0 72%); }
-          100% { transform: translate3d(0,0,0) skewX(0deg); filter: none saturate(1); clip-path: polygon(0 0,100% 0,100% 100%,0 100%); }
+        .prod-btn:hover { background: rgba(0,255,224,0.15); box-shadow: 0 0 14px var(--cyan-glow); }
+        @keyframes prodFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes cat-oblique-overlay {
-          0%, 100% { opacity: 0; }
-          12% { opacity: .48; } 24% { opacity: .52; } 38% { opacity: .38; }
-          50% { opacity: .45; } 66% { opacity: .32; } 82% { opacity: .18; }
+        /* Section header */
+        .section-header-row {
+          display: flex; justify-content: space-between; align-items: flex-end;
+          margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
         }
-        @keyframes cat-slice-top {
-          0%   { opacity:0; transform:translate(0,0) skewX(0deg); clip-path:polygon(0 0,100% 0,100% 48%,0 48%); }
-          20%  { opacity:1; transform:translate(-24px,-10px) skewX(-22deg) rotateZ(-8deg); clip-path:polygon(0 0,100% 0,95% 45%,0 62%); }
-          40%  { opacity:.6; transform:translate(-12px,-5px) skewX(-12deg) rotateZ(-4deg); clip-path:polygon(0 0,100% 0,98% 46%,0 60%); }
-          70%  { opacity:.2; transform:translate(-4px,-2px) skewX(-4deg) rotateZ(-1deg); }
-          100% { opacity:0; transform:translate(0,0) skewX(0deg) rotateZ(0deg); }
-        }
-        @keyframes cat-slice-bottom {
-          0%   { opacity:0; transform:translate(0,0) skewX(0deg); clip-path:polygon(0 52%,100% 52%,100% 100%,0 100%); }
-          20%  { opacity:1; transform:translate(26px,12px) skewX(24deg) rotateZ(8deg); clip-path:polygon(0 38%,100% 52%,100% 100%,2% 100%); }
-          40%  { opacity:.6; transform:translate(14px,6px) skewX(14deg) rotateZ(4deg); clip-path:polygon(0 45%,100% 52%,100% 100%,3% 100%); }
-          70%  { opacity:.2; transform:translate(5px,2px) skewX(5deg) rotateZ(1deg); }
-          100% { opacity:0; transform:translate(0,0) skewX(0deg) rotateZ(0deg); }
-        }
-        @keyframes cat-title-oblique-slice {
-          0%   { transform:translate(0,0) skewX(0deg) rotateZ(0deg); clip-path:inset(0 0 0 0); opacity:1; }
-          18%  { transform:translate(-5px,2px) skewX(-12deg) rotateZ(-2deg); clip-path:polygon(0 0,100% 0,100% 30%,0 56%); opacity:.95; }
-          36%  { transform:translate(5px,-2px) skewX(12deg) rotateZ(2deg); clip-path:polygon(0 28%,100% 12%,100% 100%,0 76%); opacity:.9; }
-          54%  { transform:translate(-3px,1px) skewX(-8deg) rotateZ(-1deg); clip-path:polygon(0 8%,100% 0,100% 86%,0 98%); opacity:.92; }
-          72%  { transform:translate(3px,-1px) skewX(8deg) rotateZ(1deg); clip-path:polygon(0 16%,100% 8%,100% 90%,0 74%); opacity:.94; }
-          100% { transform:translate(0,0) skewX(0deg) rotateZ(0deg); clip-path:inset(0 0 0 0); opacity:1; }
-        }
-        @keyframes cat-icon-oblique-slice {
-          0%   { transform:translate(0) rotate(0deg) skewX(0deg) scale(1); filter:brightness(1) drop-shadow(none); }
-          15%  { transform:translate(-4px,2px) rotate(-12deg) skewX(-14deg) scale(1.1); filter:brightness(1.25) drop-shadow(0 0 20px rgba(0,255,224,0.8)); }
-          30%  { transform:translate(4px,-2px) rotate(12deg) skewX(14deg) scale(1.08); filter:brightness(1.2) drop-shadow(0 0 18px rgba(255,0,153,0.7)); }
-          50%  { transform:translate(-2px,1px) rotate(-6deg) skewX(-8deg) scale(1.05); filter:brightness(1.15) drop-shadow(0 0 16px rgba(0,255,224,0.6)); }
-          70%  { transform:translate(2px,-1px) rotate(6deg) skewX(8deg) scale(1.03); filter:brightness(1.1) drop-shadow(0 0 12px rgba(123,47,255,0.5)); }
-          100% { transform:translate(0) rotate(0deg) skewX(0deg) scale(1); filter:brightness(1) drop-shadow(none); }
-        }
-        @keyframes modal-backdrop-in {
-          from { opacity: 0; } to { opacity: 1; }
-        }
-        @keyframes modal-card-in {
-          from { opacity: 0; transform: translateY(10px) scale(.97); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes modal-noise {
-          0%, 100% { opacity: .1; transform: translateY(0); }
-          50%      { opacity: .16; transform: translateY(1px); }
-        }
+        .see-all-link { color: var(--cyan); font-size: 14px; font-weight: 500; text-decoration: none; white-space: nowrap; }
       `}</style>
     </section>
   );
 }
-
 function StepsSection() {
   return (
     <section className="section-container">

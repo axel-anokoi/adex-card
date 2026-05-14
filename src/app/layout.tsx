@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {/* Particle canvas + custom cursor — mounts client-side only */}
-        <GamingBackground />
+        {/* <GamingBackground /> */}
 
         {/* All page content sits above the canvas (z-index via relative) */}
         <div className="relative z-10 flex min-h-full flex-col">

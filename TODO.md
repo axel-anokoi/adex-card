@@ -1,29 +1,23 @@
-# Email Mailer Implementation Plan
+# Hero Card Desktop Optimization - TODO
 
-## Information Gathered
-- Task shows email configuration using SMTP with Gmail
-- MAIL_MAILER=smtp
-- MAIL_HOST=smtp.gmail.com
-- MAIL_PORT=587
-- MAIL_USERNAME=edwardelrick99@gmail.com
-- MAIL_PASSWORD="" (empty - user needs to provide app password)
-- MAIL_ENCRYPTION=tls
-- MAIL_FROM_ADDRESS=edwardelrick99@gmail.com
-- MAIL_FROM_NAME="Adex card"
-- Current dependencies in package.json don't include nodemailer
-- This is a Next.js App Router project with API routes
+## Task: analyser_le_css_actuel
+- [x] Analyser le CSS actuel de la carte Hero pour Desktop
 
-## Plan
-1. Install nodemailer package
-2. Create mail configuration file (src/lib/mail/config.ts)
-3. Create mailer service with helper functions (src/lib/mail/mailer.ts)
-4. Create sample .env.local.example with mail environment variables
-5. Run npm install to install nodemailer
+## Task: reduire_taille_carte
+- [x] Réduire la taille de la carte pour la version Desktop
+  - Passer de min(280px, 85vw) à min(220px, 85vw)
+  - Ajuster aspect-ratio de 3/4 à 2/3
 
-## Dependent Files
-- package.json - add nodemailer dependency
-- Need creation of src/lib/mail/ directory and files
+## Task: ameliorer_disposition
+- [x] Améliorer la disposition des éléments internes
+  - padding: 24px (non modifié, garder proportionnel)
+  - Ajout breakpoint responsive pour Tablet/Desktop
 
-## Followup Steps
-- Test the mail configuration with actual credentials
-- Create example edge function using the mailer
+## Task: verifier_tablet_mobile
+- [x] Vérifier que les versions tablette et mobile ne sont pas affectées
+  - Breakpoint Tablet (640px-1023px): 240px, 2/3 ratio
+  - Maintenir mobile: 220px, 3/4 ratio
+  - Breakpoint Large Desktop (1280px+): 260px, 3/4 ratio
+
+## Task: valider_resultat
+- [x] Valider le résultat final

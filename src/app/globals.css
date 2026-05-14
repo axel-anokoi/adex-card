@@ -8,94 +8,765 @@
 
 
 :root,
+/* =============================================
+   ADEXCARD CI — ENHANCED DUAL THEME v3
+   WITH RICH COLORS & VIBRANT EFFECTS
+   ============================================= */
+
+/* ── DARK MODE ENHANCED ── */
+:root,
 html.dark {
-  --bg:           #000005;
-  --bg2:          #0a0a12;
-  --bg3:          #12121e;
-  --bg-card:      rgba(18, 18, 30, 0.85);
-
-  --cyan:         #00ffe0;
-  --cyan-dim:     rgba(0, 255, 224, 0.15);
-  --cyan-glow:    rgba(0, 255, 224, 0.4);
-  --violet:       #7b2fff;
-  --violet-dim:   rgba(123, 47, 255, 0.15);
-  --pink:         #ff0080;
-  --pink-dim:     rgba(255, 0, 128, 0.15);
+  /* Deep space background */
+  --bg:           #000000;
+  --bg2:          #0a0a0f;
+  --bg3:          #12121a;
+  --bg-card:      rgba(16, 16, 24, 0.92);
+  
+  /* Neon color palette - more vibrant */
+  --cyan:         #00f0ff;
+  --cyan-dim:     rgba(0, 240, 255, 0.12);
+  --cyan-glow:    rgba(0, 240, 255, 0.5);
+  --violet:       #bf4bff;
+  --violet-dim:   rgba(191, 75, 255, 0.12);
+  --violet-glow:  rgba(191, 75, 255, 0.5);
+  --pink:         #ff2d9b;
+  --pink-dim:     rgba(255, 45, 155, 0.12);
+  --pink-glow:    rgba(255, 45, 155, 0.4);
   --green:        #00ff88;
-  --amber:        #ffb800;
-
-  --text:         #f0f0ff;
-  --text-muted:   rgba(240, 240, 255, 0.5);
-  --text-faint:   rgba(240, 240, 255, 0.25);
-
---border:       rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --border-cyan:  rgba(0, 255, 224, 0.2);
-
-  /* ── Dark Mode Shadows ── */
-  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md:    0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg:    0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-  --shadow-xl:    0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-
-  /* ── Payment Method Colors (Cyan/Teal & Amber) ── */
-  --payment-cyan:       rgba(0, 229, 255, 0.2);
-  --payment-cyan-dim:  rgba(0, 229, 255, 0.07);
-  --payment-amber:      rgba(255, 140, 0, 0.25);
-  --payment-amber-dim: rgba(255, 140, 0, 0.07);
-
-  --font-display: 'Orbitron', sans-serif;
-  --font-body:    'Barlow', Arial, sans-serif;
-
-  --cursor-core:  var(--cyan);
-  --cursor-ring:  rgba(0, 255, 224, 0.45);
-  --cursor-shadow: 0 0 12px var(--cyan-glow), 0 0 30px rgba(0, 255, 224, 0.2);
-
+  --green-glow:   rgba(0, 255, 136, 0.4);
+  --amber:        #ffc107;
+  --amber-glow:   rgba(255, 193, 7, 0.4);
+  --orange:       #ff6b2d;
+  --orange-dim:   rgba(255, 107, 45, 0.12);
+  --purple:       #8b2fcf;
+  --purple-dim:   rgba(139, 47, 207, 0.12);
+  --blue:         #2d5eff;
+  --blue-dim:     rgba(45, 94, 255, 0.12);
+  
+  /* Text colors */
+  --text:         #ffffff;
+  --text-muted:   rgba(255, 255, 255, 0.65);
+  --text-faint:   rgba(255, 255, 255, 0.35);
+  
+  /* Borders with neon touch */
+  --border:       rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(0, 240, 255, 0.25);
+  --border-cyan:  rgba(0, 240, 255, 0.3);
+  --border-violet: rgba(191, 75, 255, 0.3);
+  
+  /* Dramatic shadows */
+  --shadow-sm:    0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md:    0 4px 8px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 240, 255, 0.1);
+  --shadow-lg:    0 8px 16px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 240, 255, 0.15);
+  --shadow-xl:    0 12px 24px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 240, 255, 0.2);
+  
+  /* Category specific glows */
+  --psn-glow:     rgba(0, 160, 255, 0.4);
+  --xbox-glow:    rgba(82, 210, 67, 0.4);
+  --nintendo-glow: rgba(255, 40, 80, 0.4);
+  --apple-glow:   rgba(200, 200, 210, 0.25);
+  
+  /* Payment methods */
+  --payment-cyan:       rgba(0, 240, 255, 0.15);
+  --payment-cyan-dim:  rgba(0, 240, 255, 0.05);
+  --payment-amber:      rgba(255, 193, 7, 0.15);
+  --payment-amber-dim: rgba(255, 193, 7, 0.05);
+  
+  /* Cursor */
+  --cursor-core:  #00f0ff;
+  --cursor-ring:  rgba(0, 240, 255, 0.5);
+  --cursor-shadow: 0 0 20px #00f0ff, 0 0 40px rgba(0, 240, 255, 0.3);
+  
+  /* Radius */
   --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  18px;
-  --radius-xl:  24px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
 }
 
+/* ── LIGHT MODE ENHANCED ── */
 html.light {
-  --bg:           #fafbfc;
-  --bg2:          #f3f4f6;
-  --bg3:          #e5e7eb;
-  --bg-card:      rgba(255, 255, 255, 0.88);
-
-  --cyan:         #0d9488;
-  --cyan-dim:     rgba(13, 148, 136, 0.1);
-  --cyan-glow:    rgba(13, 148, 136, 0.2);
-  --violet:       #5d2ac9;
-  --violet-dim:   rgba(93, 42, 201, 0.1);
+  /* Clean, bright background */
+  --bg:           #f0f4f8;
+  --bg2:          #e8eef3;
+  --bg3:          #dce4ec;
+  --bg-card:      rgba(255, 255, 255, 0.96);
+  
+  /* Vibrant but elegant colors */
+  --cyan:         #0891b2;
+  --cyan-dim:     rgba(8, 145, 178, 0.1);
+  --cyan-glow:    rgba(8, 145, 178, 0.25);
+  --violet:       #7c3aed;
+  --violet-dim:   rgba(124, 58, 237, 0.08);
+  --violet-glow:  rgba(124, 58, 237, 0.2);
   --pink:         #db2777;
-  --pink-dim:     rgba(219, 39, 119, 0.1);
+  --pink-dim:     rgba(219, 39, 119, 0.08);
+  --pink-glow:    rgba(219, 39, 119, 0.2);
   --green:        #059669;
+  --green-glow:   rgba(5, 150, 105, 0.2);
   --amber:        #d97706;
+  --amber-glow:   rgba(217, 119, 6, 0.2);
+  --orange:       #ea580c;
+  --orange-dim:   rgba(234, 88, 12, 0.08);
+  --purple:       #9333ea;
+  --purple-dim:   rgba(147, 51, 234, 0.08);
+  --blue:         #2563eb;
+  --blue-dim:     rgba(37, 99, 235, 0.08);
+  
+  /* Rich text colors */
+  --text:         #0f172a;
+  --text-muted:   rgba(15, 23, 42, 0.7);
+  --text-faint:   rgba(15, 23, 42, 0.45);
+  
+  /* Colorful borders */
+  --border:       rgba(15, 23, 42, 0.08);
+  --border-hover: rgba(8, 145, 178, 0.3);
+  --border-cyan:  rgba(8, 145, 178, 0.35);
+  --border-violet: rgba(124, 58, 237, 0.3);
+  
+  /* Fresh shadows */
+  --shadow-sm:    0 2px 4px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md:    0 4px 8px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg:    0 8px 16px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-xl:    0 12px 24px rgba(0, 0, 0, 0.05), 0 6px 12px rgba(0, 0, 0, 0.06);
+  
+  /* Category glows for light mode */
+  --psn-glow:     rgba(8, 145, 178, 0.2);
+  --xbox-glow:    rgba(5, 150, 105, 0.2);
+  --nintendo-glow: rgba(219, 39, 119, 0.2);
+  --apple-glow:   rgba(100, 116, 139, 0.15);
+  
+  /* Payment methods */
+  --payment-cyan:       rgba(8, 145, 178, 0.12);
+  --payment-cyan-dim:  rgba(8, 145, 178, 0.05);
+  --payment-amber:      rgba(217, 119, 6, 0.12);
+  --payment-amber-dim: rgba(217, 119, 6, 0.05);
+  
+  /* Cursor */
+  --cursor-core:  #0891b2;
+  --cursor-ring:  rgba(8, 145, 178, 0.4);
+  --cursor-shadow: 0 0 0 3px rgba(255,255,255,0.9), 0 0 20px rgba(8, 145, 178, 0.3);
+  
+  /* Radius */
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+}
 
-  --text:         #111827;
-  --text-muted:   rgba(17, 24, 39, 0.58);
-  --text-faint:   rgba(17, 24, 39, 0.35);
+/* ── ENHANCED PRODUCT CARDS ── */
+.prod-card {
+  position: relative;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeUp 0.5s ease-out backwards;
+  overflow: hidden;
+  cursor: pointer;
+}
 
-  --border:       rgba(17, 24, 39, 0.1);
-  --border-hover: rgba(17, 24, 39, 0.22);
-  --border-cyan:  rgba(13, 148, 136, 0.3);
+/* Animated gradient border */
+.prod-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    transparent,
+    var(--cyan),
+    var(--violet),
+    var(--pink),
+    transparent
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
 
-  /* ── Light Mode Shadows ── */
-  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md:    0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg:    0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-xl:    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+.prod-card:hover::before {
+  opacity: 1;
+}
 
-  /* ── Payment Method Colors (Cyan/Teal & Amber) ── */
-  --payment-cyan:       rgba(13, 148, 136, 0.15);
-  --payment-cyan-dim:  rgba(13, 148, 136, 0.06);
-  --payment-amber:      rgba(217, 119, 6, 0.18);
-  --payment-amber-dim: rgba(217, 119, 6, 0.06);
+.prod-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, var(--cyan-dim), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
 
-  --cursor-core:  #0b5f58;
-  --cursor-ring:  rgba(11, 95, 88, 0.6);
-  --cursor-shadow: 0 0 0 2px rgba(255,255,255,0.85), 0 0 10px rgba(11, 95, 88, 0.35);
+.prod-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--border-cyan);
+  box-shadow: var(--shadow-xl);
+}
+
+.prod-card:hover::after {
+  opacity: 1;
+}
+
+/* Dark mode specific card backgrounds */
+html.dark .prod-card.psn {
+  background: linear-gradient(135deg, rgba(0, 40, 60, 0.95), rgba(0, 20, 40, 0.98));
+  border-left: 3px solid #00a0ff;
+}
+
+html.dark .prod-card.xbox {
+  background: linear-gradient(135deg, rgba(0, 50, 20, 0.95), rgba(0, 30, 10, 0.98));
+  border-left: 3px solid #52d243;
+}
+
+html.dark .prod-card.nintendo {
+  background: linear-gradient(135deg, rgba(80, 20, 30, 0.95), rgba(60, 10, 20, 0.98));
+  border-left: 3px solid #ff2850;
+}
+
+html.dark .prod-card.apple {
+  background: linear-gradient(135deg, rgba(30, 30, 40, 0.95), rgba(20, 20, 30, 0.98));
+  border-left: 3px solid #c8c8d2;
+}
+
+/* Light mode specific card backgrounds */
+html.light .prod-card.psn {
+  background: linear-gradient(135deg, #ffffff, #f0f9ff);
+  border-left: 4px solid #0891b2;
+}
+
+html.light .prod-card.xbox {
+  background: linear-gradient(135deg, #ffffff, #f0fdf4);
+  border-left: 4px solid #059669;
+}
+
+html.light .prod-card.nintendo {
+  background: linear-gradient(135deg, #ffffff, #fef2f2);
+  border-left: 4px solid #db2777;
+}
+
+html.light .prod-card.apple {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border-left: 4px solid #64748b;
+}
+
+/* Product Media Container - Enhanced */
+.prod-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html.dark .prod-media {
+  background: linear-gradient(135deg, var(--bg2), var(--bg3));
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+html.light .prod-media {
+  background: linear-gradient(135deg, var(--bg2), var(--bg3));
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.02), 0 4px 8px rgba(0, 0, 0, 0.03);
+}
+
+.prod-card:hover .prod-media {
+  transform: scale(1.03);
+}
+
+/* Category-specific media backgrounds - DARK */
+html.dark .prod-card.psn .prod-media {
+  background: radial-gradient(circle at 30% 30%, rgba(0, 160, 255, 0.25), rgba(0, 40, 60, 0.8));
+  box-shadow: 0 0 30px rgba(0, 160, 255, 0.2);
+}
+
+html.dark .prod-card.xbox .prod-media {
+  background: radial-gradient(circle at 30% 30%, rgba(82, 210, 67, 0.2), rgba(0, 50, 20, 0.8));
+  box-shadow: 0 0 30px rgba(82, 210, 67, 0.2);
+}
+
+html.dark .prod-card.nintendo .prod-media {
+  background: radial-gradient(circle at 30% 30%, rgba(255, 40, 80, 0.2), rgba(80, 20, 30, 0.8));
+  box-shadow: 0 0 30px rgba(255, 40, 80, 0.2);
+}
+
+html.dark .prod-card.apple .prod-media {
+  background: radial-gradient(circle at 30% 30%, rgba(200, 200, 210, 0.15), rgba(30, 30, 40, 0.8));
+  box-shadow: 0 0 30px rgba(200, 200, 210, 0.1);
+}
+
+/* Category-specific media backgrounds - LIGHT */
+html.light .prod-card.psn .prod-media {
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
+}
+
+html.light .prod-card.xbox .prod-media {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.1);
+}
+
+html.light .prod-card.nintendo .prod-media {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  box-shadow: 0 4px 12px rgba(219, 39, 119, 0.1);
+}
+
+html.light .prod-card.apple .prod-media {
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.08);
+}
+
+/* Product Icon */
+.prod-icon {
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  transition: all 0.3s ease;
+}
+
+.prod-card:hover .prod-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+}
+
+html.dark .prod-card.psn .prod-icon {
+  text-shadow: 0 0 20px rgba(0, 160, 255, 0.5);
+}
+
+html.dark .prod-card.xbox .prod-icon {
+  text-shadow: 0 0 20px rgba(82, 210, 67, 0.5);
+}
+
+html.dark .prod-card.nintendo .prod-icon {
+  text-shadow: 0 0 20px rgba(255, 40, 80, 0.5);
+}
+
+html.light .prod-card.psn .prod-icon {
+  filter: drop-shadow(0 2px 4px rgba(8, 145, 178, 0.3));
+}
+
+html.light .prod-card.xbox .prod-icon {
+  filter: drop-shadow(0 2px 4px rgba(5, 150, 105, 0.3));
+}
+
+/* Product Badge - Enhanced */
+.prod-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+html.dark .prod-badge {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-muted);
+}
+
+html.light .prod-badge {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.prod-card:hover .prod-badge {
+  transform: translateY(-2px);
+}
+
+html.dark .prod-card:hover .prod-badge {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+html.light .prod-card:hover .prod-badge {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: white;
+}
+
+/* Category-specific badges */
+html.dark .prod-card.psn .prod-badge {
+  border-left: 3px solid #00a0ff;
+}
+
+html.dark .prod-card.xbox .prod-badge {
+  border-left: 3px solid #52d243;
+}
+
+html.dark .prod-card.nintendo .prod-badge {
+  border-left: 3px solid #ff2850;
+}
+
+html.light .prod-card.psn .prod-badge {
+  background: #f0f9ff;
+  border-color: #0891b2;
+  color: #0891b2;
+}
+
+html.light .prod-card.xbox .prod-badge {
+  background: #f0fdf4;
+  border-color: #059669;
+  color: #059669;
+}
+
+html.light .prod-card.nintendo .prod-badge {
+  background: #fef2f2;
+  border-color: #db2777;
+  color: #db2777;
+}
+
+html.light .prod-card.apple .prod-badge {
+  background: #f8fafc;
+  border-color: #64748b;
+  color: #475569;
+}
+
+/* Product Name */
+.prod-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 16px 0 12px 0;
+  transition: all 0.3s ease;
+  line-height: 1.4;
+}
+
+html.dark .prod-name {
+  color: var(--text);
+  font-family: var(--font-display);
+  letter-spacing: -0.3px;
+}
+
+html.light .prod-name {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.prod-card:hover .prod-name {
+  transform: translateX(4px);
+}
+
+html.dark .prod-card.psn:hover .prod-name {
+  color: #00a0ff;
+}
+
+html.dark .prod-card.xbox:hover .prod-name {
+  color: #52d243;
+}
+
+html.dark .prod-card.nintendo:hover .prod-name {
+  color: #ff2850;
+}
+
+html.light .prod-card.psn:hover .prod-name {
+  color: #0891b2;
+}
+
+html.light .prod-card.xbox:hover .prod-name {
+  color: #059669;
+}
+
+html.light .prod-card.nintendo:hover .prod-name {
+  color: #db2777;
+}
+
+/* Price Row */
+.prod-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.prod-eur {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  transition: all 0.3s ease;
+}
+
+html.dark .prod-eur {
+  background: linear-gradient(135deg, var(--cyan), var(--violet), var(--pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+html.light .prod-eur {
+  background: linear-gradient(135deg, #0891b2, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.prod-fcfa {
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* Product Button - Enhanced */
+.prod-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+html.dark .prod-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+html.light .prod-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.prod-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+html.dark .prod-btn::before {
+  background: var(--cyan-dim);
+}
+
+html.light .prod-btn::before {
+  background: var(--cyan-dim);
+}
+
+.prod-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.prod-btn:hover {
+  transform: translateY(-2px);
+}
+
+html.dark .prod-btn:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(0, 240, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+html.light .prod-btn:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.15);
+}
+
+.prod-btn:active {
+  transform: translateY(0);
+}
+
+/* Added state */
+.prod-btn.btn-added {
+  position: relative;
+  overflow: hidden;
+}
+
+html.dark .prod-btn.btn-added {
+  background: linear-gradient(135deg, var(--green), #00cc73);
+  border-color: var(--green);
+  color: #000;
+  font-weight: 800;
+  box-shadow: 0 0 30px var(--green-glow);
+}
+
+html.light .prod-btn.btn-added {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #059669;
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.prod-btn.btn-added::before {
+  display: none;
+}
+
+.btn-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Ripple effect on click */
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.prod-btn:active::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: ripple 0.6s ease-out;
+}
+
+html.dark .prod-btn:active::after {
+  background: var(--cyan);
+}
+
+html.light .prod-btn:active::after {
+  background: var(--cyan);
+}
+
+/* Glow effects for cards */
+html.dark .glow-psn {
+  box-shadow: 0 0 40px rgba(0, 160, 255, 0.3);
+}
+
+html.dark .glow-xbox {
+  box-shadow: 0 0 40px rgba(82, 210, 67, 0.3);
+}
+
+html.dark .glow-nintendo {
+  box-shadow: 0 0 40px rgba(255, 40, 80, 0.3);
+}
+
+html.light .glow-psn {
+  box-shadow: 0 8px 24px rgba(8, 145, 178, 0.15);
+}
+
+html.light .glow-xbox {
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.15);
+}
+
+html.light .glow-nintendo {
+  box-shadow: 0 8px 24px rgba(219, 39, 119, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .prod-card {
+    padding: 16px;
+  }
+  
+  .prod-eur {
+    font-size: 1.5rem;
+  }
+  
+  .prod-name {
+    font-size: 0.95rem;
+  }
+  
+  .prod-badge {
+    top: 12px;
+    right: 12px;
+    padding: 4px 10px;
+    font-size: 9px;
+  }
+  
+  .prod-btn {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .prod-icon {
+    font-size: 2.5rem;
+  }
+}
+
+/* Animation keyframes */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Loading skeleton for dark mode */
+html.dark .prod-card.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Loading skeleton for light mode */
+html.light .prod-card.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @theme inline {
@@ -116,7 +787,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  cursor: none;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
@@ -128,33 +798,9 @@ a, button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 }
 
 /* ── Custom Cursor ── */
-#babi-cursor {
-  position: fixed;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--cursor-core);
-  mix-blend-mode: screen;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 9999;
-  transition: width 0.15s, height 0.15s, background 0.2s;
-  box-shadow: var(--cursor-shadow);
-}
-
-html.light #babi-cursor {
-  mix-blend-mode: normal;
-}
-
+#babi-cursor,
 #babi-cursor-ring {
-  position: fixed;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1.5px solid var(--cursor-ring);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 9998;
+  display: none;
 }
 
 /* ── Particle Canvas ── */
@@ -341,8 +987,6 @@ html.light #babi-cursor {
   font-weight: 700;
   font-size: 15px;
   text-decoration: none;
-  cursor: none;
-  animation: ctaPulse 2.5s ease-in-out infinite;
 }
 .btn-primary:hover { transform: scale(1.05); filter: brightness(1.1); }
 .btn-primary:active { transform: scale(0.98); }
@@ -359,7 +1003,6 @@ html.light #babi-cursor {
   font-size: 15px;
   font-weight: 500;
   text-decoration: none;
-  cursor: none;
 }
 .btn-outline:hover {
   border-color: var(--border-hover);
@@ -373,7 +1016,6 @@ html.light #babi-cursor {
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  cursor: none;
 }
 
 /* ── Feature cards ── */
@@ -531,4 +1173,299 @@ html.light #babi-cursor {
 @media (max-width: 768px) {
   .feat-card:hover   { transform: translateY(-2px); }
   .testi-card:hover  { transform: translateY(-1px); }
+}
+
+
+
+/* ── Product Card Component Styles ── */
+.prod-card {
+  position: relative;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeUp 0.5s ease-out backwards;
+  overflow: hidden;
+}
+
+.prod-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, var(--cyan-dim), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.prod-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--border-cyan);
+  box-shadow: var(--shadow-xl);
+}
+
+.prod-card:hover::before {
+  opacity: 1;
+}
+
+/* Card glow effects for categories */
+.prod-card.glow-psn:hover {
+  box-shadow: 0 8px 30px rgba(0, 112, 204, 0.15), var(--shadow-xl);
+}
+
+.prod-card.glow-xbox:hover {
+  box-shadow: 0 8px 30px rgba(82, 176, 67, 0.15), var(--shadow-xl);
+}
+
+.prod-card.glow-nintendo:hover {
+  box-shadow: 0 8px 30px rgba(228, 0, 15, 0.15), var(--shadow-xl);
+}
+
+.prod-card.glow-apple:hover {
+  box-shadow: 0 8px 30px rgba(153, 153, 153, 0.1), var(--shadow-xl);
+}
+
+/* Product Media Container */
+.prod-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg3);
+  transition: transform 0.4s ease;
+}
+
+.prod-card:hover .prod-media {
+  transform: scale(1.02);
+}
+
+/* Product Badge */
+.prod-badge {
+  position: absolute;
+  top: 26px;
+  right: 26px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.prod-card:hover .prod-badge {
+  border-color: var(--border-cyan);
+  color: var(--cyan);
+  transform: translateY(-2px);
+}
+
+/* Category-specific badge borders */
+.prod-badge.border-psn {
+  border-left: 3px solid rgba(0, 112, 204, 0.6);
+}
+
+.prod-badge.border-xbox {
+  border-left: 3px solid rgba(82, 176, 67, 0.6);
+}
+
+.prod-badge.border-nintendo {
+  border-left: 3px solid rgba(228, 0, 15, 0.6);
+}
+
+.prod-badge.border-apple {
+  border-left: 3px solid rgba(153, 153, 153, 0.5);
+}
+
+/* Product Name */
+.prod-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 16px 0 12px 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  letter-spacing: -0.3px;
+  transition: color 0.2s ease;
+  line-height: 1.4;
+}
+
+/* Price Row */
+.prod-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 20px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.prod-eur {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+}
+
+.prod-fcfa {
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* Product Button */
+.prod-btn {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.prod-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: var(--cyan-dim);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.prod-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.prod-btn:hover {
+  border-color: var(--border-cyan);
+  color: var(--cyan);
+  transform: translateY(-2px);
+}
+
+.prod-btn:active {
+  transform: translateY(0);
+}
+
+/* Added state styling using CSS variables */
+.prod-btn.btn-added {
+  background: var(--green);
+  background: linear-gradient(135deg, var(--green), #00cc73);
+  border-color: var(--green);
+  color: #000;
+  font-weight: 800;
+}
+
+.prod-btn.btn-added::before {
+  display: none;
+}
+
+/* Light theme specific adjustments */
+html.light .prod-card {
+  backdrop-filter: blur(8px);
+}
+
+html.light .prod-btn {
+  background: var(--bg2);
+}
+
+html.light .prod-btn:hover {
+  background: var(--cyan-dim);
+}
+
+html.light .prod-eur {
+  background: linear-gradient(135deg, var(--cyan), #0b5f58);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Dark theme specific enhancements */
+html.dark .prod-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .prod-btn {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html.dark .prod-btn:hover {
+  background: var(--cyan-dim);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .prod-card {
+    padding: 14px;
+  }
+  
+  .prod-eur {
+    font-size: 1.4rem;
+  }
+  
+  .prod-name {
+    font-size: 0.95rem;
+  }
+  
+  .prod-badge {
+    top: 18px;
+    right: 18px;
+    padding: 4px 10px;
+    font-size: 9px;
+  }
+  
+  .prod-btn {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Loading skeleton state */
+.prod-card.skeleton {
+  animation: shimmer 1.5s infinite;
+  pointer-events: none;
+}
+
+.prod-card.skeleton .prod-media,
+.prod-card.skeleton .prod-name,
+.prod-card.skeleton .prod-price-row {
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    var(--border-hover) 50%,
+    var(--border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.prod-card.skeleton .prod-name {
+  height: 24px;
+}
+
+.prod-card.skeleton .prod-price-row {
+  height: 40px;
 }

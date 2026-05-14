@@ -104,17 +104,17 @@ export default function ShopPage() {
           ))}
         </div>
 
-        {/* Products Grid */}
+{/* Products Grid with Skeleton Loading */}
         {loading ? (
-          <div className="flex h-64 items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="spinner-orbit">
-                <div className="spinner-orbit-ring" />
-                <div className="spinner-orbit-ring" />
-                <div className="spinner-orbit-ring" />
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+{[...Array(8)].map((_, index) => (
+              <div key={index} className="prod-card skeleton" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="prod-media skeleton" />
+                <div className="prod-name skeleton" style={{ width: '70%', height: 24, marginTop: 16 }} />
+                <div className="prod-price-row skeleton" style={{ height: 40, marginTop: 12 }} />
+                <div className="prod-btn skeleton" style={{ height: 44 }} />
               </div>
-              <p className="text-white/40 text-sm animate-pulse">Chargement du catalogue...</p>
-            </div>
+            ))}
           </div>
         ) : products.length === 0 ? (
           <div className="flex h-64 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-[#1A1D2B]/30 backdrop-blur-sm">

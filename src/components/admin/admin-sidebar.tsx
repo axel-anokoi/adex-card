@@ -89,7 +89,6 @@ export function AdminSidebar({ activeTab = "dashboard", onTabChange, isOpen, onC
                 onClick={() => handleClick(item.id)}
                 className="admin-sidebar-item group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all"
                 style={{
-                  cursor: "none",
                   background: isActive 
                     ? "linear-gradient(135deg, rgba(0,255,224,0.08), rgba(123,47,255,0.08))" 
                     : "transparent",

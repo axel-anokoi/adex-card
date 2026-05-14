@@ -41,7 +41,6 @@ export function ThemeToggle() {
       title={isDark ? "Mode clair" : "Mode sombre"}
       className="relative flex h-9 w-9 items-center justify-center rounded-lg border transition-all"
       style={{
-        cursor: "none",
         borderColor: "var(--border)",
         background: "color-mix(in srgb, var(--text) 6%, transparent)",
         color: "var(--text-muted)",
