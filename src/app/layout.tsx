@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Orbitron, Barlow } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { GamingBackground } from "@/components/layout/gaming-background";
 
 const themeInitScript = `
@@ -49,15 +47,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className="relative min-h-full flex flex-col overflow-x-hidden"
         style={{ background: "var(--bg)", color: "var(--text)" }}
       >
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* <script dangerouslySetInnerHTML={{ __html: themeInitScript }} /> */}
         {/* Particle canvas + custom cursor — mounts client-side only */}
         {/* <GamingBackground /> */}
 
         {/* All page content sits above the canvas (z-index via relative) */}
         <div className="relative z-10 flex min-h-full flex-col">
-          <Header />
-          <main className="flex-1 pt-16">{children}</main>
-          <Footer />
+          {children}
         </div>
       </body>
     </html>

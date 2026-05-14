@@ -34,6 +34,8 @@ const typeLabels = {
 export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountManagerProps) {
   const [showCreate, setShowCreate] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [newCode, setNewCode] = useState({
     code: "",
     description: "",
@@ -56,6 +58,43 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
       return `${code.discount_value}%${code.max_discount_amount ? ` (max ${code.max_discount_amount}€)` : ""}`;
     }
     return `${code.discount_value}€`;
+  };
+
+  const handleCreate = async () => {
+    if (!newCode.code || newCode.discount_value <= 0) {
+      setMessage({ type: "error", text: "Veuillez remplir le code et la valeur" });
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/admin/discounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCode),
+      });
+      if (res.ok) {
+        setMessage({ type: "success", text: "Code promo créé" });
+        setNewCode({
+          code: "",
+          description: "",
+          discount_type: "percentage",
+          discount_value: 0,
+          max_discount_amount: 0,
+          min_order_amount: 0,
+          max_uses: 0,
+          max_uses_per_user: 1,
+        });
+        setShowCreate(false);
+      } else {
+        const { error } = await res.json();
+        setMessage({ type: "error", text: error || "Erreur" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Erreur lors de la création" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -83,6 +122,12 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
           + Nouveau code
         </button>
       </div>
+
+      {message && (
+        <div className={`mb-4 rounded-lg p-3 text-sm ${message.type === "success" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"}`}>
+          {message.text}
+        </div>
+      )}
 
       {showCreate && (
         <div className="mb-6 rounded-xl border border-cyan/30 bg-white p-6">
@@ -168,14 +213,11 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
               Annuler
             </button>
             <button
-              onClick={() => {
-                // TODO: Implement API call
-                alert("API non implémentée");
-                setShowCreate(false);
-              }}
-              className="rounded-lg bg-cyan px-4 py-2 font-medium text-black"
+              onClick={handleCreate}
+              disabled={saving}
+              className="rounded-lg bg-cyan px-4 py-2 font-medium text-black hover:bg-cyan/80 disabled:opacity-50"
             >
-              Créer
+              {saving ? "Création..." : "Créer"}
             </button>
           </div>
         </div>

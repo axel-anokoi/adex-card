@@ -8,7 +8,20 @@ const productSchema = z.object({
   sell_price: z.number().nonnegative(),
   buy_price: z.number().nonnegative(),
   is_active: z.boolean().optional(),
+  image_url: z.string().optional().nullable(),
+  slug: z.string().optional(),
 });
+
+// Helper function to generate slug
+function generateProductSlug(categoryName: string, amount: number): string {
+  const base = categoryName
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `${base}-${amount}e`;
+}
 
 async function checkAdmin() {
   const supabase = await createClient();
@@ -34,20 +47,22 @@ export async function GET() {
   try {
     const { isAdmin, supabase } = await checkAdmin();
 
-    if (!isAdmin) {
+    if (!isAdmin || !supabase) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { data, error } = await supabase
+const { data, error } = await supabase
       .from("products")
       .select(`
         id,
-        category:category_id(id, name, slug),
+        category:category_id(id, name, slug, logo_url),
         amount,
         sell_price,
         buy_price,
         stock_available,
         is_active,
+        image_url,
+        slug,
         created_at
       `)
       .order("created_at", { ascending: false });
@@ -68,7 +83,7 @@ export async function POST(request: Request) {
   try {
     const { isAdmin, supabase } = await checkAdmin();
 
-    if (!isAdmin) {
+    if (!isAdmin || !supabase) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -82,28 +97,50 @@ export async function POST(request: Request) {
       );
     }
 
+    const productData = parsed.data;
+
+    // Fetch category name to generate slug
+    const { data: category } = await supabase
+      .from("categories")
+      .select("name")
+      .eq("id", productData.category_id)
+      .single();
+
+    if (!category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 400 });
+    }
+
+// Auto-generate slug
+    const slug = generateProductSlug(category.name, productData.amount);
+    
+    // Create insert data with all fields
+    const insertData = {
+      ...productData,
+      slug,
+    };
+
     const { data, error } = await supabase
       .from("products")
-      .insert(parsed.data)
+      .insert(insertData)
       .select();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-return NextResponse.json(data[0], { status: 201 });
+    return NextResponse.json(data[0], { status: 201 });
   } catch (error) {
     console.error("Product creation error:", error);
     return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
   }
 }
 
-// PATCH: Update product
-export async function PATCH(request: Request) {
+// PUT: Update product
+export async function PUT(request: Request) {
   try {
     const { isAdmin, supabase } = await checkAdmin();
 
-    if (!isAdmin) {
+    if (!isAdmin || !supabase) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -114,7 +151,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
     }
 
-    const parsed = productSchema.safeParse(updateData);
+    const parsed = productSchema.partial().safeParse(updateData);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -146,7 +183,7 @@ export async function DELETE(request: Request) {
   try {
     const { isAdmin, supabase } = await checkAdmin();
 
-    if (!isAdmin) {
+    if (!isAdmin || !supabase) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

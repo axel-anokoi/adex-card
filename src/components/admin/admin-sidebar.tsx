@@ -10,6 +10,7 @@ type SidebarItem = {
 
 const sidebarItems: SidebarItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "⚡" },
+  { id: "stats", label: "Stats", icon: "📊" },
   { id: "categorie", label: "Catégorie", icon: "🎮" },
   { id: "produit", label: "Produit", icon: "🎁" },
   { id: "code", label: "Code", icon: "🔑" },

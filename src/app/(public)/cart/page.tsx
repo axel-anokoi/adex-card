@@ -1,18 +1,18 @@
-import Link from "next/link";
+"use client";
 
-const cartItems = [
-  {
-    id: 1,
-    title: "Adex Card Premium",
-    description: "Carte virtuelle premium avec avantages exclusifs.",
-    price: 19.9,
-    quantity: 1,
-  },
-];
+import Link from "next/link";
+import { useCart } from "@/context/CartContext";
+
+// FIFA CFA conversion
+const EUR_TO_FCFA = 655;
+const toFCFA = (eur: number) => (eur * EUR_TO_FCFA).toLocaleString("fr-FR");
 
 export default function CartPage() {
-  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
+  
+  // Calculate totals
   const fees = 0;
+  const subtotal = totalPrice;
   const total = subtotal + fees;
 
   return (
@@ -41,7 +41,7 @@ export default function CartPage() {
               >
                 Continuer mes achats
               </Link>
-            </div>
+</div>
 
             <div className="grid gap-8 grid-cols-1 lg:grid-cols-[1.6fr_1fr]">
               <section 
@@ -50,33 +50,62 @@ export default function CartPage() {
               >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold text-inherit uppercase tracking-wider" style={{ color: "var(--text)" }}>
-                    Articles <span className="text-gradient-cyan ml-2">({cartItems.length})</span>
+                    Articles <span className="text-gradient-cyan ml-2">({totalItems})</span>
                   </h2>
                   <div className="h-px flex-1 mx-4 bg-gradient-to-r from-[var(--border)] to-transparent" />
                 </div>
 
-                <ul className="space-y-4">
-                  {cartItems.map((item) => (
-                    <li 
-                      key={item.id} 
-                      className="group rounded-2xl border border-[var(--border)] bg-[var(--bg2)] p-4 transition-all hover:border-[var(--border-cyan)]"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex gap-4">
-                          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[var(--cyan-dim)] to-[var(--violet-dim)] border border-[var(--border)] flex items-center justify-center text-2xl">
-                            💳
+                {cart.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-lg mb-4" style={{ color: "var(--text-muted)" }}>Votre panier est vide</p>
+                    <Link href="/shop" className="btn-primary inline-block">
+                      Découvrir les produits
+                    </Link>
+                  </div>
+                ) : (
+                  <ul className="space-y-4">
+                    {cart.map((item) => (
+                      <li 
+                        key={item.id} 
+                        className="group rounded-2xl border border-[var(--border)] bg-[var(--bg2)] p-4 transition-all hover:border-[var(--border-cyan)]"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex gap-4">
+                            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[var(--cyan-dim)] to-[var(--violet-dim)] border border-[var(--border)] flex items-center justify-center text-2xl">
+                              {item.image || "💳"}
+                            </div>
+                            <div>
+                              <p className="font-bold text-inherit group-hover:text-cyan-400 transition-colors" style={{ color: "var(--text)" }}>{item.name}</p>
+                              <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{item.eur}€ · {toFCFA(item.eur)}FCFA</p>
+                              <div className="mt-2 flex items-center gap-2">
+                                <button 
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  className="w-6 h-6 rounded bg-[var(--border)] flex items-center justify-center text-sm hover:bg-[var(--border-cyan)] transition-colors"
+                                >
+                                  -
+                                </button>
+                                <span className="text-xs font-bold uppercase tracking-tighter" style={{ color: "var(--text-faint)" }}>Qté: {item.quantity}</span>
+                                <button 
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  className="w-6 h-6 rounded bg-[var(--border)] flex items-center justify-center text-sm hover:bg-[var(--border-cyan)] transition-colors"
+                                >
+                                  +
+                                </button>
+<button 
+                                  onClick={() => removeFromCart(item.id)}
+                                  className="ml-auto px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-bold uppercase tracking-wider hover:bg-red-500/30 hover:border-red-500 transition-all"
+                                >
+                                  🗑️ Supprimer
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-inherit group-hover:text-cyan-400 transition-colors" style={{ color: "var(--text)" }}>{item.title}</p>
-                            <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{item.description}</p>
-                            <p className="mt-2 text-xs font-bold uppercase tracking-tighter" style={{ color: "var(--text-faint)" }}>Quantité: {item.quantity}</p>
-                          </div>
+                          <p className="text-lg font-bold" style={{ color: "var(--text)" }}>{(item.eur * item.quantity).toFixed(2)}€</p>
                         </div>
-                        <p className="text-lg font-bold" style={{ color: "var(--text)" }}>{item.price.toFixed(2)}€</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
 
               <aside
@@ -101,16 +130,18 @@ export default function CartPage() {
                   </div>
                   <div className="mt-4 border-t border-[var(--border)] pt-4 flex items-center justify-between">
                     <span className="font-bold text-base" style={{ color: "var(--text)" }}>Total</span>
-                    <span className="text-2xl font-black text-gradient-cyan">{total.toFixed(2)}€</span>
+<span className="text-2xl font-black text-gradient-cyan">{total.toFixed(2)}€</span>
                   </div>
                 </div>
 
-                <Link
-                  href="/checkout"
-                  className="mt-8 btn-primary w-full flex items-center justify-center py-4 text-sm font-bold uppercase tracking-widest transition-all"
-                >
-                  Passer au paiement
-                </Link>
+                {cart.length > 0 && (
+                  <Link
+                    href="/checkout"
+                    className="mt-8 btn-primary w-full flex items-center justify-center py-4 text-sm font-bold uppercase tracking-widest transition-all"
+                  >
+                    Passer au paiement
+                  </Link>
+                )}
               </aside>
             </div>
 

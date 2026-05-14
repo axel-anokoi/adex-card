@@ -3,10 +3,36 @@
 import { ProductModal } from "@/components/products/ProductModal";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useCart } from "@/context/CartContext";
 
-// FCFA conversion
+// FIFA CFA conversion
 const EUR_TO_FCFA = 655;
 const toFCFA = (eur: number) => (eur * EUR_TO_FCFA).toLocaleString("fr-FR");
+
+// ─────────────────────────────────────────
+//  TYPES
+// ─────────────────────────────────────────
+
+interface Product {
+  id: string;
+  name: string;
+  eur: number;
+  amount: number;
+  cat: string;
+  tag: string;
+  image: string;
+  stock_available?: number;
+  is_active?: boolean;
+}
+
+interface CategoryInfo {
+  slug: string;
+  name: string;
+  icon: string;
+  desc: string;
+  cssClass: string;
+  count: string;
+}
 
 // ─────────────────────────────────────────
 //  DATA
@@ -169,7 +195,7 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
       onMouseLeave={onMouseLeave}
       style={{ perspective: "1200px", pointerEvents: "auto" }}
     >
-      <div style={{ position: "relative", width: "100%" }}>
+      <div style={{ position: "relative", width: "80%" }}>
         {/* Rainbow border glow */}
         <div className="card-rainbow-border" />
 
@@ -293,6 +319,109 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
 }
 
 // ─────────────────────────────────────────
+//  WAVE BACKGROUND
+// ─────────────────────────────────────────
+
+function WaveBackground({ color }: { color: string }) {
+  // Parse the hex color to create variations
+  const waveColor = color || "#00ffe0";
+  
+  return (
+    <div className="wave-wrapper" style={{ position: "absolute", bottom: 0, left: 0, right: 0, overflow: "hidden", pointerEvents: "none" }}>
+      {/* Back wave layer */}
+      <svg
+        className="wave-svg wave-back"
+        viewBox="0 0 1200 200"
+        preserveAspectRatio="none"
+        style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "140px" }}
+      >
+        <path
+          fill={waveColor}
+          fillOpacity="0.15"
+          d="M0,100 C300,150 600,50 900,100 C1200,150 1200,150 1200,150 L1200,200 L0,200 Z"
+        />
+      </svg>
+      
+      {/* Middle wave layer */}
+      <svg
+        className="wave-svg wave-middle"
+        viewBox="0 0 1200 180"
+        preserveAspectRatio="none"
+        style={{ position: "absolute", bottom: "-20px", left: 0, width: "100%", height: "120px" }}
+      >
+        <path
+          fill={waveColor}
+          fillOpacity="0.25"
+          d="M0,80 C200,130 500,30 800,80 C1100,130 1200,100 1200,100 L1200,180 L0,180 Z"
+        />
+      </svg>
+      
+      {/* Front wave layer */}
+      <svg
+        className="wave-svg wave-front"
+        viewBox="0 0 1200 150"
+        preserveAspectRatio="none"
+        style={{ position: "absolute", bottom: "-10px", left: "-5%", width: "110%", height: "90px" }}
+      >
+        <path
+          fill={waveColor}
+          fillOpacity="0.4"
+          d="M0,60 C150,100 400,20 650,60 C900,100 1150,40 1200,60 L1200,90 L0,90 Z"
+        />
+      </svg>
+      
+      {/* Bottom glow */}
+      <div
+        className="wave-glow"
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "120px",
+          background: `linear-gradient(to top, ${waveColor}20, transparent)`,
+          filter: "blur(30px)",
+        }}
+      />
+
+      <style>{`
+        .wave-wrapper {
+          z-index: 1;
+        }
+        .wave-svg path {
+          animation: waveAnim 12s ease-in-out infinite;
+        }
+        .wave-back path {
+          animation-duration: 14s;
+          animation-delay: 0s;
+        }
+        .wave-middle path {
+          animation-duration: 10s;
+          animation-delay: -3s;
+        }
+        .wave-front path {
+          animation-duration: 7s;
+          animation-delay: -5s;
+        }
+        @keyframes waveAnim {
+          0%, 100% { transform: translateX(0) translateY(0); }
+          25% { transform: translateX(20px) translateY(5px); }
+          50% { transform: translateX(0) translateY(10px); }
+          75% { transform: translateX(-20px) translateY(5px); }
+        }
+        .wave-glow {
+          animation: glowPulse 4s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────
 //  HERO CAROUSEL
 // ─────────────────────────────────────────
 
@@ -316,11 +445,28 @@ function HeroCarousel() {
 
   const p = platforms[idx];
 
+// Extract the main color from glowColor (convert rgba to hex for wave)
+  const parseRgbaToHex = (rgba: string) => {
+    const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+      const r = parseInt(match[1], 10);
+      const g = parseInt(match[2], 10);
+      const b = parseInt(match[3], 10);
+      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+    return "#00ffe0";
+  };
+  const platformColor = parseRgbaToHex(p.glowColor);
+
+  // alert(platformColor);
+
   return (
     <section
       className="hero-section"
       style={{ background: "var(--bg)", position: "relative", overflow: "hidden" }}
     >
+      {/* Animated wave background at bottom */}
+      <WaveBackground color={platformColor} />
       <div className="hero-inner">
 
         {/* Left text */}
@@ -672,12 +818,12 @@ function FeaturesSection() {
 
 // Amélioration du composant ProductCard pour le mode light
 function ProductCard({ product, index, onProductClick }: { product: { id: string; name: string; eur: number; tag: string; image: string; cat: string }; index: number; onProductClick: (product: any) => void; }) {
+  const { addToCart } = useCart();
   const [added, setAdded] = useState(false);
 
-
   const handleAdd = (e: React.MouseEvent) => {
-    alert('Ajouté au panier:' + product.name);
     e.stopPropagation();
+    addToCart(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -734,16 +880,35 @@ return (
   );
 }
 function CategoriesSection() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-    const [selectedProduct, setSelectedProduct] = useState(null);
+  // Fetch products from API
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        if (data.data) {
+          setProducts(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
+  }, []);
 
-    // Fonction pour ajouter au panier depuis le modal
-  const handleAddToCart = (product: any) => {
-    // Votre logique d'ajout au panier ici
-    alert('Ajouté au panier:' + product.name);
+  // Fonction pour ajouter au panier depuis le modal
+  const { addToCart } = useCart();
+
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
   };
-
 
   const toggle = (slug: string) => {
     setSelected(prev =>
@@ -753,9 +918,8 @@ function CategoriesSection() {
 
   const clearFilters = () => setSelected([]);
 
-  const allProducts = Object.entries(productsByCategory).flatMap(([cat, items]) =>
-    items.map(p => ({ ...p, cat }))
-  );
+  // Flatten products with category info from API
+  const allProducts = products.map(p => ({ ...p }));
 
   const visible = selected.length === 0
     ? allProducts

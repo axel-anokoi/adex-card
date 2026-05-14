@@ -1,15 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginPage() {
+  const { isAuthenticated, isAdmin, isClient, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+
+// Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      if (isAdmin) {
+        router.push("/admin");
+      } else if (isClient) {
+        router.push("/dashboard");
+      }
+    }
+  }, [authLoading, isAuthenticated, isAdmin, isClient, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +40,12 @@ export default function LoginPage() {
         setError(data.error || "Échec de la connexion");
         return;
       }
-      router.push("/dashboard");
+      const data = await response.json();
+      if (data.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch {
       setError("Une erreur est survenue. Veuillez réessayer.");
     } finally {

@@ -12,6 +12,24 @@ interface Category {
   updated_at: string;
 }
 
+// Upload image to storage
+async function uploadImage(file: File, folder: string): Promise<string | null> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+  const res = await fetch("/api/admin/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    return data.url;
+  }
+  return null;
+}
+
 export function CategoryManager() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +44,7 @@ const [formData, setFormData] = useState({
     logo_url: "",
 is_active: true,
   });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   const fetchCategories = async () => {
     try {
@@ -54,12 +73,22 @@ useEffect(() => {
       .replace(/^-|-$/g, "");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setMessage(null);
 
     try {
+      // Upload image if a file was selected
+      let logoUrl = formData.logo_url;
+      if (logoFile) {
+        const uploadedUrl = await uploadImage(logoFile, "categories");
+        if (uploadedUrl) {
+          logoUrl = uploadedUrl;
+        }
+      }
+
+      const payload = { ...formData, logo_url: logoUrl };
       const url = editingId
         ? `/api/admin/categories?id=${editingId}`
         : "/api/admin/categories";
@@ -68,7 +97,7 @@ useEffect(() => {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -133,8 +162,9 @@ useEffect(() => {
     }
   };
 
-  const resetForm = () => {
+const resetForm = () => {
     setFormData({ name: "", slug: "", logo_url: "", is_active: true });
+    setLogoFile(null);
     setShowCreate(false);
     setEditingId(null);
   };
@@ -155,7 +185,7 @@ useEffect(() => {
         </h3>
         <button
           onClick={() => { resetForm(); setShowCreate(!showCreate); }}
-          className="rounded-lg bg-cyan px-4 py-2 text-sm font-medium text-black hover:bg-cyan/80"
+          className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-600 transition-colors"
         >
           + Nouvelle catégorie
         </button>
@@ -207,15 +237,32 @@ useEffect(() => {
                 className="w-full rounded-lg border border-black/20 p-2"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Logo URL</label>
+<div>
+              <label className="mb-1 block text-sm font-medium">Logo</label>
               <input
-                type="text"
-                value={formData.logo_url}
-                onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                placeholder="https://..."
-                className="w-full rounded-lg border border-black/20 p-2"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setLogoFile(file);
+                }}
+                className="w-full rounded-lg border border-black/20 p-2 file:mr-2 file:rounded-lg file:border-0 file:bg-cyan file:px-2 file:py-1 file:text-black"
               />
+              {logoFile && (
+                <p className="mt-1 text-xs text-black/60">{logoFile.name}</p>
+              )}
+              {formData.logo_url && !logoFile && (
+                <div className="mt-2">
+                  <img src={formData.logo_url} alt="Preview" className="h-16 w-16 rounded-lg object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, logo_url: "" })}
+                    className="ml-2 text-xs text-red-500"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Statut</label>

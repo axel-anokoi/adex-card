@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { useCart } from "@/context/CartContext";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { useAuth } from "@/hooks/use-auth";
 
 const categories = [
   { slug: "playstation", name: "PlayStation", icon: "🎮", colorClass: "text-blue-400" },
@@ -13,16 +15,29 @@ const categories = [
 ];
 
 const navLinks = [
-  { href: "/shop",      label: "Boutique" },
-  { href: "/dashboard", label: "Mon compte" },
+  { href: "/shop", label: "Boutique" },
 ];
 
 export function Header() {
   const pathname      = usePathname();
+const { isAuthenticated, isAdmin, user, supabase } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [catsOpen, setCatsOpen]     = useState(false);
-  const [cartCount]                 = useState(0);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { totalItems: cartCount }          = useCart();
   const dropdownRef                 = useRef<HTMLDivElement>(null);
+  const userDropdownRef            = useRef<HTMLDivElement>(null);
+
+  // Close user dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -57,7 +72,16 @@ export function Header() {
     color: "var(--text-muted)",
   } as const;
 
-  const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
+const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
+
+// Handle user sign out
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
+
+  // Get user display name
+  const displayName = user?.email?.split("@")[0] || "Mon compte";
 
   return (
     <>
@@ -199,7 +223,7 @@ export function Header() {
             })}
           </nav>
 
-          {/* ── Desktop actions ── */}
+{/* ── Desktop actions ── */}
           <div className="desktop-actions">
             <ThemeToggle />
 
@@ -227,29 +251,125 @@ export function Header() {
               )}
             </Link>
 
-            <Link href="/login" className="btn-sm btn-outline">
-              Connexion
-            </Link>
+            {isAuthenticated ? (
+              <div className="relative" ref={userDropdownRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  style={{
+                    color: "var(--text)",
+                    background: userMenuOpen ? hoverSurface : "var(--bg)",
+                    border: "1px solid var(--border)",
+                  }}
+                  className="nav-link flex items-center gap-1.5"
+                  aria-expanded={userMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                  </svg>
+                  {displayName}
+                  <svg
+                    className={`dropdown-chevron ${userMenuOpen ? "rotated" : ""}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-            <Link
-              href="/register"
-              style={{
-                background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
-                color: "#000",
-                fontWeight: 700,
-                boxShadow: "0 0 20px var(--cyan-glow)",
-              }}
-              className="btn-sm btn-register"
-            >
-              S&apos;inscrire
-            </Link>
+{userMenuOpen && (
+                  <div className="dropdown-menu dropdown-anim" role="menu">
+                    <div style={{ padding: "6px" }}>
+                      <Link
+                        href={isAdmin ? "/dashboard" : "/client"}
+                        onClick={() => setUserMenuOpen(false)}
+                        role="menuitem"
+                        className="dropdown-item"
+                        style={{ color: "var(--text-muted)" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = hoverSurface;
+                          e.currentTarget.style.color = "var(--text)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--text-muted)";
+                        }}
+                      >
+                        <span>👤</span>
+                        <span>Mon compte</span>
+                      </Link>
+
+                      <Link
+                        href="/dashboard/purchases"
+                        onClick={() => setUserMenuOpen(false)}
+                        role="menuitem"
+                        className="dropdown-item"
+                        style={{ color: "var(--text-muted)" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = hoverSurface;
+                          e.currentTarget.style.color = "var(--text)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--text-muted)";
+                        }}
+                      >
+                        <span>🎁</span>
+                        <span>Mes achats</span>
+                      </Link>
+
+                      <div style={{ margin: "4px 0", borderTop: "1px solid var(--border)" }} />
+
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          handleSignOut();
+                        }}
+                        role="menuitem"
+                        className="dropdown-item"
+                        style={{ color: "var(--text-muted)", width: "100%", border: "none", background: "transparent", cursor: "pointer" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = hoverSurface;
+                          e.currentTarget.style.color = "var(--text)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--text-muted)";
+                        }}
+                      >
+                        <span>🚪</span>
+                        <span>Déconnexion</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link href="/login" className="btn-sm btn-outline">
+                  Connexion
+                </Link>
+
+                <Link
+                  href="/register"
+                  style={{
+                    background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
+                    color: "#000",
+                    fontWeight: 700,
+                    boxShadow: "0 0 20px var(--cyan-glow)",
+                  }}
+                  className="btn-sm btn-register"
+                >
+                  S&apos;inscrire
+                </Link>
+              </>
+            )}
           </div>
 
           {/* ── Mobile actions ── */}
           <div className="mobile-actions">
             <ThemeToggle />
 
-            <Link
+<Link
               href="/cart"
               style={{ ...softSurface }}
               className="cart-btn relative"
@@ -258,6 +378,11 @@ export function Header() {
               <svg className="w-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
               </svg>
+              {cartCount > 0 && (
+                <span className="cart-badge" aria-label={`${cartCount} article${cartCount > 1 ? "s" : ""}`}>
+                  {cartCount}
+                </span>
+              )}
             </Link>
 
             <button
@@ -331,28 +456,64 @@ export function Header() {
               );
             })}
 
-            {/* Auth */}
-            <div className="drawer-auth">
-              <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-                style={{ ...softSurface, textAlign: "center" }}
-                className="drawer-auth-btn"
-              >
-                Connexion
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
-                  color: "#000",
-                }}
-                className="drawer-auth-btn drawer-auth-register"
-              >
-                S&apos;inscrire gratuitement
-              </Link>
-            </div>
+{/* Auth */}
+            {isAuthenticated ? (
+              <div className="drawer-auth">
+                <Link
+                  href={isAdmin ? "/dashboard" : "/client"}
+                  onClick={() => setMobileOpen(false)}
+                  style={{ ...softSurface, textAlign: "center" }}
+                  className="drawer-auth-btn"
+                >
+                  👤 Mon compte
+                </Link>
+                <Link
+                  href="/dashboard/purchases"
+                  onClick={() => setMobileOpen(false)}
+                  style={{ ...softSurface, textAlign: "center" }}
+                  className="drawer-auth-btn"
+                >
+                  🎁 Mes achats
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    handleSignOut();
+                  }}
+                  style={{
+                    ...softSurface,
+                    textAlign: "center",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                  className="drawer-auth-btn"
+                >
+                  🚪 Déconnexion
+                </button>
+              </div>
+            ) : (
+              <div className="drawer-auth">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  style={{ ...softSurface, textAlign: "center" }}
+                  className="drawer-auth-btn"
+                >
+                  Connexion
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
+                    color: "#000",
+                  }}
+                  className="drawer-auth-btn drawer-auth-register"
+                >
+                  S&apos;inscrire gratuitement
+                </Link>
+              </div>
+            )}
           </nav>
         )}
       </header>

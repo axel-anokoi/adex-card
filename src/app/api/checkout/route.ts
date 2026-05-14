@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getStripeServer } from "@/lib/stripe/server";
+import { createClient } from "@/lib/supabase/server";
 
 const checkoutSchema = z.object({
   items: z
@@ -15,6 +16,38 @@ const checkoutSchema = z.object({
     .min(1),
 });
 
+// Validate stock for checkout
+async function validateStock(items: { productId: string; quantity: number; name: string }[]): Promise<{ valid: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  // Fetch current stock for all products
+  const productIds = items.map((item) => item.productId);
+  const { data: products, error } = await supabase
+    .from("products")
+    .select("id, stock_available")
+    .in("id", productIds);
+
+  if (error) {
+    console.error("Failed to fetch products:", error);
+    return { valid: false, error: "Erreur de vérification du stock" };
+  }
+
+  const stockMap = new Map(products?.map((p) => [p.id, p.stock_available]) || []);
+
+  // Validate each item
+  for (const item of items) {
+    const availableStock = stockMap.get(item.productId) || 0;
+    if (item.quantity > availableStock) {
+      return {
+        valid: false,
+        error: `Stock insuffisant pour "${item.name}" (${availableStock} disponible${availableStock === 0 ? ', produit épuisé' : ''})`
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
@@ -24,6 +57,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Payload checkout invalide", details: parsed.error.flatten() },
         { status: 400 },
+      );
+    }
+
+    // Validate stock before checkout
+    const stockValidation = await validateStock(parsed.data.items);
+    if (!stockValidation.valid) {
+      return NextResponse.json(
+        { error: stockValidation.error },
+        { status: 400 }
       );
     }
 

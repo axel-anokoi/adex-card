@@ -12,6 +12,7 @@ interface AdminHeaderProps {
 
 const tabLabels: Record<string, { label: string; subtitle: string }> = {
   overview: { label: "Dashboard", subtitle: "Aperçu des performances" },
+  stats: { label: "Statistiques", subtitle: "Analyses et graphiques" },
   purchases: { label: "Commandes", subtitle: "Historique des achats" },
   refunds: { label: "Remboursements", subtitle: "Gestion des remboursements" },
   discounts: { label: "Codes Promo", subtitle: "Gestion des promotions" },

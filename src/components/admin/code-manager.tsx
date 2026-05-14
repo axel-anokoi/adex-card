@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Product {
   id: string;
@@ -32,7 +32,7 @@ export function CodeManager() {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [filterProduct, setFilterProduct] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     product_id: "",
     codes: "",
     buy_price: 0,
@@ -40,11 +40,7 @@ export function CodeManager() {
     expires_at: "",
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+const fetchData = useCallback(async () => {
     try {
       const [codesRes, productsRes] = await Promise.all([
         fetch("/api/admin/products"),
@@ -63,7 +59,12 @@ export function CodeManager() {
     } finally {
       setLoading(false);
     }
-  };
+}, []);
+
+  // Call fetchData on mount
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleAddCodes = async () => {
     if (!formData.product_id || !formData.codes) {
@@ -79,11 +80,11 @@ export function CodeManager() {
       const res = await fetch("/api/admin/codes/manual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+body: JSON.stringify({
           product_id: formData.product_id,
           codes: codeList.map((code) => ({ code, buy_price: formData.buy_price })),
-          batch_reference: formData.batch_reference || null,
-          expires_at: formData.expires_at || null,
+          batch_reference: formData.batch_reference || undefined,
+          expires_at: formData.expires_at || undefined,
         }),
       });
 
@@ -148,9 +149,9 @@ export function CodeManager() {
     );
   }
 
-  const filteredCodes = codes.filter((c) => {
+const filteredCodes = codes.filter((c) => {
     if (filterStatus && c.status !== filterStatus) return false;
-    if (filterProduct && c.product_id !== filterProduct) return false;
+    if (filterProduct && c.product?.id !== filterProduct) return false;
     return true;
   });
 

@@ -15,8 +15,9 @@ import { ProfileEditor } from "@/components/admin/profile-editor";
 import { CategoryManager } from "@/components/admin/category-manager";
 import { ProductManager } from "@/components/admin/product-manager";
 import { CodeManager } from "@/components/admin/code-manager";
+import { StatsTab, StatsData } from "@/components/admin/stats/stats-tab";
 
-type TabType = "overview" | "purchases" | "refunds" | "discounts" | "users" | "audit" | "categorie" | "produit" | "code" | "profil";
+type TabType = "overview" | "stats" | "purchases" | "refunds" | "discounts" | "users" | "audit" | "categorie" | "produit" | "code" | "profil";
 
 interface Stats {
   salesToday: number;
@@ -32,6 +33,33 @@ interface Stats {
   productsLowStock: number;
   ordersPendingReview: number;
   refundsPending: number;
+}
+
+// Extended stats for StatsTab - matches API response
+interface ExtendedStats {
+  salesToday: number;
+  salesThisMonth: number;
+  transactionsTodayCount: number;
+  totalOrders: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  dailyRevenue: { day: string; orders_count: number; gross_revenue: number; net_revenue: number }[];
+  monthlyRevenue: { month: string; orders_count: number; revenue: number }[];
+  salesByCategory: { name: string; value: number; count: number }[];
+  topProducts: { id: string; name: string; revenue: number; quantity: number }[];
+  refundStats: {
+    totalRefunded: number;
+    refundCount: number;
+    refundRate: string;
+    reasons: { reason: string; count: number }[];
+  };
+  customerStats: {
+    totalCustomers: number;
+    newCustomersLast30d: number;
+  };
+  hourlySales: number[];
+  stockValue?: number;
+  lowStock?: Array<{ id: string; amount: number; stock_available: number; category: { name: string } }>;
 }
 
 interface DailyRevenue {
@@ -263,9 +291,10 @@ if (loading) {
     );
   }
 
-  const handleTabChange = (tab: string) => {
+const handleTabChange = (tab: string) => {
     const tabMap: Record<string, TabType> = {
       dashboard: "overview",
+      stats: "stats",
       categorie: "categorie",
       produit: "produit",
       code: "code",
@@ -329,9 +358,14 @@ if (loading) {
                 <ActivityFeed activities={activities} />
               </div>
 
-              {/* Stock Alerts */}
+{/* Stock Alerts */}
               <StockAlerts alerts={stockAlerts} />
             </div>
+          )}
+
+{/* Stats Tab */}
+          {activeTab === "stats" && (
+            <StatsTab stats={stats as unknown as StatsData | null} />
           )}
 
           {/* Purchases Tab */}

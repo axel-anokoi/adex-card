@@ -6,6 +6,7 @@ interface Category {
   id: string;
   name: string;
   slug: string;
+  logo_url: string | null;
 }
 
 interface Product {
@@ -16,7 +17,27 @@ interface Product {
   buy_price: number;
   stock_available: number;
   is_active: boolean;
+  image_url: string | null;
+  slug: string;
   created_at: string;
+}
+
+// Upload image to storage
+async function uploadImage(file: File, folder: string): Promise<string | null> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+  const res = await fetch("/api/admin/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    return data.url;
+  }
+  return null;
 }
 
 export function ProductManager() {
@@ -29,18 +50,17 @@ export function ProductManager() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     category_id: "",
     amount: 10,
     sell_price: 0,
     buy_price: 0,
     stock_available: 0,
-is_active: true,
-});
+    is_active: true,
+    image_url: "",
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const fetchData = async () => {
     try {
@@ -63,17 +83,31 @@ is_active: true,
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setMessage(null);
 
     try {
-      const method = editingId ? "PATCH" : "POST";
+      // Upload image if a file was selected
+      let imageUrl = formData.image_url;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage(imageFile, "products");
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        }
+      }
+
+      const payload = { ...formData, image_url: imageUrl };
+      const method = editingId ? "PUT" : "POST";
       const res = await fetch("/api/admin/products", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editingId ? { id: editingId, ...formData } : formData),
+        body: JSON.stringify(editingId ? { id: editingId, ...payload } : payload),
       });
 
       if (res.ok) {
@@ -91,7 +125,7 @@ is_active: true,
     }
   };
 
-  const handleEdit = (product: Product) => {
+const handleEdit = (product: Product) => {
     setEditingId(product.id);
     setFormData({
       category_id: product.category?.id || "",
@@ -100,6 +134,7 @@ is_active: true,
       buy_price: product.buy_price,
       stock_available: product.stock_available,
       is_active: product.is_active,
+      image_url: product.image_url || "",
     });
     setShowCreate(true);
   };
@@ -125,7 +160,7 @@ is_active: true,
   const handleToggleActive = async (id: string, isActive: boolean) => {
     try {
       const res = await fetch("/api/admin/products", {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, is_active: isActive }),
       });
@@ -138,8 +173,9 @@ is_active: true,
     }
   };
 
-  const resetForm = () => {
-    setFormData({ category_id: "", amount: 10, sell_price: 0, buy_price: 0, stock_available: 0, is_active: true });
+const resetForm = () => {
+    setFormData({ category_id: "", amount: 10, sell_price: 0, buy_price: 0, stock_available: 0, is_active: true, image_url: "" });
+    setImageFile(null);
     setShowCreate(false);
     setEditingId(null);
   };
@@ -186,7 +222,7 @@ is_active: true,
         </div>
         <button
           onClick={() => { resetForm(); setShowCreate(!showCreate); }}
-          className="rounded-lg bg-cyan px-4 py-2 text-sm font-medium text-black hover:bg-cyan/80"
+          className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-600 transition-colors"
         >
           + Nouveau produit
         </button>
@@ -256,7 +292,7 @@ is_active: true,
                 className="w-full rounded-lg border border-black/20 p-2"
               />
             </div>
-            <div>
+<div>
               <label className="mb-1 block text-sm font-medium">Statut</label>
               <select
                 value={formData.is_active ? "true" : "false"}
@@ -266,6 +302,33 @@ is_active: true,
                 <option value="true">Actif</option>
                 <option value="false">Inactif</option>
               </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setImageFile(file);
+                }}
+                className="w-full rounded-lg border border-black/20 p-2"
+              />
+              {imageFile && (
+                <p className="mt-1 text-xs text-black/60">{imageFile.name}</p>
+              )}
+              {formData.image_url && !imageFile && (
+                <div className="mt-2">
+                  <img src={formData.image_url} alt="Product" className="h-20 w-20 rounded-lg object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, image_url: "" })}
+                    className="ml-2 text-xs text-red-500"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-4 flex gap-2">
@@ -280,27 +343,40 @@ is_active: true,
       {filteredProducts.length === 0 ? (
         <p className="text-center text-black/60">Aucun produit</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className={`rounded-xl border p-4 ${product.is_active ? "border-black/10 bg-white" : "border-black/5 bg-black/5"}`}>
-              <div className="flex items-center justify-between">
-                <span className="font-bold">{product.category?.name || "Produit"}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${product.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
-                  {product.is_active ? "Actif" : "Inactif"}
-                </span>
+<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredProducts.map((product) => {
+            // Display product image, fallback to category logo if no product image
+            const displayImage = product.image_url || product.category?.logo_url;
+            return (
+              <div key={product.id} className={`rounded-xl border p-4 ${product.is_active ? "border-black/10 bg-white" : "border-black/5 bg-black/5"}`}>
+                {displayImage && (
+                  <div className="mb-3 flex justify-center">
+                    <img 
+                      src={displayImage} 
+                      alt={product.category?.name || "Product"} 
+                      className="h-24 w-24 rounded-lg object-contain" 
+                    />
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">{product.category?.name || "Produit"}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${product.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
+                    {product.is_active ? "Actif" : "Inactif"}
+                  </span>
+                </div>
+                <p className="mt-2 text-2xl font-bold">{product.amount}€</p>
+                <p className="text-sm text-black/60">Vente: {product.sell_price}€ / Achat: {product.buy_price}€</p>
+                <p className="mt-1 text-sm">Stock: {product.stock_available}</p>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => handleEdit(product)} className="rounded-lg border border-black/20 px-2 py-1 text-xs hover:bg-black/5">Modifier</button>
+                  <button onClick={() => handleToggleActive(product.id, !product.is_active)} className="rounded-lg border border-black/20 px-2 py-1 text-xs hover:bg-black/5">
+                    {product.is_active ? "Désactiver" : "Activer"}
+                  </button>
+                  <button onClick={() => handleDelete(product.id)} className="rounded-lg border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50">Supprimer</button>
+                </div>
               </div>
-              <p className="mt-2 text-2xl font-bold">{product.amount}€</p>
-              <p className="text-sm text-black/60">Vente: {product.sell_price}€ / Achat: {product.buy_price}€</p>
-              <p className="mt-1 text-sm">Stock: {product.stock_available}</p>
-              <div className="mt-3 flex gap-2">
-                <button onClick={() => handleEdit(product)} className="rounded-lg border border-black/20 px-2 py-1 text-xs hover:bg-black/5">Modifier</button>
-                <button onClick={() => handleToggleActive(product.id, !product.is_active)} className="rounded-lg border border-black/20 px-2 py-1 text-xs hover:bg-black/5">
-                  {product.is_active ? "Désactiver" : "Activer"}
-                </button>
-                <button onClick={() => handleDelete(product.id)} className="rounded-lg border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50">Supprimer</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
