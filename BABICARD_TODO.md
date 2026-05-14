@@ -1,4 +1,4 @@
-# BabiCard CI - Design Overhaul Implementation Plan
+# AdexCard CI - Design Overhaul Implementation Plan
 
 ## Priority 1: Foundation Updates ✅
 - [x] 1.1 Update globals.css with Dark Neon Gaming color palette (Cyan + Violet)
@@ -21,7 +21,7 @@
 - [ ] 4.3 Add testimonials section
 
 ## Priority 5: Navigation & Branding ✅
-- [x] 5.1 Update brand to "BabiCard CI"
+- [x] 5.1 Update brand to "AdexCard CI"
 - [x] 5.2 Improve header with neon hover effects
 
 ## Priority 6: Mobile-First Polish ✅

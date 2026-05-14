@@ -211,7 +211,7 @@ const testimonials = [
     avatar: "F",
     avatarColor: "bg-purple-500",
     rating: 5,
-    text: "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci BabiCard !",
+    text: "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci AdexCard !",
     product: "iTunes 10€",
   },
   {

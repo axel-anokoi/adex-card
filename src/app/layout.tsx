@@ -32,7 +32,7 @@ const barlow = Barlow({
 });
 
 export const metadata: Metadata = {
-  title: "BabiCard CI | Cartes Cadeaux Gaming Côte d'Ivoire",
+  title: "AdexCard CI | Cartes Cadeaux Gaming Côte d'Ivoire",
   description:
     "Achetez vos cartes PSN, Xbox, iTunes, Google Play. Paiement Djamo & Moov Money. Livraison instantanée en Côte d'Ivoire.",
   keywords: ["cartes cadeau", "gaming", "PSN", "Xbox", "Côte d'Ivoire", "Djamo", "Moov Money"],

@@ -12,15 +12,21 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.users (id, email, role, is_blocked)
+  insert into public.users (id, email, role, is_blocked, nom, prenoms, telephone)
   values (
     new.id,
     coalesce(new.email, ''),
     'client',
-    false
+    false,
+    coalesce((new.raw_user_meta_data->>'nom'), ''),
+    coalesce((new.raw_user_meta_data->>'prenoms'), ''),
+    coalesce((new.raw_user_meta_data->>'telephone'), '')
   )
   on conflict (id) do update
-    set email = excluded.email;
+    set email = excluded.email,
+        nom = excluded.nom,
+        prenoms = excluded.prenoms,
+        telephone = excluded.telephone;
 
   return new;
 end;

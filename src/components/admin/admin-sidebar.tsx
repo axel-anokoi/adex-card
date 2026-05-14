@@ -68,7 +68,7 @@ export function AdminSidebar({ activeTab = "dashboard", onTabChange, isOpen, onC
                 letterSpacing: "-0.5px"
               }}
             >
-              BabiCard
+              AdexCard
             </p>
             <p className="text-xs" style={{ color: "var(--text-faint)" }}>
               Admin Panel

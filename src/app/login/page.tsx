@@ -54,7 +54,7 @@ export default function LoginPage() {
           <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 2.2rem)", fontWeight: 800, color: "var(--text)", fontFamily: "var(--font-display)", letterSpacing: "-0.5px", lineHeight: 1.2, marginBottom: 8 }}>
             Bon retour{" "}
             <span style={{ background: "linear-gradient(135deg,#00ffe0,#7b2fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              sur BabiCard
+              sur AdexCard
             </span>
           </h1>
           <p style={{ fontSize: 14, color: "var(--text-muted)" }}>Connectez-vous pour accéder à vos codes</p>

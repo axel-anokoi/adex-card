@@ -55,54 +55,51 @@ export async function POST(request: Request) {
     const { data, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
+      options: {
+        emailRedirectTo: undefined, // ANSUT gère la confirmation, pas Supabase
+        data: {
+          nom: parsed.data.nom,
+          prenoms: parsed.data.prenoms,
+          telephone: parsed.data.telephone,
+        },
+      },
     });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-// Create user profile in public.users table
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from("users")
-.insert({
-          id: data.user.id,
-           email:  parsed.data.email,
-          role: "client",
-          nom: parsed.data.nom,
-          prenoms: parsed.data.prenoms,
-          telephone: parsed.data.telephone,
-        });
-
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        return NextResponse.json(
-          { error: "Failed to create user profile" },
-          { status: 500 }
-        );
-      }
-    }
 
     // Send welcome email
     try {
       const welcomeHtml = `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;">
-          <div style="background-color: #1a1a1a; color: #ffffff; padding: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 24px; letter-spacing: 1px;">ADEX CARD</h1>
+        <div style="font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0a0a0a; border: 1px solid #333; border-radius: 16px; overflow: hidden; color: #ffffff;">
+          <div style="background: linear-gradient(135deg, #00ffe0, #7b2fff); padding: 4px;">
+            <div style="background-color: #0a0a0a; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 2px; background: linear-gradient(135deg, #00ffe0, #7b2fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ADEX CARD</h1>
+            </div>
           </div>
-          <div style="padding: 30px; background-color: #ffffff; color: #333333; line-height: 1.6;">
-            <h2 style="color: #1a1a1a; margin-top: 0;">Bonjour ${parsed.data.prenoms} ! 👋</h2>
-            <p>Nous sommes ravis de vous accueillir dans la communauté <strong>Adex Card</strong>.</p>
-            <p>Votre compte a été créé avec succès. Vous pouvez désormais explorer notre boutique et profiter de nos offres exclusives.</p>
-            <div style="text-align: center; margin: 30px 0;">
+          <div style="padding: 40px 30px; line-height: 1.6;">
+            <h2 style="font-size: 24px; font-weight: 700; margin-top: 0; margin-bottom: 20px; color: #ffffff;">
+              Bonjour ${parsed.data.prenoms} ! <span style="color: #00ffe0;">🚀</span>
+            </h2>
+            <p style="font-size: 16px; color: #a1a1aa; margin-bottom: 24px;">
+              Bienvenue dans l'univers <strong style="color: #00ffe0;">Adex Card</strong>. Votre compte est désormais actif et prêt pour l'action.
+            </p>
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(0,255,224,0.2); border-radius: 12px; padding: 20px; margin-bottom: 30px; text-align: center;">
+              <p style="font-size: 14px; color: #e4e4e7; margin: 0 0 15px 0;">
+                Accédez instantanément aux meilleures cartes gaming (PSN, Xbox, Nintendo, Apple) avec vos moyens de paiement locaux.
+              </p>
               <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://adex-card.com'}/shop"
-                 style="background-color: #0070f3; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                Découvrir la boutique
+                 style="display: inline-block; background: linear-gradient(135deg, #00ffe0, #7b2fff); color: #000; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Explorer le catalogue
               </a>
             </div>
-            <p style="font-size: 14px; color: #666666;">Si vous avez des questions, n'hésitez pas à répondre à cet email.</p>
+            <p style="font-size: 13px; color: #71717a; text-align: center;">
+              Livraison instantanée &bull; Paiement sécurisé &bull; Support 24/7
+            </p>
           </div>
-          <div style="background-color: #f9f9f9; color: #999999; padding: 20px; text-align: center; font-size: 12px;">
+          <div style="background-color: #000; border-top: 1px solid #222; color: #52525b; padding: 20px; text-align: center; font-size: 12px;">
             &copy; ${new Date().getFullYear()} Adex Card. Tous droits réservés.
           </div>
         </div>

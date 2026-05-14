@@ -4,13 +4,14 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer
-      style={{
-        borderTop: "1px solid var(--border)",
-        background: "var(--bg)",
-        backdropFilter: "blur(16px)",
-      }}
-    >
+    <>
+      <footer
+        style={{
+          borderTop: "1px solid var(--border)",
+          background: "var(--bg)",
+          backdropFilter: "blur(16px)",
+        }}
+      >
       <div className="mx-auto w-full max-w-6xl px-4 py-14">
         <div className="grid gap-10 md:grid-cols-4">
 
@@ -18,16 +19,20 @@ export function Footer() {
           <div className="md:col-span-1">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-xl font-bold transition-colors hover:text-[var(--cyan)]"
+              className="group inline-flex items-center gap-2 text-xl font-bold transition-colors hover:text-[var(--cyan)]"
               style={{ color: "var(--text)", fontFamily: "var(--font-display)", cursor: "none" }}
             >
               <span
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black"
+                className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black glitch-box"
                 style={{ background: "linear-gradient(135deg,var(--cyan),var(--violet))", color: "var(--bg)" }}
               >
                 🎮
+                <div className="glitch-layer absolute inset-0 rounded-lg" />
               </span>
-              BabiCard<span style={{ color: "var(--cyan)" }}>.ci</span>
+              <span className="relative glitch-text">
+                AdexCard<span style={{ color: "var(--cyan)" }}>.ci</span>
+                <span className="glitch-layer-text absolute inset-0" />
+              </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
               La plateforme gaming ivoirienne pour acheter tes cartes USA, Xbox, Nintendo, iTunes.
@@ -95,7 +100,7 @@ export function Footer() {
             </h3>
             <ul className="space-y-2" style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.8 }}>
               <li>📍 Abidjan, Cote d&apos;Ivoire</li>
-              <li>📧 support@babicard.ci</li>
+              <li>📧 support@AdexCard.ci</li>
               <li>📱 +225 07 05 89 80 80</li>
               <li style={{ fontSize: 11, color: "var(--text-faint)" }}>Disponible 7j/7 — 8h a 22h</li>
             </ul>
@@ -107,7 +112,7 @@ export function Footer() {
           className="mt-12 flex flex-col items-start justify-between gap-4 pt-7 sm:flex-row sm:items-center"
           style={{ borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--text-faint)" }}
         >
-          <p>© {year} BabiCard.ci — Tous droits reserves.</p>
+          <p>© {year} AdexCard.ci — Tous droits reserves.</p>
           <div className="flex flex-wrap items-center gap-3">
             <span className="badge" style={{ background: "var(--payment-cyan-dim)", border: "1px solid var(--payment-cyan)", color: "var(--cyan)" }}>
               💳 Djamo
@@ -122,5 +127,45 @@ export function Footer() {
         </div>
       </div>
     </footer>
+    <style>{`
+      @keyframes glitch {
+        0% { transform: translate(0); }
+        20% { transform: translate(-2px, 2px); }
+        40% { transform: translate(-2px, -2px); }
+        60% { transform: translate(2px, 2px); }
+        80% { transform: translate(2px, -2px); }
+        100% { transform: translate(0); }
+      }
+      @keyframes glitch-clip {
+        0% { clip-path: inset(50% 0 30% 0); }
+        20% { clip-path: inset(10% 0 80% 0); }
+        40% { clip-path: inset(40% 0 40% 0); }
+        60% { clip-path: inset(80% 0 10% 0); }
+        80% { clip-path: inset(30% 0 60% 0); }
+        100% { clip-path: inset(50% 0 30% 0); }
+      }
+      .group:hover .glitch-box .glitch-layer {
+        animation: glitch 0.2s linear infinite;
+        background: var(--cyan);
+        opacity: 0.5;
+        mix-blend-mode: screen;
+      }
+      .group:hover .glitch-text {
+        animation: glitch 0.3s linear infinite;
+      }
+      .group:hover .glitch-text .glitch-layer-text {
+        animation: glitch-clip 0.2s linear infinite;
+        background: var(--cyan);
+        color: var(--text);
+        mix-blend-mode: difference;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        pointer-events: none;
+      }
+    `}</style>
+    </>
   );
 }

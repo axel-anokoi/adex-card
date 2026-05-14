@@ -115,7 +115,7 @@ const steps = [
 
 const testimonials = [
   { name: "Kouamé A.", city: "Abidjan", initials: "K", color: "#2563eb", rating: 5, text: "Incroyable ! J'ai reçu mon code PSN en moins d'une minute. Le paiement Djamo est super pratique. Je recommande à 100% !", product: "PSN 20€" },
-  { name: "Fatou D.",  city: "Bouaké",  initials: "F", color: "#7c3aed", rating: 5, text: "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci BabiCard !", product: "iTunes 10€" },
+  { name: "Fatou D.",  city: "Bouaké",  initials: "F", color: "#7c3aed", rating: 5, text: "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci AdexCard !", product: "iTunes 10€" },
   { name: "Yves K.",   city: "Abidjan", initials: "Y", color: "#16a34a", rating: 5, text: "Le meilleur site pour acheter des cartes gaming en Côte d'Ivoire. Prix corrects et livraison ultra rapide. Mon go-to !", product: "Xbox 25€" },
 ];
 
@@ -163,7 +163,7 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
 
   return (
     <div ref={wrapRef} className="flex items-center justify-center" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
-      <div style={{ position: "relative", width: 300 }}>
+      <div style={{ position: "relative", width: "min(300px, 80vw)" }}>
         {/* Rainbow border glow */}
         <div className="card-rainbow-border" />
 
@@ -171,8 +171,8 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
         <div
           ref={cardRef}
           style={{
-            width: 300,
-            height: 400,
+            width: "100%",
+            height: "min(400px, 106vw)",
             borderRadius: 24,
             background: platform.cardBg,
             border: `1px solid ${platform.cardBorder}`,
@@ -291,16 +291,17 @@ function HeroCarousel() {
       className="flex items-center justify-center px-4 py-16"
     >
 
-      <div style={{ maxWidth: 1100, width: "100%", position: "relative", zIndex: 2 }} className="grid gap-12 lg:grid-cols-2 items-center">
+      <div style={{ maxWidth: 1100, width: "100%", position: "relative", zIndex: 2 }} className="grid gap-12 lg:grid-cols-2 items-center text-center lg:text-left">
 
 {/* Left text */}
-        <div
-          style={{
-            opacity: animating ? 0 : 1,
-            transform: animating ? "translateX(16px)" : "translateX(0)",
-            transition: "opacity 0.28s, transform 0.28s",
-          }}
-        >
+       <div
+         style={{
+           opacity: animating ? 0 : 1,
+           transform: animating ? "translateX(16px)" : "translateX(0)",
+           transition: "opacity 0.28s, transform 0.28s",
+         }}
+         className="flex flex-col items-center lg:items-start"
+       >
           {/* Live badge */}
           <div className="badge badge-cyan animate-badge" style={{ marginBottom: 24 }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--cyan)", animation: "dotPulse 1.5s ease-in-out infinite", display: "inline-block" }} />
@@ -330,7 +331,7 @@ function HeroCarousel() {
           </p>
 
           {/* CTAs */}
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", alignContent: "center" }} className="lg:justify-start">
             <Link href={`/shop?category=${p.slug}`} className="btn-primary animate-cta">
               Acheter maintenant
               <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -341,24 +342,24 @@ function HeroCarousel() {
           </div>
 
 {/* Platform dots */}
-          <div style={{ display: "flex", gap: 12, marginTop: 36, alignItems: "center" }}>
-            {/* Nav arrows */}
-            <button onClick={goPrev} style={{ cursor: "none", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "var(--text-muted)", transition: "all 0.2s" }}>←</button>
-            {platforms.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i)}
-                style={{
-                  cursor: "none",
-                  width: i === idx ? 32 : 8, height: 8, borderRadius: 999,
-                  background: i === idx ? "var(--cyan)" : "var(--border)",
-                  boxShadow: i === idx ? "0 0 12px var(--cyan-glow)" : "none",
-                  border: "none", transition: "all 0.3s",
-                }}
-              />
-            ))}
-            <button onClick={goNext} style={{ cursor: "none", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "var(--text-muted)", transition: "all 0.2s" }}>→</button>
-          </div>
+<div style={{ display: "flex", gap: 12, marginTop: 36, alignItems: "center", justifyContent: "center" }} className="lg:justify-start">
+  {/* Nav arrows */}
+  <button onClick={goPrev} style={{ cursor: "none", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "var(--text-muted)", transition: "all 0.2s" }}>←</button>
+  {platforms.map((_, i) => (
+    <button
+      key={i}
+      onClick={() => goTo(i)}
+      style={{
+        cursor: "none",
+        width: i === idx ? 32 : 8, height: 8, borderRadius: 999,
+        background: i === idx ? "var(--cyan)" : "var(--border)",
+        boxShadow: i === idx ? "0 0 12px var(--cyan-glow)" : "none",
+        border: "none", transition: "all 0.3s",
+      }}
+    />
+  ))}
+  <button onClick={goNext} style={{ cursor: "none", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px", color: "var(--text-muted)", transition: "all 0.2s" }}>→</button>
+</div>
         </div>
 
         {/* Right 3D card */}
@@ -525,7 +526,7 @@ function HeroCarousel() {
 function FeaturesSection() {
   return (
     <section style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 1.5rem" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-sm:grid-cols-2">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-md:grid-cols-2 max-sm:grid-cols-1">
         {features.map((f) => (
           <article key={f.title} className="feat-card">
             <div style={{ width: 40, height: 40, borderRadius: 10, background: f.dim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>
@@ -570,14 +571,14 @@ function CategoriesSection() {
   return (
     <section style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem 3rem" }}>
       <p className="section-label">Catégories</p>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 12 }} className="flex-col sm:flex-row">
         <h2 className="section-title">Par plateforme</h2>
         <Link href="/shop" style={{ color: "#00ffe0", fontSize: 14, fontWeight: 500, textDecoration: "none", cursor: "none" }}>
           Voir tout →
         </Link>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-sm:grid-cols-2">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-md:grid-cols-2 max-sm:grid-cols-1">
         {categories.map((cat) => {
           const isActive = activeCategory === cat.slug;
           const isSlicing = sliceAnimating === cat.slug;
@@ -890,7 +891,7 @@ function CategoriesSection() {
 
         @media (max-width: 768px) {
           .products-modal-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
           }
 
           .products-modal-head {
@@ -1027,7 +1028,7 @@ function StepsSection() {
     <section style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 1.5rem" }}>
       <p className="section-label">Processus</p>
       <h2 className="section-title" style={{ marginBottom: "1.5rem" }}>Comment ça marche</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="max-sm:grid-cols-1">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="max-md:grid-cols-1">
         {steps.map((s) => (
           <article key={s.num} className="step-card">
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "var(--cyan)", marginBottom: 14 }}>{s.num}</p>
@@ -1044,13 +1045,13 @@ function StepsSection() {
 function PaymentSection() {
   return (
     <section style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem" }}>
-      <div style={{ borderRadius: 20, border: "1px solid var(--border)", background: "var(--bg-card)", padding: "2rem 2.5rem", backdropFilter: "blur(12px)" }}>
+      <div style={{ borderRadius: 20, border: "1px solid var(--border)", background: "var(--bg-card)", padding: "2rem 2.5rem", backdropFilter: "blur(12px)" }} className="max-sm:p-6">
         <p className="section-label">Paiements locaux</p>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", margin: "6px 0 8px" }}>Paiement 100% local, sécurisé et instantané</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--text)", margin: "6px 0 8px" }} className="text-lg sm:text-2xl">Paiement 100% local, sécurisé et instantané</h2>
         <p style={{ fontSize: 13, color: "var(--text-muted)", maxWidth: 540, lineHeight: 1.7, marginBottom: 20 }}>
           Réglez facilement avec Djamo et Moov Money. Vos transactions sont protégées et validées en temps réel.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }} className="max-sm:grid-cols-1">
           <div style={{ borderRadius: 14, border: "1px solid var(--payment-cyan)", background: "var(--payment-cyan-dim)", padding: "18px 20px" }}>
             <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>💳 Djamo</p>
             <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Paiement rapide, simple et fiable.</p>
@@ -1071,7 +1072,7 @@ function TestimonialsSection() {
       <p className="section-label">Avis clients</p>
       <h2 className="section-title" style={{ marginBottom: 6 }}>Ils nous font confiance</h2>
       <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 24 }}>+1 200 clients satisfaits à Abidjan, Bouaké et partout en CI</p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }} className="max-sm:grid-cols-1">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }} className="max-md:grid-cols-2 max-sm:grid-cols-1">
         {testimonials.map((t) => (
           <article key={t.name} className="testi-card">
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -1096,7 +1097,7 @@ function TestimonialsSection() {
 function StatsSection() {
   return (
     <section style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem 1.5rem 5rem" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-sm:grid-cols-2">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="max-md:grid-cols-2 max-sm:grid-cols-1">
         {stats.map((s) => (
           <div
             key={s.label}

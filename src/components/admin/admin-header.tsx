@@ -233,7 +233,7 @@ export function AdminHeader({
             >
               <div className="border-b p-3" style={{ borderColor: "var(--border)" }}>
                 <p className="font-medium" style={{ color: "var(--text)" }}>Administrateur</p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>admin@babicard.ci</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>admin@AdexCard.ci</p>
               </div>
               <div className="p-1.5">
                 <button

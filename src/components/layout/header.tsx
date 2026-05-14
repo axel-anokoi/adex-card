@@ -58,20 +58,22 @@ export function Header() {
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4">
         <Link href="/" className="group flex items-center gap-2.5" style={{ cursor: "none" }}>
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-black"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-black glitch-box"
             style={{
               background: "linear-gradient(135deg, var(--cyan), var(--violet))",
               boxShadow: "0 0 20px var(--cyan-glow)",
               animation: "logoPulse 3s ease-in-out infinite",
             }}
           >
-            B
+            A
+            <div className="glitch-layer absolute inset-0 rounded-xl" />
           </div>
           <span
-            className="text-lg font-bold tracking-tight transition-colors group-hover:text-[var(--cyan)]"
+            className="relative text-lg font-bold tracking-tight transition-colors group-hover:text-[var(--cyan)] glitch-text"
             style={{ fontFamily: "var(--font-display)", color: "var(--text)" }}
           >
-            BabiCard<span style={{ color: "var(--cyan)" }}>.ci</span>
+            AdexCard<span style={{ color: "var(--cyan)" }}>.ci</span>
+            <span className="glitch-layer-text absolute inset-0" />
           </span>
         </Link>
 
@@ -344,6 +346,43 @@ export function Header() {
         @keyframes badgePulse {
           0%,100% { transform: scale(1); }
           50% { transform: scale(1.25); }
+        }
+        @keyframes glitch {
+          0% { transform: translate(0); }
+          20% { transform: translate(-2px, 2px); }
+          40% { transform: translate(-2px, -2px); }
+          60% { transform: translate(2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+          100% { transform: translate(0); }
+        }
+        @keyframes glitch-clip {
+          0% { clip-path: inset(50% 0 30% 0); }
+          20% { clip-path: inset(10% 0 80% 0); }
+          40% { clip-path: inset(40% 0 40% 0); }
+          60% { clip-path: inset(80% 0 10% 0); }
+          80% { clip-path: inset(30% 0 60% 0); }
+          100% { clip-path: inset(50% 0 30% 0); }
+        }
+        .glitch-box:hover .glitch-layer {
+          animation: glitch 0.2s linear infinite;
+          background: var(--cyan);
+          opacity: 0.5;
+          mix-blend-mode: screen;
+        }
+        .glitch-text:hover {
+          animation: glitch 0.3s linear infinite;
+        }
+        .glitch-text:hover .glitch-layer-text {
+          animation: glitch-clip 0.2s linear infinite;
+          background: var(--cyan);
+          color: var(--text);
+          mix-blend-mode: difference;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          position: absolute;
+          pointer-events: none;
         }
       `}</style>
     </header>
