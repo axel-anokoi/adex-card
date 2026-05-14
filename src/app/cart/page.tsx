@@ -43,7 +43,7 @@ export default function CartPage() {
               </Link>
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+            <div className="grid gap-8 grid-cols-1 lg:grid-cols-[1.6fr_1fr]">
               <section 
                 className="glass relative overflow-hidden rounded-3xl p-6 backdrop-blur-xl"
                 style={{ boxShadow: "var(--shadow-lg)" }}

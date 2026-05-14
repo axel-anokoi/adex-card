@@ -166,7 +166,7 @@ body: JSON.stringify({ email, password, nom, prenoms, telephone }),
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }} className="reg-fields-grid">
                 <div>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>Nom</label>
                   <input
@@ -315,6 +315,13 @@ body: JSON.stringify({ email, password, nom, prenoms, telephone }),
         .auth-input:focus {
           border-color: rgba(0,255,224,0.4) !important;
           box-shadow: 0 0 0 3px rgba(0,255,224,0.07);
+        }
+      `}</style>
+      <style>{`
+        @media (min-width: 640px) {
+          .reg-fields-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
         }
       `}</style>
     </main>

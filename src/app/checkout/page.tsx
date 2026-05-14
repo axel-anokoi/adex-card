@@ -80,7 +80,7 @@ export default function CheckoutPage() {
           </h1>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 20, alignItems: "start" }} className="checkout-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20, alignItems: "start" }} className="checkout-grid">
 
           {/* LEFT — Cart + Payment */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -125,7 +125,7 @@ export default function CheckoutPage() {
               <div style={{ padding: "1.5rem" }}>
                 <p className="section-label" style={{ marginBottom: 14 }}>Méthode de paiement</p>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: 10 }} className="payment-methods-grid">
                   {paymentMethods.map((pm) => (
                     <button
                       key={pm.id}
@@ -228,6 +228,14 @@ export default function CheckoutPage() {
         @media (max-width: 768px) {
           .checkout-grid {
             grid-template-columns: 1fr !important;
+          }
+          .payment-methods-grid {
+            grid-template-columns: repeat(1, 1fr) !important;
+          }
+        }
+        @media (min-width: 640px) {
+          .payment-methods-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
           }
         }
       `}</style>

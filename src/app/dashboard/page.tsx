@@ -114,11 +114,11 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10">
+    <div className="mx-auto w-full max-w-5xl px-4 py-10" style={{ background: "var(--bg)", minHeight: "100vh" }}>
       <h1 className="text-3xl font-bold">Mon Dashboard</h1>
       
       {/* Stats Cards */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-3">
         <div className="rounded-xl border border-black/10 bg-white p-4">
           <p className="text-sm text-black/60">Commandes</p>
           <p className="text-2xl font-bold">{purchases.length}</p>
@@ -133,7 +133,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8 grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Purchase History */}
         <div>
           <h2 className="text-2xl font-bold">Historique des commandes</h2>
@@ -165,8 +165,8 @@ export default function DashboardPage() {
 
       {/* Refund Modal */}
       {showRefundModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
             <h3 className="text-xl font-bold">Demander un remboursement</h3>
             <p className="mt-2 text-sm text-black/60">
               Veuillez expliquez la raison de votre demande de remboursement.

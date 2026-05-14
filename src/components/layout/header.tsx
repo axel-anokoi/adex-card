@@ -7,23 +7,24 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const categories = [
   { slug: "playstation", name: "PlayStation", icon: "🎮", colorClass: "text-blue-400" },
-  { slug: "xbox", name: "Xbox", icon: "🎯", colorClass: "text-green-400" },
-  { slug: "nintendo", name: "Nintendo", icon: "🍄", colorClass: "text-red-400" },
-  { slug: "apple", name: "Apple", icon: "🍎", colorClass: "text-gray-400" },
+  { slug: "xbox",        name: "Xbox",        icon: "🎯", colorClass: "text-green-400" },
+  { slug: "nintendo",    name: "Nintendo",    icon: "🍄", colorClass: "text-red-400" },
+  { slug: "apple",       name: "Apple",       icon: "🍎", colorClass: "text-gray-400" },
 ];
 
 const navLinks = [
-  { href: "/shop", label: "Boutique" },
+  { href: "/shop",      label: "Boutique" },
   { href: "/dashboard", label: "Mon compte" },
 ];
 
 export function Header() {
-  const pathname = usePathname();
+  const pathname      = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [catsOpen, setCatsOpen] = useState(false);
-  const [cartCount] = useState(0);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [catsOpen, setCatsOpen]     = useState(false);
+  const [cartCount]                 = useState(0);
+  const dropdownRef                 = useRef<HTMLDivElement>(null);
 
+  // Close dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -34,6 +35,22 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+    setCatsOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
   const softSurface = {
     border: "1px solid var(--border)",
     background: "color-mix(in srgb, var(--text) 6%, transparent)",
@@ -43,79 +60,96 @@ export function Header() {
   const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
 
   return (
-    <header
-      className="fixed left-0 right-0 top-0 z-50"
-      style={{
-        background: "color-mix(in srgb, var(--bg) 88%, transparent)",
-        borderBottom: "1px solid var(--border)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        height: 64,
-        display: "flex",
-        alignItems: "center",
-      }}
-    >
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="group flex items-center gap-2.5" style={{ cursor: "none" }}>
-          <div
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black text-black glitch-box"
-            style={{
-              background: "linear-gradient(135deg, var(--cyan), var(--violet))",
-              boxShadow: "0 0 20px var(--cyan-glow)",
-              animation: "logoPulse 3s ease-in-out infinite",
-            }}
-          >
-            A
-            <div className="glitch-layer absolute inset-0 rounded-xl" />
-          </div>
-          <span
-            className="relative text-lg font-bold tracking-tight transition-colors group-hover:text-[var(--cyan)] glitch-text"
-            style={{ fontFamily: "var(--font-display)", color: "var(--text)" }}
-          >
-            AdexCard<span style={{ color: "var(--cyan)" }}>.ci</span>
-            <span className="glitch-layer-text absolute inset-0" />
-          </span>
-        </Link>
+    <>
+      <header
+        className="site-header"
+        style={{
+          background: "color-mix(in srgb, var(--bg) 88%, transparent)",
+          borderBottom: "1px solid var(--border)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+        }}
+      >
+        <div className="header-inner">
 
-        <nav className="hidden items-center gap-1 text-sm font-medium md:flex">
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setCatsOpen(!catsOpen)}
+          {/* ── Logo ── */}
+          <Link href="/" className="header-logo group" style={{ cursor: "none" }}>
+            <div
+              className="logo-box glitch-box"
               style={{
-                cursor: "none",
-                color: catsOpen ? "var(--text)" : "var(--text-muted)",
-                background: catsOpen ? hoverSurface : "transparent",
+                background: "linear-gradient(135deg, var(--cyan), var(--violet))",
+                boxShadow: "0 0 20px var(--cyan-glow)",
+                animation: "logoPulse 3s ease-in-out infinite",
               }}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-2 transition-all"
             >
-              Catégories
-              <svg
-                className={`h-3.5 w-3.5 transition-transform duration-200 ${catsOpen ? "rotate-180" : ""}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+              A
+              <div className="glitch-layer" style={{ position: "absolute", inset: 0, borderRadius: "inherit" }} />
+            </div>
+            <span
+              className="logo-text relative glitch-text"
+              style={{ fontFamily: "var(--font-display)", color: "var(--text)" }}
+            >
+              AdexCard<span style={{ color: "var(--cyan)" }}>.ci</span>
+              <span className="glitch-layer-text" style={{ position: "absolute", inset: 0 }} />
+            </span>
+          </Link>
 
-            {catsOpen && (
-              <div
-                className="dropdown-anim absolute left-0 top-full mt-2 w-52 overflow-hidden rounded-xl shadow-2xl"
+          {/* ── Desktop nav ── */}
+          <nav className="desktop-nav" aria-label="Navigation principale">
+            {/* Categories dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setCatsOpen(!catsOpen)}
                 style={{
-                  background: "color-mix(in srgb, var(--bg2) 92%, transparent)",
-                  border: "1px solid var(--border)",
-                  backdropFilter: "blur(20px)",
+                  cursor: "none",
+                  color: catsOpen ? "var(--text)" : "var(--text-muted)",
+                  background: catsOpen ? hoverSurface : "transparent",
                 }}
+                className="nav-link flex items-center gap-1.5"
+                aria-expanded={catsOpen}
+                aria-haspopup="true"
               >
-                <div className="p-1.5">
-                  {categories.map((cat) => (
+                Catégories
+                <svg
+                  className={`dropdown-chevron ${catsOpen ? "rotated" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {catsOpen && (
+                <div className="dropdown-menu dropdown-anim" role="menu">
+                  <div style={{ padding: "6px" }}>
+                    {categories.map((cat) => (
+                      <Link
+                        key={cat.slug}
+                        href={`/shop?category=${cat.slug}`}
+                        onClick={() => setCatsOpen(false)}
+                        role="menuitem"
+                        className="dropdown-item"
+                        style={{ cursor: "none", color: "var(--text-muted)" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = hoverSurface;
+                          e.currentTarget.style.color = "var(--text)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--text-muted)";
+                        }}
+                      >
+                        <span className="text-base">{cat.icon}</span>
+                        <span className={cat.colorClass}>{cat.name}</span>
+                      </Link>
+                    ))}
+
+                    <div style={{ margin: "4px 0", borderTop: "1px solid var(--border)" }} />
+
                     <Link
-                      key={cat.slug}
-                      href={`/shop?category=${cat.slug}`}
+                      href="/shop"
                       onClick={() => setCatsOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all"
+                      role="menuitem"
+                      className="dropdown-item"
                       style={{ cursor: "none", color: "var(--text-muted)" }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = hoverSurface;
@@ -126,219 +160,445 @@ export function Header() {
                         e.currentTarget.style.color = "var(--text-muted)";
                       }}
                     >
-                      <span className="text-base">{cat.icon}</span>
-                      <span className={cat.colorClass}>{cat.name}</span>
+                      <span className="text-base">🛍️</span>
+                      <span style={{ color: "var(--cyan)" }}>Toutes les cartes</span>
                     </Link>
-                  ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
-                  <div className="my-1 border-t" style={{ borderColor: "var(--border)" }} />
-
-                  <Link
-                    href="/shop"
-                    onClick={() => setCatsOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all"
-                    style={{ cursor: "none", color: "var(--text-muted)" }}
-                    onMouseEnter={(e) => {
+            {/* Other nav links */}
+            {navLinks.map((link) => {
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    cursor: "none",
+                    color: active ? "var(--text)" : "var(--text-muted)",
+                    background: active ? hoverSurface : "transparent",
+                  }}
+                  className="nav-link"
+                  aria-current={active ? "page" : undefined}
+                  onMouseEnter={(e) => {
+                    if (!active) {
                       e.currentTarget.style.background = hoverSurface;
                       e.currentTarget.style.color = "var(--text)";
-                    }}
-                    onMouseLeave={(e) => {
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
                       e.currentTarget.style.background = "transparent";
                       e.currentTarget.style.color = "var(--text-muted)";
-                    }}
-                  >
-                    <span className="text-base">🛍️</span>
-                    <span style={{ color: "var(--cyan)" }}>Toutes les cartes</span>
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
+                    }
+                  }}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
 
-          {navLinks.map((link) => {
-            const active = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                style={{
-                  cursor: "none",
-                  color: active ? "var(--text)" : "var(--text-muted)",
-                  background: active ? hoverSurface : "transparent",
-                }}
-                className="rounded-lg px-3 py-2 transition-all"
-                onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = hoverSurface;
-                    e.currentTarget.style.color = "var(--text)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "var(--text-muted)";
-                  }
-                }}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+          {/* ── Desktop actions ── */}
+          <div className="desktop-actions">
+            <ThemeToggle />
 
-        <div className="hidden items-center gap-2 md:flex">
-          <ThemeToggle />
-
-          <Link
-            href="/cart"
-            style={{ cursor: "none", ...softSurface }}
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg transition-all"
-            aria-label="Panier"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = hoverSurface;
-              e.currentTarget.style.color = "var(--text)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = softSurface.background;
-              e.currentTarget.style.color = softSurface.color;
-            }}
-          >
-            <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-            </svg>
-            {cartCount > 0 && (
-              <span
-                className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold text-black"
-                style={{ background: "var(--cyan)", animation: "badgePulse 2s ease-in-out infinite" }}
-              >
-                {cartCount}
-              </span>
-            )}
-          </Link>
-
-          <Link href="/login" style={{ cursor: "none" }} className="btn-sm btn-outline">
-            Connexion
-          </Link>
-
-          <Link
-            href="/register"
-            style={{
-              cursor: "none",
-              background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
-              color: "#000",
-              fontWeight: 700,
-              boxShadow: "0 0 20px var(--cyan-glow)",
-            }}
-            className="btn-sm rounded-lg px-4 py-2 transition-all"
-          >
-            S&apos;inscrire
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
-          <Link
-            href="/cart"
-            style={{ cursor: "none", ...softSurface }}
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-            </svg>
-          </Link>
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="flex flex-col gap-1.5 p-2"
-            aria-label="Menu"
-            style={{ cursor: "none" }}
-          >
-            <span className={`h-0.5 w-5 transition-all duration-300 ${mobileOpen ? "translate-y-2 rotate-45" : ""}`} style={{ background: "var(--text)" }} />
-            <span className={`h-0.5 w-5 transition-all duration-300 ${mobileOpen ? "scale-x-0 opacity-0" : ""}`} style={{ background: "var(--text)" }} />
-            <span className={`h-0.5 w-5 transition-all duration-300 ${mobileOpen ? "-translate-y-2 -rotate-45" : ""}`} style={{ background: "var(--text)" }} />
-          </button>
-        </div>
-      </div>
-
-      {mobileOpen && (
-        <nav
-          className="absolute left-0 right-0 top-16 flex flex-col px-4 py-4 md:hidden"
-          style={{
-            background: "color-mix(in srgb, var(--bg2) 96%, transparent)",
-            borderBottom: "1px solid var(--border)",
-            backdropFilter: "blur(20px)",
-          }}
-        >
-          <p className="mb-2 px-4 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>
-            Catégories
-          </p>
-          {categories.map((cat) => (
             <Link
-              key={cat.slug}
-              href={`/shop?category=${cat.slug}`}
-              onClick={() => setMobileOpen(false)}
-              style={{ cursor: "none", color: "var(--text-muted)" }}
-              className="flex items-center gap-3 rounded-lg px-4 py-3 transition-all"
+              href="/cart"
+              style={{ cursor: "none", ...softSurface }}
+              className="cart-btn relative"
+              aria-label="Panier"
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = hoverSurface;
                 e.currentTarget.style.color = "var(--text)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "var(--text-muted)";
+                e.currentTarget.style.background = softSurface.background;
+                e.currentTarget.style.color = softSurface.color;
               }}
             >
-              <span>{cat.icon}</span>
-              <span className={cat.colorClass}>{cat.name}</span>
+              <svg className="w-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="cart-badge" aria-label={`${cartCount} article${cartCount > 1 ? "s" : ""}`}>
+                  {cartCount}
+                </span>
+              )}
             </Link>
-          ))}
-          <div className="my-3 border-t" style={{ borderColor: "var(--border)" }} />
-          <p className="mb-2 px-4 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>
-            Navigation
-          </p>
-          {navLinks.map((link) => {
-            const active = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  cursor: "none",
-                  color: active ? "var(--text)" : "var(--text-muted)",
-                  background: active ? hoverSurface : "transparent",
-                }}
-                className="rounded-lg px-4 py-3 transition-all"
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-          <div className="mt-4 flex flex-col gap-2">
-            <Link
-              href="/login"
-              onClick={() => setMobileOpen(false)}
-              style={{ cursor: "none", ...softSurface, textAlign: "center" }}
-              className="rounded-lg px-4 py-3 text-sm font-medium transition-all"
-            >
+
+            <Link href="/login" style={{ cursor: "none" }} className="btn-sm btn-outline">
               Connexion
             </Link>
+
             <Link
               href="/register"
-              onClick={() => setMobileOpen(false)}
               style={{
                 cursor: "none",
                 background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
                 color: "#000",
+                fontWeight: 700,
+                boxShadow: "0 0 20px var(--cyan-glow)",
               }}
-              className="rounded-lg px-4 py-3 text-center text-sm font-bold transition-all"
+              className="btn-sm btn-register"
             >
-              S&apos;inscrire gratuitement
+              S&apos;inscrire
             </Link>
           </div>
-        </nav>
-      )}
 
+          {/* ── Mobile actions ── */}
+          <div className="mobile-actions">
+            <ThemeToggle />
+
+            <Link
+              href="/cart"
+              style={{ cursor: "none", ...softSurface }}
+              className="cart-btn relative"
+              aria-label="Panier"
+            >
+              <svg className="w-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+              </svg>
+            </Link>
+
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="hamburger-btn"
+              aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={mobileOpen}
+              style={{ cursor: "none" }}
+            >
+              <span className={`ham-line ${mobileOpen ? "ham-open-1" : ""}`} />
+              <span className={`ham-line ${mobileOpen ? "ham-open-2" : ""}`} />
+              <span className={`ham-line ${mobileOpen ? "ham-open-3" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Mobile drawer ── */}
+        {mobileOpen && (
+          <nav
+            className="mobile-drawer"
+            aria-label="Menu mobile"
+            style={{
+              background: "color-mix(in srgb, var(--bg2) 96%, transparent)",
+              borderBottom: "1px solid var(--border)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+            }}
+          >
+            {/* Categories */}
+            <p className="drawer-section-label">Catégories</p>
+            {categories.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/shop?category=${cat.slug}`}
+                onClick={() => setMobileOpen(false)}
+                style={{ cursor: "none", color: "var(--text-muted)" }}
+                className="drawer-link"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = hoverSurface;
+                  e.currentTarget.style.color = "var(--text)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "var(--text-muted)";
+                }}
+              >
+                <span>{cat.icon}</span>
+                <span className={cat.colorClass}>{cat.name}</span>
+              </Link>
+            ))}
+
+            <div style={{ margin: "8px 0", borderTop: "1px solid var(--border)" }} />
+
+            {/* Main links */}
+            <p className="drawer-section-label">Navigation</p>
+            {navLinks.map((link) => {
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    cursor: "none",
+                    color: active ? "var(--text)" : "var(--text-muted)",
+                    background: active ? hoverSurface : "transparent",
+                  }}
+                  className="drawer-link"
+                  aria-current={active ? "page" : undefined}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+
+            {/* Auth */}
+            <div className="drawer-auth">
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                style={{ cursor: "none", ...softSurface, textAlign: "center" }}
+                className="drawer-auth-btn"
+              >
+                Connexion
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  cursor: "none",
+                  background: "linear-gradient(135deg,var(--cyan),#00c8b0)",
+                  color: "#000",
+                }}
+                className="drawer-auth-btn drawer-auth-register"
+              >
+                S&apos;inscrire gratuitement
+              </Link>
+            </div>
+          </nav>
+        )}
+      </header>
+
+      {/* ── Styles ── */}
       <style>{`
+        /* ── Header shell ── */
+        .site-header {
+          position: fixed;
+          left: 0; right: 0; top: 0;
+          z-index: 50;
+          height: 64px;
+        }
+        .header-inner {
+          margin: 0 auto;
+          max-width: 1200px;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 1rem;
+          gap: 8px;
+        }
+        @media (min-width: 640px) {
+          .header-inner { padding: 0 1.5rem; }
+        }
+
+        /* ── Logo ── */
+        .header-logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+          text-decoration: none;
+        }
+        .logo-box {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px; height: 36px;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 900;
+          color: #000;
+          flex-shrink: 0;
+        }
+        .logo-text {
+          font-size: 17px;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          transition: color 0.2s;
+          white-space: nowrap;
+        }
+
+        /* ── Desktop nav ── */
+        .desktop-nav {
+          display: none;
+          align-items: center;
+          gap: 2px;
+          font-size: 13px;
+          font-weight: 500;
+        }
+        @media (min-width: 768px) {
+          .desktop-nav { display: flex; }
+        }
+        .nav-link {
+          display: flex;
+          align-items: center;
+          border-radius: 8px;
+          padding: 7px 12px;
+          transition: all 0.15s;
+          white-space: nowrap;
+          text-decoration: none;
+        }
+        .dropdown-chevron {
+          width: 14px; height: 14px;
+          transition: transform 0.2s;
+        }
+        .dropdown-chevron.rotated { transform: rotate(180deg); }
+
+        /* ── Dropdown ── */
+        .dropdown-menu {
+          position: absolute;
+          left: 0; top: 100%;
+          margin-top: 8px;
+          width: 208px;
+          border-radius: 14px;
+          overflow: hidden;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+          border: 1px solid var(--border);
+          background: color-mix(in srgb, var(--bg2) 92%, transparent);
+          backdrop-filter: blur(20px);
+        }
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          border-radius: 8px;
+          padding: 9px 12px;
+          font-size: 13px;
+          transition: all 0.15s;
+          text-decoration: none;
+          cursor: none;
+        }
+
+        /* ── Desktop actions ── */
+        .desktop-actions {
+          display: none;
+          align-items: center;
+          gap: 8px;
+        }
+        @media (min-width: 768px) {
+          .desktop-actions { display: flex; }
+        }
+        .cart-btn {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px; height: 36px;
+          border-radius: 8px;
+          transition: all 0.15s;
+          text-decoration: none;
+          flex-shrink: 0;
+        }
+        .w-icon { width: 18px; height: 18px; }
+        .cart-badge {
+          position: absolute;
+          right: -4px; top: -4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 16px; height: 16px;
+          border-radius: 50%;
+          font-size: 10px;
+          font-weight: 700;
+          color: #000;
+          background: var(--cyan);
+          animation: badgePulse 2s ease-in-out infinite;
+        }
+        .btn-register {
+          border-radius: 8px;
+          padding: 7px 16px;
+          transition: all 0.15s;
+          font-size: 13px;
+          white-space: nowrap;
+        }
+
+        /* ── Mobile actions ── */
+        .mobile-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        @media (min-width: 768px) {
+          .mobile-actions { display: none; }
+        }
+
+        /* ── Hamburger ── */
+        .hamburger-btn {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          padding: 8px;
+          background: transparent;
+          border: none;
+        }
+        .ham-line {
+          display: block;
+          width: 20px;
+          height: 2px;
+          border-radius: 2px;
+          background: var(--text);
+          transition: all 0.3s;
+          transform-origin: center;
+        }
+        .ham-open-1 { transform: translateY(7px) rotate(45deg); }
+        .ham-open-2 { transform: scaleX(0); opacity: 0; }
+        .ham-open-3 { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Mobile drawer ── */
+        .mobile-drawer {
+          position: absolute;
+          left: 0; right: 0;
+          top: 64px;
+          z-index: 51;
+          padding: 12px 16px 16px;
+          /* Allow scroll if content overflows viewport height */
+          max-height: calc(100vh - 64px - 60px);
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        @media (min-width: 768px) {
+          .mobile-drawer { display: none; }
+        }
+        .drawer-section-label {
+          padding: 4px 16px;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: var(--text-faint);
+          margin-bottom: 4px;
+        }
+        .drawer-link {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          border-radius: 10px;
+          padding: 11px 16px;
+          font-size: 14px;
+          transition: all 0.15s;
+          text-decoration: none;
+          cursor: none;
+        }
+        .drawer-auth {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 16px;
+        }
+        .drawer-auth-btn {
+          display: block;
+          border-radius: 10px;
+          padding: 12px 16px;
+          font-size: 14px;
+          font-weight: 600;
+          text-align: center;
+          text-decoration: none;
+          transition: all 0.15s;
+          cursor: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .drawer-auth-register {
+          font-weight: 700;
+          letter-spacing: 0.01em;
+        }
+
+        /* ── Animations ── */
         @keyframes logoPulse {
           0%,100% { box-shadow: 0 0 20px var(--cyan-glow); }
           50% { box-shadow: 0 0 40px var(--cyan-glow), 0 0 80px color-mix(in srgb, var(--violet) 40%, transparent); }
@@ -349,18 +609,18 @@ export function Header() {
         }
         @keyframes glitch {
           0% { transform: translate(0); }
-          20% { transform: translate(-2px, 2px); }
-          40% { transform: translate(-2px, -2px); }
-          60% { transform: translate(2px, 2px); }
-          80% { transform: translate(2px, -2px); }
+          20% { transform: translate(-2px,2px); }
+          40% { transform: translate(-2px,-2px); }
+          60% { transform: translate(2px,2px); }
+          80% { transform: translate(2px,-2px); }
           100% { transform: translate(0); }
         }
         @keyframes glitch-clip {
-          0% { clip-path: inset(50% 0 30% 0); }
-          20% { clip-path: inset(10% 0 80% 0); }
-          40% { clip-path: inset(40% 0 40% 0); }
-          60% { clip-path: inset(80% 0 10% 0); }
-          80% { clip-path: inset(30% 0 60% 0); }
+          0%   { clip-path: inset(50% 0 30% 0); }
+          20%  { clip-path: inset(10% 0 80% 0); }
+          40%  { clip-path: inset(40% 0 40% 0); }
+          60%  { clip-path: inset(80% 0 10% 0); }
+          80%  { clip-path: inset(30% 0 60% 0); }
           100% { clip-path: inset(50% 0 30% 0); }
         }
         .glitch-box:hover .glitch-layer {
@@ -377,14 +637,22 @@ export function Header() {
           background: var(--cyan);
           color: var(--text);
           mix-blend-mode: difference;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
-          position: absolute;
           pointer-events: none;
         }
+
+        /* ── Tablet: show a compact nav (≥ 640px < 768px) ── */
+        @media (min-width: 640px) and (max-width: 767px) {
+          .desktop-nav {
+            display: flex;
+          }
+          .desktop-actions {
+            display: none;
+          }
+          .mobile-actions {
+            display: flex;
+          }
+        }
       `}</style>
-    </header>
+    </>
   );
 }
