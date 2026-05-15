@@ -2,23 +2,8 @@
 
 import { useState } from "react";
 
-interface DiscountCode {
-  id: string;
-  code: string;
-  description: string | null;
-  discount_type: "percentage" | "fixed_amount";
-  discount_value: number;
-  max_discount_amount: number | null;
-  product_id: string | null;
-  category_id: string | null;
-  min_order_amount: number;
-  max_uses: number | null;
-  uses_count: number;
-  max_uses_per_user: number;
-  valid_from: string;
-  valid_until: string | null;
-  is_active: boolean;
-}
+// Replace the existing DiscountCode interface in AdminPage (around line 143-154)
+import { DiscountCode } from "@/types/discounts";
 
 interface DiscountManagerProps {
   codes: DiscountCode[];
@@ -55,9 +40,9 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
 
   const formatDiscount = (code: DiscountCode) => {
     if (code.discount_type === "percentage") {
-      return `${code.discount_value}%${code.max_discount_amount ? ` (max ${code.max_discount_amount}€)` : ""}`;
+      return `${code.discount_value}%${code.max_discount_amount ? ` (max ${code.max_discount_amount} FCFA)` : ""}`;
     }
-    return `${code.discount_value}€`;
+    return `${code.discount_value} FCFA`;
   };
 
   const handleCreate = async () => {
@@ -151,12 +136,12 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
                 className="w-full rounded-lg border border-black/20 p-2"
               >
                 <option value="percentage">Pourcentage (%)</option>
-                <option value="fixed_amount">Montant fixe (€)</option>
+                <option value="fixed_amount">Montant fixe (FCFA)</option>
               </select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">
-                {newCode.discount_type === "percentage" ? "Pourcentage" : "Montant (€)"}
+                {newCode.discount_type === "percentage" ? "Pourcentage" : "Montant (FCFA)"}
               </label>
               <input
                 type="number"
@@ -166,7 +151,7 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Montant max (€)</label>
+              <label className="mb-1 block text-sm font-medium">Montant max (FCFA)</label>
               <input
                 type="number"
                 value={newCode.max_discount_amount}
@@ -176,7 +161,7 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Commande min (€)</label>
+              <label className="mb-1 block text-sm font-medium">Commande min (FCFA)</label>
               <input
                 type="number"
                 value={newCode.min_order_amount}
@@ -248,7 +233,7 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
                 </p>
                 <p className="mt-1 text-xs text-black/40">
                   {code.uses_count}/{code.max_uses || "∞"} utilisations
-                  {code.min_order_amount > 0 && ` • Min ${code.min_order_amount}€`}
+                  {code.min_order_amount > 0 && ` • Min ${code.min_order_amount} FCFA`}
                 </p>
               </div>
               <div className="flex gap-2">

@@ -103,16 +103,16 @@ export function StatsTab({ stats: initialStats }: StatsTabProps) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Ventes aujourd'hui"
-          value={`${(data.salesToday || 0).toFixed(2)}€`}
+          value={`${(data.salesToday || 0).toFixed(2)} FCFA`}
           subValue={`${data.transactionsTodayCount || 0} commandes`}
         />
         <KpiCard
           label="Ventes du mois"
-          value={`${(data.salesThisMonth || 0).toFixed(2)}€`}
+          value={`${(data.salesThisMonth || 0).toFixed(2)} FCFA`}
         />
         <KpiCard
           label="Panier moyen"
-          value={`${(data.averageOrderValue || 0).toFixed(2)}€`}
+          value={`${(data.averageOrderValue || 0).toFixed(2)} FCFA`}
           subValue={`${data.totalOrders || 0} commandes`}
         />
         <KpiCard
@@ -155,7 +155,7 @@ export function StatsTab({ stats: initialStats }: StatsTabProps) {
                 <YAxis
                   tick={{ fill: "var(--text-muted)", fontSize: 11 }}
                   axisLine={{ stroke: "var(--border)" }}
-                  tickFormatter={(value) => `${value}€`}
+                  tickFormatter={(value) => `${value} FCFA`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -163,7 +163,7 @@ export function StatsTab({ stats: initialStats }: StatsTabProps) {
                     border: "1px solid var(--border)",
                     borderRadius: "8px",
                   }}
-                  formatter={(value) => [`${Number(value).toFixed(2)}€`, "Revenu"]}
+                  formatter={(value) => [`${Number(value).toFixed(2)} FCFA`, "Revenu"]}
                 />
                 <Line
                   type="monotone"

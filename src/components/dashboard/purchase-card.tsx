@@ -60,7 +60,7 @@ export function PurchaseCard({ purchase, onRefundRequest }: PurchaseCardProps) {
           <p className="text-sm text-black/60">{totalItems} article(s)</p>
         </div>
         <div className="text-right">
-          <p className="font-bold">{purchase.total_amount.toFixed(2)}€</p>
+          <p className="font-bold">{purchase.total_amount.toFixed(2)} FCFA</p>
           <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}>
             {status.label}
           </span>
@@ -73,10 +73,10 @@ export function PurchaseCard({ purchase, onRefundRequest }: PurchaseCardProps) {
             {purchase.purchase_items.map((item) => (
               <div key={item.id} className="flex items-center justify-between text-sm">
                 <div>
-                  <p className="font-medium">{item.product.amount}€</p>
+                  <p className="font-medium">{item.product.amount} FCFA</p>
                   <p className="text-black/60">Qté: {item.quantity}</p>
                 </div>
-                <p className="font-medium">{(item.unit_price * item.quantity).toFixed(2)}€</p>
+                <p className="font-medium">{(item.unit_price * item.quantity).toFixed(2)} FCFA</p>
               </div>
             ))}
           </div>

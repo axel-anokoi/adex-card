@@ -58,7 +58,7 @@ export function TopProductsChart({
               type="number"
               tick={{ fill: "var(--text-muted)", fontSize: 11 }}
               axisLine={{ stroke: "var(--border)" }}
-              tickFormatter={(value) => `${value}€`}
+              tickFormatter={(value) => `${value} FCFA`}
             />
             <YAxis
               type="category"
@@ -73,7 +73,7 @@ export function TopProductsChart({
                 border: "1px solid var(--border)",
                 borderRadius: "8px",
               }}
-              formatter={(value: number) => [`${value.toFixed(2)}€`, "Revenu"]}
+              formatter={(value: number) => [`${value.toFixed(2)} FCFA`, "Revenu"]}
               labelStyle={{ color: "var(--text)" }}
             />
             <Bar

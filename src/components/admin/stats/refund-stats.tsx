@@ -33,7 +33,7 @@ export function RefundStats({ data, title = "Statistiques de remboursement" }: R
       <div className="grid gap-4 sm:grid-cols-3">
         <KpiCard
           label="Total remboursé"
-          value={`${(data.totalRefunded || 0).toFixed(2)}€`}
+          value={`${(data.totalRefunded || 0).toFixed(2)} FCFA`}
           subValue={`${data.refundCount || 0} demandes`}
         />
         <KpiCard

@@ -75,7 +75,7 @@ export function CategoryPieChart({
                 borderRadius: "8px",
               }}
               formatter={(value: number, name: string, props) => [
-                `${value.toFixed(2)}€ (${props.payload.percentage}%)`,
+                `${value.toFixed(2)} FCFA (${props.payload.percentage}%)`,
                 name,
               ]}
             />

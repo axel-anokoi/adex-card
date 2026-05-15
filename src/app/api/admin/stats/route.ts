@@ -160,7 +160,7 @@ export async function GET() {
     const topProductsMap: Record<string, { id: string; name: string; revenue: number; quantity: number }> = {};
     productSales?.forEach(item => {
       const prodId = item.product?.id;
-      const prodName = `${item.product?.category?.name || "Produit"} ${item.product?.amount}€`;
+      const prodName = `${item.product?.category?.name || "Produit"} ${item.product?.amount} FCFA`;
       if (!topProductsMap[prodId]) {
         topProductsMap[prodId] = { id: prodId, name: prodName, revenue: 0, quantity: 0 };
       }

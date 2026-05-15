@@ -102,34 +102,9 @@ interface RefundRequest {
   user?: { email: string };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface DiscountCode {
-  id: string;
-  code: string;
-  description?: string | null;
-  discount_type: "percentage" | "fixed_amount";
-  discount_value: number;
-  max_discount_amount?: number | null;
-  is_active: boolean;
-  uses_count: number;
-  max_uses?: number | null;
-  min_order_amount: number;
-  [key: string]: any;
-}
+import { DiscountCode } from "@/types/discounts";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface AuditLog {
-  id: string;
-  actor_id?: string | null;
-  action: string;
-  table_name: string;
-  record_id: string;
-  old_data?: Record<string, unknown> | null;
-  new_data?: Record<string, unknown> | null;
-  created_at: string;
-  ip_address?: string | null;
-  [key: string]: any;
-}
+import { AuditLog } from "@/types/audit";
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
@@ -185,7 +160,7 @@ export default function AdminPage() {
         if (statsData?.lowStock) {
           setStockAlerts(statsData.lowStock.map((p: { id: string; amount: number; stock_available: number; category: { name: string } }) => ({
             product_id: p.id,
-            product_label: `${p.category?.name || "Produit"} ${p.amount}€`,
+            product_label: `${p.category?.name || "Produit"} ${p.amount} FCFA`,
             category_name: p.category?.name || "",
             amount: p.amount,
             stock_available: p.stock_available,
@@ -333,12 +308,12 @@ const handleTabChange = (tab: string) => {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <KpiCard
                   label="Ventes aujourd'hui"
-                  value={`${(stats?.salesToday || 0).toFixed(2)}€`}
+                  value={`${(stats?.salesToday || 0).toFixed(2)} FCFA`}
                   subValue={`${stats?.transactionsTodayCount || 0} commandes`}
                 />
                 <KpiCard
                   label="Ventes du mois"
-                  value={`${(stats?.salesThisMonth || 0).toFixed(2)}€`}
+                  value={`${(stats?.salesThisMonth || 0).toFixed(2)} FCFA`}
                 />
                 <KpiCard
                   label="Total commandes"
@@ -395,7 +370,7 @@ const handleTabChange = (tab: string) => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium" style={{ color: "var(--text)" }}>{(activity.amount || 0).toFixed(2)}€</p>
+                        <p className="font-medium" style={{ color: "var(--text)" }}>{(activity.amount || 0).toFixed(2)} FCFA</p>
                         <span className={`text-xs ${
                           activity.status === "paid" ? "text-emerald-600" :
                           activity.status === "pending" ? "text-amber-600" : "text-red-600"

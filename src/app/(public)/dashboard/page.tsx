@@ -125,7 +125,7 @@ export default function DashboardPage() {
         </div>
         <div className="rounded-xl border border-black/10 bg-white p-4">
           <p className="text-sm text-black/60">Total dépensé</p>
-          <p className="text-2xl font-bold">{totalSpent.toFixed(2)}€</p>
+          <p className="text-2xl font-bold">{totalSpent.toFixed(2)} FCFA</p>
         </div>
         <div className="rounded-xl border border-black/10 bg-white p-4">
           <p className="text-sm text-black/60">Codes livrés</p>

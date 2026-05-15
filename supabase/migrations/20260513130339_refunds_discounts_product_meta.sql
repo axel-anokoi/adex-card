@@ -138,7 +138,7 @@ create table if not exists public.discount_codes (
   description         text,
   discount_type       discount_type not null,
   discount_value      numeric not null check (discount_value > 0),
-  -- Pour percentage : valeur max en devise (ex: max 20€ pour 30%)
+  -- Pour percentage : valeur max en devise (ex: max 20FCFA pour 30%)
   max_discount_amount numeric check (max_discount_amount > 0),
   -- Restrictions produit (null = valable sur tout)
   product_id          uuid references public.products(id) on delete set null,

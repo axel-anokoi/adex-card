@@ -5,7 +5,7 @@ import { useCart } from "@/context/CartContext";
 
 // FIFA CFA conversion
 const EUR_TO_FCFA = 655;
-const toFCFA = (eur: number) => (eur * EUR_TO_FCFA).toLocaleString("fr-FR");
+const toFCFA = (eur: number) => (eur).toLocaleString("fr-FR");
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
@@ -71,12 +71,16 @@ export default function CartPage() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex gap-4">
-                            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[var(--cyan-dim)] to-[var(--violet-dim)] border border-[var(--border)] flex items-center justify-center text-2xl">
-                              {item.image || "💳"}
+                            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[var(--cyan-dim)] to-[var(--violet-dim)] border border-[var(--border)] flex items-center justify-center text-2xl overflow-hidden">
+                              {typeof item.image === "string" && item.image.startsWith("http") ? (
+                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                              ) : (
+                                item.image || "💳"
+                              )}
                             </div>
                             <div>
                               <p className="font-bold text-inherit group-hover:text-cyan-400 transition-colors" style={{ color: "var(--text)" }}>{item.name}</p>
-                              <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{item.eur}€ · {toFCFA(item.eur)}FCFA</p>
+                              <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}> {toFCFA(item.eur)} FCFA</p>
                               <div className="mt-2 flex items-center gap-2">
                                 <button 
                                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -100,7 +104,7 @@ export default function CartPage() {
                               </div>
                             </div>
                           </div>
-                          <p className="text-lg font-bold" style={{ color: "var(--text)" }}>{(item.eur * item.quantity).toFixed(2)}€</p>
+                          <p className="text-lg font-bold" style={{ color: "var(--text)" }}>{(item.eur * item.quantity).toFixed(2)} FCFA</p>
                         </div>
                       </li>
                     ))}
@@ -122,15 +126,15 @@ export default function CartPage() {
                 <div className="space-y-3 text-sm relative z-10">
                   <div className="flex items-center justify-between py-2">
                     <span style={{ color: "var(--text-muted)" }}>Sous-total</span>
-                    <span className="font-semibold" style={{ color: "var(--text)" }}>{subtotal.toFixed(2)}€</span>
+                    <span className="font-semibold" style={{ color: "var(--text)" }}>{subtotal.toFixed(2)} FCFA</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
                     <span style={{ color: "var(--text-muted)" }}>Frais de service</span>
-                    <span className="font-semibold" style={{ color: "var(--text)" }}>{fees.toFixed(2)}€</span>
+                    <span className="font-semibold" style={{ color: "var(--text)" }}>{fees.toFixed(2)} FCFA</span>
                   </div>
                   <div className="mt-4 border-t border-[var(--border)] pt-4 flex items-center justify-between">
                     <span className="font-bold text-base" style={{ color: "var(--text)" }}>Total</span>
-<span className="text-2xl font-black text-gradient-cyan">{total.toFixed(2)}€</span>
+<span className="text-2xl font-black text-gradient-cyan">{total.toFixed(2)} FCFA</span>
                   </div>
                 </div>
 

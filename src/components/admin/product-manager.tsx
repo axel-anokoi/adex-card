@@ -253,7 +253,7 @@ const resetForm = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Montant (€)</label>
+              <label className="mb-1 block text-sm font-medium">Montant (FCFA)</label>
               <input
                 type="number"
                 value={formData.amount}
@@ -263,7 +263,7 @@ const resetForm = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Prix de vente (€)</label>
+              <label className="mb-1 block text-sm font-medium">Prix de vente (FCFA)</label>
               <input
                 type="number"
                 value={formData.sell_price}
@@ -273,7 +273,7 @@ const resetForm = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Prix d'achat (€)</label>
+              <label className="mb-1 block text-sm font-medium">Prix d'achat (FCFA)</label>
               <input
                 type="number"
                 value={formData.buy_price}
@@ -364,8 +364,8 @@ const resetForm = () => {
                     {product.is_active ? "Actif" : "Inactif"}
                   </span>
                 </div>
-                <p className="mt-2 text-2xl font-bold">{product.amount}€</p>
-                <p className="text-sm text-black/60">Vente: {product.sell_price}€ / Achat: {product.buy_price}€</p>
+                <p className="mt-2 text-2xl font-bold">{product.amount} FCFA</p>
+                <p className="text-sm text-black/60">Vente: {product.sell_price} FCFA / Achat: {product.buy_price} FCFA</p>
                 <p className="mt-1 text-sm">Stock: {product.stock_available}</p>
                 <div className="mt-3 flex gap-2">
                   <button onClick={() => handleEdit(product)} className="rounded-lg border border-black/20 px-2 py-1 text-xs hover:bg-black/5">Modifier</button>

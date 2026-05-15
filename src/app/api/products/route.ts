@@ -25,15 +25,16 @@ export async function GET(request: Request) {
 
     const supabase = await createClient();
 
-    let query = supabase
+let query = supabase
       .from("products")
       .select(`
         id,
-        category:category_id(slug, name),
+        category:category_id(slug, name, logo_url),
         amount,
         sell_price,
         stock_available,
-        is_active
+        is_active,
+        image_url
       `)
       .eq("is_active", true)
       .order("amount", { ascending: true })
@@ -45,24 +46,29 @@ export async function GET(request: Request) {
 
     const { data, error } = await query;
 
+    console.log("Products fetched:", { category, limit, count: data?.length || 0, error });
+
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Transform data to include generated name, image, and tag
+// Transform data to include generated name, image, and tag
     const transformedProducts = data.map((product: any) => {
       const catSlug = product.category?.slug || "unknown";
       const catName = product.category?.name || "Unknown";
+      const logoUrl = product.category?.logo_url;
       const eurAmount = product.sell_price;
+
+      console.log("Transforming product:", { id: product.id, catSlug, catName, eurAmount, logoUrl });
       
       return {
         id: product.id,
-        name: `Carte ${catName} ${eurAmount}€`,
+        name: `Carte ${catName} ${eurAmount} FCFA`,
         eur: eurAmount,
         amount: product.amount,
         cat: catSlug,
         tag: CATEGORY_TAGS[catSlug] || catName,
-        image: CATEGORY_ICONS[catSlug] || "💳",
+        image: product.image_url || logoUrl || CATEGORY_ICONS[catSlug] || "💳",
         stock_available: product.stock_available,
         is_active: product.is_active,
       };

@@ -176,7 +176,7 @@ const filteredCodes = codes.filter((c) => {
           >
             <option value="">Tous les produits</option>
             {products.map((p) => (
-              <option key={p.id} value={p.id}>{p.category?.name} {p.amount}€</option>
+              <option key={p.id} value={p.id}>{p.category?.name} {p.amount} FCFA</option>
             ))}
           </select>
         </div>
@@ -207,7 +207,7 @@ const filteredCodes = codes.filter((c) => {
               >
                 <option value="">Sélectionner...</option>
                 {products.map((p) => (
-                  <option key={p.id} value={p.id}>{p.category?.name} {p.amount}€</option>
+                  <option key={p.id} value={p.id}>{p.category?.name} {p.amount} FCFA</option>
                 ))}
               </select>
             </div>
@@ -223,7 +223,7 @@ const filteredCodes = codes.filter((c) => {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">Prix d&apos;achat (€)</label>
+                <label className="mb-1 block text-sm font-medium">Prix d&apos;achat (FCFA)</label>
                 <input
                   type="number"
                   value={formData.buy_price}
@@ -268,7 +268,7 @@ const filteredCodes = codes.filter((c) => {
           {filteredCodes.map((code) => (
             <div key={code.id} className={`rounded-lg border p-3 ${code.status === "available" ? "border-black/10 bg-white" : "border-black/5 bg-black/5"}`}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium">{code.product?.category?.name} {code.product?.amount}€</span>
+                <span className="text-xs font-medium">{code.product?.category?.name} {code.product?.amount} FCFA</span>
                 <span className={`rounded-full px-2 py-0.5 text-xs ${
                   code.status === "available" ? "bg-emerald-100 text-emerald-700" :
                   code.status === "sold" ? "bg-blue-100 text-blue-700" :

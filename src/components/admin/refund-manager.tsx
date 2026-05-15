@@ -93,7 +93,7 @@ export function RefundManager({ refunds, onApprove, onReject, onProcess }: Refun
                         {statusInfo.label}
                       </span>
                       {refund.amount && (
-                        <span className="text-sm font-medium">{refund.amount.toFixed(2)}€</span>
+                        <span className="text-sm font-medium">{refund.amount.toFixed(2)} FCFA</span>
                       )}
                     </div>
                     <p className="mt-2 text-sm text-black/80">{refund.reason}</p>

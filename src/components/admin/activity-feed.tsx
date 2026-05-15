@@ -72,7 +72,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
               </div>
               <div className="text-right">
                 {activity.amount !== null && (
-                  <p className="text-sm font-medium">{activity.amount.toFixed(2)}€</p>
+                  <p className="text-sm font-medium">{activity.amount.toFixed(2)} FCFA</p>
                 )}
                 <p className="text-xs text-black/40">
                   {new Date(activity.occurred_at).toLocaleDateString("fr-FR", {

@@ -82,10 +82,16 @@ create table if not exists public.gift_codes (
 -- Purchases
 create table if not exists public.purchases (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.users(id),
+  user_id uuid references public.users(id),
   stripe_session_id text unique,
   total_amount numeric not null check (total_amount >= 0),
   status purchase_status not null default 'pending',
+  payment_method text,
+  customer_name text,
+  customer_phone text,
+  customer_email text,
+  total_cost numeric default 0,
+  total_profit numeric default 0,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
@@ -95,9 +101,11 @@ create table if not exists public.purchase_items (
   id uuid primary key default gen_random_uuid(),
   purchase_id uuid not null references public.purchases(id) on delete cascade,
   product_id uuid not null references public.products(id),
+  category_id uuid not null references public.categories(id),
   gift_code_id uuid references public.gift_codes(id),
   quantity integer not null check (quantity > 0),
   unit_price numeric not null check (unit_price >= 0),
+  unit_cost numeric not null check (unit_cost >= 0),
   total_price numeric not null check (total_price >= 0),
   created_at timestamp with time zone default now()
 );

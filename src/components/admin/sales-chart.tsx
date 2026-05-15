@@ -40,7 +40,7 @@ export function SalesChart({ data }: SalesChartProps) {
 {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white group-hover:block">
                   <p className="font-medium">{date.toLocaleDateString("fr-FR")}</p>
-                  <p className="text-cyan">{item.net_revenue.toFixed(2)}€</p>
+                  <p className="text-cyan">{item.net_revenue.toFixed(2)} FCFA</p>
                   <p className="text-black/60">{item.orders_count} commandes</p>
                 </div>
               </div>

@@ -1,38 +1,12 @@
 "use client";
 
-import { ProductModal } from "@/components/products/ProductModal";
+import CategoriesSection from "@/components/categories/categorie-section";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useCart } from "@/context/CartContext";
 
-// FIFA CFA conversion
+// FCFA conversion
 const EUR_TO_FCFA = 655;
-const toFCFA = (eur: number) => (eur * EUR_TO_FCFA).toLocaleString("fr-FR");
-
-// ─────────────────────────────────────────
-//  TYPES
-// ─────────────────────────────────────────
-
-interface Product {
-  id: string;
-  name: string;
-  eur: number;
-  amount: number;
-  cat: string;
-  tag: string;
-  image: string;
-  stock_available?: number;
-  is_active?: boolean;
-}
-
-interface CategoryInfo {
-  slug: string;
-  name: string;
-  icon: string;
-  desc: string;
-  cssClass: string;
-  count: string;
-}
+const toFCFA = (eur: number) => (eur).toLocaleString("fr-FR");
 
 // ─────────────────────────────────────────
 //  DATA
@@ -113,24 +87,24 @@ const categories = [
 
 const productsByCategory: Record<string, { id: string; name: string; eur: number; tag: string; image: string }[]> = {
   playstation: [
-    { id: "psn-10", name: "Carte PSN US 10€",  eur: 10, tag: "Instantané",  image: "🎮" },
-    { id: "psn-20", name: "Carte PSN US 20€",  eur: 20, tag: "Best seller", image: "🎮" },
-    { id: "psn-50", name: "Carte PSN US 50€",  eur: 50, tag: "Top up",      image: "🎮" },
+    { id: "psn-10", name: "Carte PSN US 10FCFA",  eur: 10, tag: "Instantané",  image: "🎮" },
+    { id: "psn-20", name: "Carte PSN US 20FCFA",  eur: 20, tag: "Best seller", image: "🎮" },
+    { id: "psn-50", name: "Carte PSN US 50FCFA",  eur: 50, tag: "Top up",      image: "🎮" },
   ],
   xbox: [
-    { id: "xbox-10", name: "Xbox Gift Card 10€", eur: 10, tag: "Game Pass",  image: "🎯" },
-    { id: "xbox-25", name: "Xbox Gift Card 25€", eur: 25, tag: "Populaire",  image: "🎯" },
-    { id: "xbox-50", name: "Xbox Gift Card 50€", eur: 50, tag: "Top up",     image: "🎯" },
+    { id: "xbox-10", name: "Xbox Gift Card 10FCFA", eur: 10, tag: "Game Pass",  image: "🎯" },
+    { id: "xbox-25", name: "Xbox Gift Card 25FCFA", eur: 25, tag: "Populaire",  image: "🎯" },
+    { id: "xbox-50", name: "Xbox Gift Card 50FCFA", eur: 50, tag: "Top up",     image: "🎯" },
   ],
   nintendo: [
-    { id: "nin-10", name: "Nintendo eShop 10€", eur: 10, tag: "Switch",  image: "🍄" },
-    { id: "nin-20", name: "Nintendo eShop 20€", eur: 20, tag: "NSO",     image: "🍄" },
-    { id: "nin-35", name: "Nintendo eShop 35€", eur: 35, tag: "Famille", image: "🍄" },
+    { id: "nin-10", name: "Nintendo eShop 10FCFA", eur: 10, tag: "Switch",  image: "🍄" },
+    { id: "nin-20", name: "Nintendo eShop 20FCFA", eur: 20, tag: "NSO",     image: "🍄" },
+    { id: "nin-35", name: "Nintendo eShop 35FCFA", eur: 35, tag: "Famille", image: "🍄" },
   ],
   apple: [
-    { id: "app-5",  name: "iTunes/App Store 5€",  eur: 5,  tag: "Starter",  image: "🍎" },
-    { id: "app-10", name: "iTunes/App Store 10€", eur: 10, tag: "Populaire", image: "🍎" },
-    { id: "app-25", name: "iTunes/App Store 25€", eur: 25, tag: "Premium",   image: "🍎" },
+    { id: "app-5",  name: "iTunes/App Store 5FCFA",  eur: 5,  tag: "Starter",  image: "🍎" },
+    { id: "app-10", name: "iTunes/App Store 10FCFA", eur: 10, tag: "Populaire", image: "🍎" },
+    { id: "app-25", name: "iTunes/App Store 25FCFA", eur: 25, tag: "Premium",   image: "🍎" },
   ],
 };
 
@@ -141,9 +115,9 @@ const steps = [
 ];
 
 const testimonials = [
-  { name: "Kouamé A.", city: "Abidjan", initials: "K", color: "#2563eb", rating: 5, text: "Incroyable ! J'ai reçu mon code PSN en moins d'une minute. Le paiement Djamo est super pratique. Je recommande à 100% !", product: "PSN 20€" },
-  { name: "Fatou D.",  city: "Bouaké",  initials: "F", color: "#7c3aed", rating: 5, text: "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci AdexCard !", product: "iTunes 10€" },
-  { name: "Yves K.",   city: "Abidjan", initials: "Y", color: "#16a34a", rating: 5, text: "Le meilleur site pour acheter des cartes gaming en Côte d'Ivoire. Prix corrects et livraison ultra rapide. Mon go-to !", product: "Xbox 25€" },
+  { name: "Kouamé A.", city: "Abidjan", initials: "K", color: "#2563eb", rating: 5, text: "Incroyable ! J'ai reçu mon code PSN en moins d'une minute. Le paiement Djamo est super pratique. Je recommande à 100% !", product: "PSN 20FCFA" },
+  { name: "Fatou D.",  city: "Bouaké",  initials: "F", color: "#7c3aed", rating: 5, text: "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci AdexCard !", product: "iTunes 10FCFA" },
+  { name: "Yves K.",   city: "Abidjan", initials: "Y", color: "#16a34a", rating: 5, text: "Le meilleur site pour acheter des cartes gaming en Côte d'Ivoire. Prix corrects et livraison ultra rapide. Mon go-to !", product: "Xbox 25FCFA" },
 ];
 
 const stats = [
@@ -215,7 +189,7 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
           <div
             ref={shineRef}
             style={{
-              position: "absolute", inset: 0, zIndex: 3, borderRadius: 24,
+              position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", borderRadius: 24,
               background: "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 60%)",
               transition: "background 0.05s",
             }}
@@ -258,14 +232,14 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
                       transition: "all 0.2s",
                     }}
                   >
-                    {a}€
+                    {a} FCFA
                   </button>
                 ))}
               </div>
 
               <div style={{ fontSize: 22, fontWeight: 800 }}>
                 <span style={{ background: "linear-gradient(135deg,#00ffe0,#7b2fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                  {amt}€
+                  {amt} FCFA
                 </span>
                 <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginLeft: 8, WebkitTextFillColor: "rgba(255,255,255,0.4)" }}>
                   → {toFCFA(amt)} FCFA
@@ -319,109 +293,6 @@ function HeroCard({ platform }: { platform: typeof platforms[0] }) {
 }
 
 // ─────────────────────────────────────────
-//  WAVE BACKGROUND
-// ─────────────────────────────────────────
-
-function WaveBackground({ color }: { color: string }) {
-  // Parse the hex color to create variations
-  const waveColor = color || "#00ffe0";
-  
-  return (
-    <div className="wave-wrapper" style={{ position: "absolute", bottom: 0, left: 0, right: 0, overflow: "hidden", pointerEvents: "none" }}>
-      {/* Back wave layer */}
-      <svg
-        className="wave-svg wave-back"
-        viewBox="0 0 1200 200"
-        preserveAspectRatio="none"
-        style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "140px" }}
-      >
-        <path
-          fill={waveColor}
-          fillOpacity="0.15"
-          d="M0,100 C300,150 600,50 900,100 C1200,150 1200,150 1200,150 L1200,200 L0,200 Z"
-        />
-      </svg>
-      
-      {/* Middle wave layer */}
-      <svg
-        className="wave-svg wave-middle"
-        viewBox="0 0 1200 180"
-        preserveAspectRatio="none"
-        style={{ position: "absolute", bottom: "-20px", left: 0, width: "100%", height: "120px" }}
-      >
-        <path
-          fill={waveColor}
-          fillOpacity="0.25"
-          d="M0,80 C200,130 500,30 800,80 C1100,130 1200,100 1200,100 L1200,180 L0,180 Z"
-        />
-      </svg>
-      
-      {/* Front wave layer */}
-      <svg
-        className="wave-svg wave-front"
-        viewBox="0 0 1200 150"
-        preserveAspectRatio="none"
-        style={{ position: "absolute", bottom: "-10px", left: "-5%", width: "110%", height: "90px" }}
-      >
-        <path
-          fill={waveColor}
-          fillOpacity="0.4"
-          d="M0,60 C150,100 400,20 650,60 C900,100 1150,40 1200,60 L1200,90 L0,90 Z"
-        />
-      </svg>
-      
-      {/* Bottom glow */}
-      <div
-        className="wave-glow"
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "120px",
-          background: `linear-gradient(to top, ${waveColor}20, transparent)`,
-          filter: "blur(30px)",
-        }}
-      />
-
-      <style>{`
-        .wave-wrapper {
-          z-index: 1;
-        }
-        .wave-svg path {
-          animation: waveAnim 12s ease-in-out infinite;
-        }
-        .wave-back path {
-          animation-duration: 14s;
-          animation-delay: 0s;
-        }
-        .wave-middle path {
-          animation-duration: 10s;
-          animation-delay: -3s;
-        }
-        .wave-front path {
-          animation-duration: 7s;
-          animation-delay: -5s;
-        }
-        @keyframes waveAnim {
-          0%, 100% { transform: translateX(0) translateY(0); }
-          25% { transform: translateX(20px) translateY(5px); }
-          50% { transform: translateX(0) translateY(10px); }
-          75% { transform: translateX(-20px) translateY(5px); }
-        }
-        .wave-glow {
-          animation: glowPulse 4s ease-in-out infinite;
-        }
-        @keyframes glowPulse {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────
 //  HERO CAROUSEL
 // ─────────────────────────────────────────
 
@@ -445,28 +316,11 @@ function HeroCarousel() {
 
   const p = platforms[idx];
 
-// Extract the main color from glowColor (convert rgba to hex for wave)
-  const parseRgbaToHex = (rgba: string) => {
-    const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-    if (match) {
-      const r = parseInt(match[1], 10);
-      const g = parseInt(match[2], 10);
-      const b = parseInt(match[3], 10);
-      return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-    }
-    return "#00ffe0";
-  };
-  const platformColor = parseRgbaToHex(p.glowColor);
-
-  // alert(platformColor);
-
   return (
     <section
       className="hero-section"
       style={{ background: "var(--bg)", position: "relative", overflow: "hidden" }}
     >
-      {/* Animated wave background at bottom */}
-      <WaveBackground color={platformColor} />
       <div className="hero-inner">
 
         {/* Left text */}
@@ -815,289 +669,6 @@ function FeaturesSection() {
 }
 
 
-
-// Amélioration du composant ProductCard pour le mode light
-function ProductCard({ product, index, onProductClick }: { product: { id: string; name: string; eur: number; tag: string; image: string; cat: string }; index: number; onProductClick: (product: any) => void; }) {
-  const { addToCart } = useCart();
-  const [added, setAdded] = useState(false);
-
-  const handleAdd = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addToCart(product);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  };
-
-  const getCategoryClass = (cat: string) => {
-    switch(cat) {
-      case 'psn': return 'psn';
-      case 'xbox': return 'xbox';
-      case 'nintendo': return 'nintendo';
-      case 'apple': return 'apple';
-      default: return '';
-    }
-  };
-
-return (
-<div 
-      className={`prod-card ${getCategoryClass(product.cat)}`}
-      style={{ animationDelay: `${index * 0.04}s` }}
-      onClick={() => onProductClick(product)}
-    >
-
-      <div className="prod-media">
-        <span className="prod-icon">{product.image}</span>
-      </div>
-      
-      <div className="prod-badge">
-        {product.tag}
-      </div>
-      
-      <div className="prod-name">{product.name}</div>
-      
-      <div className="prod-price-row">
-        <span className="prod-eur">{product.eur}€</span>
-        <span className="prod-fcfa">
-          {toFCFA(product.eur)}<br />FCFA
-        </span>
-      </div>
-      
-      <button
-        className={`prod-btn ${added ? 'btn-added' : ''}`}
-        onClick={handleAdd}
-      >
-        {added ? (
-          <span className="btn-content">
-            <span className="btn-icon">✓</span> Ajouté !
-          </span>
-        ) : (
-          <span className="btn-content">
-            <span className="btn-icon">+</span> Ajouter au panier
-          </span>
-        )}
-      </button>
-    </div>
-  );
-}
-function CategoriesSection() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  // Fetch products from API
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await fetch("/api/products");
-        const data = await res.json();
-        if (data.data) {
-          setProducts(data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
-  }, []);
-
-  // Fonction pour ajouter au panier depuis le modal
-  const { addToCart } = useCart();
-
-  const handleAddToCart = (product: Product) => {
-    addToCart(product);
-  };
-
-  const toggle = (slug: string) => {
-    setSelected(prev =>
-      prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
-    );
-  };
-
-  const clearFilters = () => setSelected([]);
-
-  // Flatten products with category info from API
-  const allProducts = products.map(p => ({ ...p }));
-
-  const visible = selected.length === 0
-    ? allProducts
-    : allProducts.filter(p => selected.includes(p.cat));
-
-  return (
-    <section className="section-container">
-      <p className="section-label">Catalogue</p>
-      <div className="section-header-row">
-        <h2 className="section-title">Tous les produits</h2>
-        <Link href="/shop" className="see-all-link">Voir tout →</Link>
-      </div>
-
-      {/* Filter chips */}
-      <div className="filter-chips">
-        <button
-          onClick={clearFilters}
-          className={`chip chip-all ${selected.length === 0 ? "active" : ""}`}
-        >
-          ✦ Tous
-        </button>
-        {categories.map(cat => (
-          <button
-            key={cat.slug}
-            onClick={() => toggle(cat.slug)}
-            className={`chip chip-${cat.slug} ${selected.includes(cat.slug) ? "active" : ""}`}
-          >
-            <span className="chip-dot" />
-            {cat.icon} {cat.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Results bar */}
-      <div className="results-bar">
-        <span className="results-count">{visible.length} produit{visible.length > 1 ? "s" : ""}</span>
-        {selected.length > 0 && (
-          <button onClick={clearFilters} className="clear-btn">Tout effacer ✕</button>
-        )}
-      </div>
-
-      {/* Product grid */}
-      <div className="products-grid">
-        {visible.map((p, i) => (
-          <ProductCard 
-            key={p.id} 
-            product={p} 
-            index={i} 
-            onProductClick={setSelectedProduct}
-          />
-        ))}
-      </div>
-
-      {/* Modal */}
-      {selectedProduct && (
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onAddToCart={handleAddToCart}
-        />
-      )}
-
-      <style>{`
-        /* ── Filter chips ── */
-        .filter-chips {
-          display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
-        }
-        .chip {
-          display: flex; align-items: center; gap: 6px;
-          padding: 7px 13px; border-radius: 999px;
-          border: 1px solid var(--border);
-          background: rgba(255,255,255,0.04);
-          color: var(--text-muted); font-size: 12px; font-weight: 600;
-          cursor: pointer; transition: all 0.2s; user-select: none;
-          -webkit-tap-highlight-color: transparent;
-        }
-        .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-        .chip.active, .chip-all.active {
-          border-color: var(--border-cyan); background: rgba(0,255,224,0.1);
-          color: var(--cyan); box-shadow: 0 0 12px var(--cyan-glow);
-        }
-        .chip-all.active {
-          background: rgba(123,47,255,0.15); border-color: rgba(123,47,255,0.4);
-          color: #b98aff; box-shadow: 0 0 12px rgba(123,47,255,0.2);
-        }
-        /* Results bar */
-        .results-bar {
-          display: flex; justify-content: space-between; align-items: center;
-          margin-bottom: 14px;
-        }
-        .results-count { font-size: 12px; color: var(--text-muted); }
-        .clear-btn {
-          font-size: 12px; color: var(--cyan); background: none;
-          border: none; cursor: pointer; padding: 0;
-        }
-        /* Product grid — 2 cols mobile/tablet */
-        .products-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
-        }
-        @media (min-width: 768px) {
-          .products-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
-        }
-        @media (min-width: 1024px) {
-          .products-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
-        }
-        /* Product card */
-        .prod-card {
-          border-radius: 16px; border: 1px solid var(--border);
-          padding: 14px; position: relative; overflow: hidden;
-          transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-          cursor: pointer; animation: prodFadeIn 0.25s ease both;
-        }
-        .prod-card:hover { transform: translateY(-3px); }
-        .prod-card.psn    { background: linear-gradient(145deg, #000d2e, #071840); border-color: rgba(0,112,204,0.3); }
-        .prod-card.xbox   { background: linear-gradient(145deg, #001400, #081e08); border-color: rgba(82,176,67,0.3); }
-        .prod-card.nintendo { background: linear-gradient(145deg, #200003, #3a0005); border-color: rgba(228,0,15,0.3); }
-        .prod-card.apple  { background: linear-gradient(145deg, #111111, #1e1e1e); border-color: rgba(180,180,180,0.2); }
-        .prod-card::after {
-          content: ''; position: absolute; bottom: 0; left: 0; right: 0;
-          height: 1px; opacity: 0.5;
-        }
-        .prod-card.psn::after    { background: linear-gradient(90deg, transparent, #0070cc, transparent); }
-        .prod-card.xbox::after   { background: linear-gradient(90deg, transparent, #52b043, transparent); }
-        .prod-card.nintendo::after { background: linear-gradient(90deg, transparent, #e4000f, transparent); }
-        .prod-card.apple::after  { background: linear-gradient(90deg, transparent, #b4b4b4, transparent); }
-        /* Card media */
-        .prod-media {
-          width: 100%; aspect-ratio: 1.6; border-radius: 10px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 28px; margin-bottom: 10px; border: 1px solid var(--border);
-        }
-        .prod-card.psn .prod-media    { background: radial-gradient(circle at 30% 30%, rgba(0,112,204,0.3), rgba(0,13,46,0.8)); }
-        .prod-card.xbox .prod-media   { background: radial-gradient(circle at 30% 30%, rgba(82,176,67,0.25), rgba(0,20,0,0.8)); }
-        .prod-card.nintendo .prod-media { background: radial-gradient(circle at 30% 30%, rgba(228,0,15,0.25), rgba(32,0,3,0.8)); }
-        .prod-card.apple .prod-media  { background: radial-gradient(circle at 30% 30%, rgba(180,180,180,0.2), rgba(17,17,17,0.9)); }
-        /* Badge */
-        .prod-badge {
-          display: inline-block; font-size: 9px; font-weight: 700;
-          letter-spacing: 0.06em; padding: 3px 7px; border-radius: 999px;
-          margin-bottom: 6px; text-transform: uppercase;
-        }
-        .prod-card.psn .prod-badge    { background: rgba(0,112,204,0.2); color: rgba(100,180,255,0.9); border: 1px solid rgba(0,112,204,0.35); }
-        .prod-card.xbox .prod-badge   { background: rgba(82,176,67,0.15); color: rgba(130,220,100,0.9); border: 1px solid rgba(82,176,67,0.35); }
-        .prod-card.nintendo .prod-badge { background: rgba(228,0,15,0.15); color: rgba(255,100,100,0.9); border: 1px solid rgba(228,0,15,0.35); }
-        .prod-card.apple .prod-badge  { background: rgba(180,180,180,0.12); color: rgba(210,210,210,0.9); border: 1px solid rgba(180,180,180,0.3); }
-        /* Name & price */
-        .prod-name { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px; line-height: 1.3; }
-        .prod-price-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
-        .prod-eur {
-          font-size: 16px; font-weight: 800;
-          background: linear-gradient(135deg, #00ffe0, #7b2fff);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .prod-fcfa { font-size: 9px; color: var(--text-muted); line-height: 1.4; text-align: right; }
-        /* Add button */
-        .prod-btn {
-          width: 100%; padding: 8px 0; border-radius: 9px; font-size: 11px; font-weight: 700;
-          letter-spacing: 0.03em; border: 1px solid var(--border-cyan);
-          background: rgba(0,255,224,0.08); color: var(--cyan); cursor: pointer;
-          transition: all 0.2s;
-        }
-        .prod-btn:hover { background: rgba(0,255,224,0.15); box-shadow: 0 0 14px var(--cyan-glow); }
-        @keyframes prodFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        /* Section header */
-        .section-header-row {
-          display: flex; justify-content: space-between; align-items: flex-end;
-          margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
-        }
-        .see-all-link { color: var(--cyan); font-size: 14px; font-weight: 500; text-decoration: none; white-space: nowrap; }
-      `}</style>
-    </section>
-  );
-}
 function StepsSection() {
   return (
     <section className="section-container">

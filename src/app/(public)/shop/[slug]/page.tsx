@@ -52,7 +52,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           
           <h1 
             className="glitch-heading" 
-            data-text={`${product.amount}€`}
+            data-text={`${product.amount} FCFA`}
             style={{ 
               fontSize: "clamp(2.5rem, 6vw, 4rem)", 
               fontWeight: 800, 
@@ -62,7 +62,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               fontFamily: "var(--font-display)" 
             }}
           >
-            {product.amount}€
+            {product.amount} FCFA
           </h1>
 
           <p className="text-white/60 text-lg max-w-2xl leading-relaxed mb-8">
@@ -73,11 +73,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-10">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:border-cyan/50 group">
               <p className="text-xs text-white/40 uppercase tracking-wider font-bold mb-2 group-hover:text-cyan/70">Montant</p>
-              <p className="text-2xl font-bold text-white">{product.amount}€</p>
+              <p className="text-2xl font-bold text-white">{product.amount} FCFA</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:border-cyan/50 group">
               <p className="text-xs text-white/40 uppercase tracking-wider font-bold mb-2 group-hover:text-cyan/70">Prix</p>
-              <p className="text-2xl font-bold text-white">{product.sell_price.toFixed(2)}€</p>
+              <p className="text-2xl font-bold text-white">{product.sell_price.toFixed(2)} FCFA</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:border-cyan/50 group">
               <p className="text-xs text-white/40 uppercase tracking-wider font-bold mb-2 group-hover:text-cyan/70">Stock</p>

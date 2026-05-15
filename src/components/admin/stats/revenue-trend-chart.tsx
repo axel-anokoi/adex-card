@@ -62,7 +62,7 @@ export function RevenueTrendChart({ data, title = "Revenus quotidiens (30 dernie
             <YAxis
               tick={{ fill: "var(--text-muted)", fontSize: 11 }}
               axisLine={{ stroke: "var(--border)" }}
-              tickFormatter={(value) => `${value}€`}
+              tickFormatter={(value) => `${value} FCFA`}
             />
             <Tooltip
               contentStyle={{
@@ -71,7 +71,7 @@ export function RevenueTrendChart({ data, title = "Revenus quotidiens (30 dernie
                 borderRadius: "8px",
               }}
               labelStyle={{ color: "var(--text)" }}
-              formatter={(value: number) => [`${value.toFixed(2)}€`, "Revenu"]}
+              formatter={(value: number) => [`${value.toFixed(2)} FCFA`, "Revenu"]}
             />
             <Area
               type="monotone"

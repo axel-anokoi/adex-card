@@ -55,7 +55,7 @@ export function HourlyHeatmap({
                 background: getHeatColor(data[hour]),
                 border: "1px solid var(--border)",
               }}
-              title={`${formatHour(hour)}: ${data[hour].toFixed(2)}€`}
+              title={`${formatHour(hour)}: ${data[hour].toFixed(2)} FCFA`}
             />
             {hour % 4 === 0 && (
               <span
