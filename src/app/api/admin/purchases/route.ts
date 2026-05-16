@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 async function checkAdmin() {
@@ -8,7 +8,7 @@ async function checkAdmin() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { isAdmin: false, user: null, supabase: null };
+    return { isAdmin: false, user: null, supabase };
   }
 
   const { data: userData } = await supabase
@@ -94,8 +94,9 @@ export async function GET(request: Request) {
 
       if (!purchase.total_cost) {
         const items = purchase.purchase_items || [];
-        totalBuyCost = items.reduce((sum: number, item: { quantity: number; unit_cost?: number; product: { buy_price?: number } | null }) => {
-          return sum + (item.unit_cost ?? item.product?.buy_price ?? 0) * item.quantity;
+        totalBuyCost = (items as any[]).reduce((sum: number, item: any) => {
+          const product = Array.isArray(item.product) ? item.product[0] : item.product;
+          return sum + (item.unit_cost ?? product?.buy_price ?? 0) * item.quantity;
         }, 0);
         profit = purchase.total_amount - totalBuyCost;
       }

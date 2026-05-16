@@ -2,6 +2,42 @@
 -- Durcissement RLS:
 -- - Empêcher un client de modifier role/is_blocked sur son profil
 -- - Rendre explicites les droits purchase_items (lecture client owner, écriture admin)
+-- - Fix récursion infinie: is_admin() doit être SECURITY DEFINER pour bypasser RLS sur public.users
+
+-- Recréer is_admin() avec SECURITY DEFINER pour éviter la récursion infinie.
+-- Sans ça: is_admin() → SELECT users → déclenche users_admin_all → appelle is_admin() → boucle.
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.users u
+    where u.id = auth.uid()
+      and u.role = 'admin'
+      and u.is_blocked = false
+  );
+$$;
+
+-- GIFT_CODES: permettre au client de lire ses propres codes via ses purchase_items
+drop policy if exists "gift_codes_read_own" on public.gift_codes;
+create policy "gift_codes_read_own"
+on public.gift_codes
+for select
+to authenticated
+using (
+  public.is_admin()
+  or exists (
+    select 1
+    from public.purchase_items pi
+    join public.purchases p on p.id = pi.purchase_id
+    where pi.gift_code_id = gift_codes.id
+      and p.user_id = auth.uid()
+  )
+);
 
 -- USERS: remplace la policy update self pour empêcher l'escalade de privilèges
 drop policy if exists "users_update_self" on public.users;

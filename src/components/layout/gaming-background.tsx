@@ -19,8 +19,8 @@ export function GamingBackground() {
 
     // ── Resize ──
     function resize() {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
+      W = canvas!.width = window.innerWidth;
+      H = canvas!.height = window.innerHeight;
     }
     resize();
     window.addEventListener("resize", resize);

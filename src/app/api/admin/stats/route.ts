@@ -135,8 +135,10 @@ export async function GET() {
       .gte("created_at", twelveMonthsAgo.toISOString());
     
     const categoryMap: Record<string, { name: string; value: number; count: number }> = {};
-    categorySales?.forEach(item => {
-      const catName = item.product?.category?.name || "Autre";
+    categorySales?.forEach((item: any) => {
+      const product = Array.isArray(item.product) ? item.product[0] : item.product;
+      const category = Array.isArray(product?.category) ? product?.category[0] : product?.category;
+      const catName = category?.name || "Autre";
       if (!categoryMap[catName]) {
         categoryMap[catName] = { name: catName, value: 0, count: 0 };
       }
@@ -158,9 +160,11 @@ export async function GET() {
       .limit(10);
     
     const topProductsMap: Record<string, { id: string; name: string; revenue: number; quantity: number }> = {};
-    productSales?.forEach(item => {
-      const prodId = item.product?.id;
-      const prodName = `${item.product?.category?.name || "Produit"} ${item.product?.amount} FCFA`;
+    productSales?.forEach((item: any) => {
+      const product = Array.isArray(item.product) ? item.product[0] : item.product;
+      const category = Array.isArray(product?.category) ? product?.category[0] : product?.category;
+      const prodId = product?.id;
+      const prodName = `${category?.name || "Produit"} ${product?.amount} FCFA`;
       if (!topProductsMap[prodId]) {
         topProductsMap[prodId] = { id: prodId, name: prodName, revenue: 0, quantity: 0 };
       }

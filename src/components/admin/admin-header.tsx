@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AdminHeaderProps {
   title: string;
@@ -34,6 +36,9 @@ export function AdminHeader({
   const [searchOpen, setSearchOpen]   = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen]     = useState(false);
+  const [signingOut, setSigningOut]   = useState(false);
+  const router = useRouter();
+  const { user, profile, supabase } = useAuth();
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef   = useRef<HTMLDivElement>(null);
   const searchRef  = useRef<HTMLDivElement>(null);
@@ -49,6 +54,7 @@ export function AdminHeader({
   }, []);
 
   const displayInfo = tabLabels[title] || { label: title, subtitle: subtitle || "" };
+  const adminEmail = profile?.email || user?.email || "admin@AdexCard.ci";
 
   const iconBtn = (active: boolean) => ({
     background: active
@@ -57,6 +63,31 @@ export function AdminHeader({
     border: `1px solid ${active ? "var(--border-cyan)" : "var(--border)"}`,
     color: active ? "var(--cyan)" : "var(--text-muted)",
   });
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+
+    setSigningOut(true);
+
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Logout failed");
+      }
+
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Logout error:", error);
+      await supabase.auth.signOut();
+    } finally {
+      setProfileOpen(false);
+      router.replace("/");
+      router.refresh();
+      setSigningOut(false);
+    }
+  };
 
   return (
     <header
@@ -231,7 +262,7 @@ export function AdminHeader({
             >
               <div className="border-b p-3" style={{ borderColor: "var(--border)" }}>
                 <p className="font-medium" style={{ color: "var(--text)" }}>Administrateur</p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>admin@AdexCard.ci</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>{adminEmail}</p>
               </div>
               <div className="p-1.5">
                 {[
@@ -253,8 +284,11 @@ export function AdminHeader({
                 ))}
                 <div className="my-1 border-t" style={{ borderColor: "var(--border)" }} />
                 <button
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={signingOut}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all"
-                  style={{ color: "var(--pink)" }}
+                  style={{ color: "var(--pink)", cursor: signingOut ? "wait" : "pointer" }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "color-mix(in srgb, var(--pink) 10%, transparent)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >

@@ -73,7 +73,7 @@ export function TopProductsChart({
                 border: "1px solid var(--border)",
                 borderRadius: "8px",
               }}
-              formatter={(value: number) => [`${value.toFixed(2)} FCFA`, "Revenu"]}
+              formatter={(value) => [`${Number(value ?? 0).toFixed(2)} FCFA`, "Revenu"]}
               labelStyle={{ color: "var(--text)" }}
             />
             <Bar

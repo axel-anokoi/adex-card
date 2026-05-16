@@ -71,7 +71,7 @@ export function RevenueTrendChart({ data, title = "Revenus quotidiens (30 dernie
                 borderRadius: "8px",
               }}
               labelStyle={{ color: "var(--text)" }}
-              formatter={(value: number) => [`${value.toFixed(2)} FCFA`, "Revenu"]}
+              formatter={(value) => [`${Number(value ?? 0).toFixed(2)} FCFA`, "Revenu"]}
             />
             <Area
               type="monotone"

@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 async function checkAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { isAdmin: false, supabase: null };
+  if (!user) return { isAdmin: false, supabase };
   const { data: userData } = await supabase.from("users").select("role").eq("id", user.id).single();
   return { isAdmin: userData?.role === "admin", supabase };
 }

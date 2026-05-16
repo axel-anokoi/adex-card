@@ -17,7 +17,7 @@ interface Product {
   cat: string;
   tag: string;
   image: string;
-  stock_available: boolean;
+  stock_available: number;
   is_active: boolean;
 }
 

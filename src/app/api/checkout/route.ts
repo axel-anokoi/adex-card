@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendMail } from "@/lib/mail";
+import crypto from "crypto";
 
 const checkoutSchema = z.object({
   items: z
@@ -21,6 +23,7 @@ const checkoutSchema = z.object({
     phone: z.string().min(1),
     email: z.string().email().optional().or(z.literal("")),
   }),
+  createAccountConsent: z.boolean().optional(),
   promo: z
     .object({ code: z.string(), discount: z.number() })
     .nullable()
@@ -47,18 +50,98 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, paymentMethod, customer, promo } = parsed.data;
+    const { items, paymentMethod, customer, promo, createAccountConsent } = parsed.data;
     const supabase = await createClient();
+    let checkoutClient = supabase;
+    let implicitAccountCreated = false;
+    let activationLink: string | null = null;
 
     // Authentication required — sold_to_user_id NOT NULL constraint on gift_codes
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
+    let checkoutUserId = user?.id;
+
+    if (!checkoutUserId) {
+      if (!customer.email) {
+        return NextResponse.json(
+          { error: "Une adresse email est requise pour créer votre compte et envoyer vos codes." },
+          { status: 400 },
+        );
+      }
+
+      if (!createAccountConsent) {
+        return NextResponse.json(
+          { error: "Veuillez confirmer la création du compte avant de payer." },
+          { status: 400 },
+        );
+      }
+
+      checkoutClient = createAdminClient();
+
+      const { data: existingProfile, error: existingProfileError } = await checkoutClient
+        .from("users")
+        .select("id")
+        .eq("email", customer.email)
+        .maybeSingle();
+
+      if (existingProfileError) {
+        console.error("Implicit account lookup error:", existingProfileError);
+        return NextResponse.json(
+          { error: "Erreur lors de la vérification du compte client" },
+          { status: 500 },
+        );
+      }
+
+      if (existingProfile) {
+        checkoutUserId = existingProfile.id;
+      } else {
+        const nameParts = customer.fullName.trim().split(/\s+/);
+        const nom = nameParts.slice(-1).join(" ");
+        const prenoms = nameParts.slice(0, -1).join(" ") || customer.fullName.trim();
+        const temporaryPassword = crypto.randomBytes(18).toString("base64url");
+
+        const { data: createdUser, error: createUserError } =
+          await checkoutClient.auth.admin.createUser({
+            email: customer.email,
+            password: temporaryPassword,
+            email_confirm: true,
+            user_metadata: {
+              nom,
+              prenoms,
+              telephone: customer.phone,
+              implicit_checkout: true,
+            },
+          });
+
+        if (createUserError || !createdUser.user) {
+          console.error("Implicit account creation error:", createUserError);
+          return NextResponse.json(
+            { error: "Impossible de créer le compte client automatiquement" },
+            { status: 500 },
+          );
+        }
+
+        checkoutUserId = createdUser.user.id;
+        implicitAccountCreated = true;
+
+        const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+        const { data: activationData, error: activationLinkError } =
+          await checkoutClient.auth.admin.generateLink({
+            type: "recovery",
+            email: customer.email,
+            options: { redirectTo: `${origin}/auth/callback?next=/activate` },
+          });
+
+        if (activationLinkError) {
+          console.error("Implicit account activation link error:", activationLinkError);
+        } else {
+          activationLink = activationData.properties?.action_link ?? null;
+        }
+      }
     }
 
     // 1. Validate stock and fetch pricing from DB
     const productIds = items.map((item) => item.id);
-    const { data: products, error: prodError } = await supabase
+    const { data: products, error: prodError } = await checkoutClient
       .from("products")
       .select("id, stock_available, buy_price, category_id")
       .in("id", productIds);
@@ -96,7 +179,7 @@ export async function POST(request: Request) {
     // 3. Atomic reservation — SELECT FOR UPDATE SKIP LOCKED inside the RPC.
     //    Creates the purchase (pending) + cart_reservations + purchase_items
     //    in one transaction. Any exception rolls everything back.
-    const { data: reservation, error: rpcError } = await supabase.rpc(
+    const { data: reservation, error: rpcError } = await checkoutClient.rpc(
       "checkout_reserve_codes",
       {
         p_items: items.map((item) => ({
@@ -116,7 +199,7 @@ export async function POST(request: Request) {
         p_total_amount:   finalAmount,
         p_total_cost:     totalCost,
         p_total_profit:   totalProfit,
-        p_user_id:        user.id,
+        p_user_id:        checkoutUserId,
       },
     );
 
@@ -165,7 +248,7 @@ export async function POST(request: Request) {
         cancel_url:  `${origin}/cart`,
       });
 
-      await supabase
+      await checkoutClient
         .from("purchases")
         .update({ stripe_session_id: session.id })
         .eq("id", purchaseId);
@@ -174,7 +257,7 @@ export async function POST(request: Request) {
     }
 
     // 4b. Local payment (djamo, moov, wave) — finalize immediately
-    const { data: finalized, error: finalizeError } = await supabase.rpc(
+    const { data: finalized, error: finalizeError } = await checkoutClient.rpc(
       "finalize_purchase",
       { p_purchase_id: purchaseId, p_stripe_session_id: null },
     );
@@ -193,9 +276,17 @@ export async function POST(request: Request) {
       sendPurchaseConfirmationEmail(customer.email, result).catch((e) =>
         console.error("Email sending failed:", e),
       );
+
+      if (implicitAccountCreated) {
+        sendImplicitAccountActivationEmail(customer.email, result.customer_name, activationLink).catch((e) =>
+          console.error("Activation email sending failed:", e),
+        );
+      }
     }
 
-    return NextResponse.json({ data: { statut: "success", purchase_id: purchaseId } });
+    return NextResponse.json({
+      data: { statut: "success", purchase_id: purchaseId, implicitAccountCreated, codes: result.codes },
+    });
   } catch (error) {
     console.error("Checkout error:", error);
     return NextResponse.json(
@@ -203,6 +294,34 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+async function sendImplicitAccountActivationEmail(
+  email: string,
+  customerName: string,
+  activationLink: string | null,
+) {
+  const activationText = activationLink
+    ? `Cliquez sur ce lien pour définir votre mot de passe : ${activationLink}`
+    : "Utilisez la page de mot de passe oublié avec cette adresse email afin de définir votre mot de passe.";
+  const activationHtml = activationLink
+    ? `<p><a href="${activationLink}" style="display:inline-block;background:linear-gradient(135deg,#00ffe0,#7b2fff);color:#000;padding:12px 18px;text-decoration:none;border-radius:8px;font-weight:800;">Activer mon compte</a></p>`
+    : "<p>Utilisez la page <strong>Mot de passe oublié</strong> avec cette adresse email afin de définir votre mot de passe.</p>";
+
+  await sendMail({
+    to: email,
+    subject: "Activez votre compte Adex Card",
+    text: `Bonjour ${customerName},\n\nUn compte Adex Card a été créé avec votre accord pendant votre achat. ${activationText}\n\nVous pourrez ensuite retrouver l'historique de vos commandes depuis votre tableau de bord.`,
+    html: `
+      <div style="font-family:sans-serif;color:#eee;background:#0d0d0d;max-width:600px;margin:0 auto;padding:24px;border-radius:12px;">
+        <h2 style="color:#00ffe0;margin-top:0;">Votre compte Adex Card est prêt</h2>
+        <p>Bonjour ${customerName},</p>
+        <p>Un compte a été créé avec votre accord pendant votre achat.</p>
+        ${activationHtml}
+        <p>Vous pourrez ensuite retrouver votre historique de commandes depuis votre tableau de bord.</p>
+        <p style="margin-top:30px;font-size:12px;color:#666;">Vous pouvez supprimer votre compte depuis votre profil ou contacter le support.</p>
+      </div>`,
+  });
 }
 
 export async function sendPurchaseConfirmationEmail(
