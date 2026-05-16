@@ -353,7 +353,7 @@ const resetForm = () => {
       ) : (
 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paginatedProducts.map((product) => {
-            // Display product image, fallback to category logo if no product image
+            // Display product image, fallback to category logo if no product image .
             const displayImage = product.image_url || product.category?.logo_url;
             return (
               <div key={product.id} className={`rounded-xl border p-4 ${product.is_active ? "border-black/10 bg-white" : "border-black/5 bg-black/5"}`}>
