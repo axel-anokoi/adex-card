@@ -205,7 +205,7 @@ function ResetPasswordContent() {
         </div>
 
         <p style={{ textAlign: "center", fontSize: 13, color: "var(--text-muted)", marginTop: 20 }}>
-          Vous n'avez pas reçu le code ?{" "}
+          Vous n&apos;avez pas reçu le code ?{" "}
           <Link href="/auth/forgot-password" style={{ color: "var(--cyan)", fontWeight: 600, textDecoration: "none" }}>
             Renvoyer un code →
           </Link>

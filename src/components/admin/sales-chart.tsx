@@ -83,7 +83,7 @@ export function SalesChart({ data }: SalesChartProps) {
                 ? new Date(data[data.length - 1].day).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
                 : ""}
             </span>
-            <span>Aujourd'hui</span>
+            <span>Aujourd&apos;hui</span>
           </div>
         </>
       )}

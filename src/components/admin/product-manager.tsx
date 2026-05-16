@@ -277,7 +277,7 @@ const resetForm = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Prix d'achat (FCFA)</label>
+              <label className="mb-1 block text-sm font-medium">Prix d&apos;achat (FCFA)</label>
               <input
                 type="number"
                 value={formData.buy_price}

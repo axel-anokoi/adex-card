@@ -37,7 +37,7 @@ export function AuditLogs({ logs }: AuditLogsProps) {
     return (
       <div style={card}>
         <h3 className="mb-4 text-lg font-bold" style={{ color: "var(--text)" }}>
-          Journal d'audit
+          Journal d&apos;audit
         </h3>
         <p className="text-center text-sm" style={{ color: "var(--text-muted)" }}>
           Aucune activité enregistrée
@@ -49,7 +49,7 @@ export function AuditLogs({ logs }: AuditLogsProps) {
   return (
     <div style={card}>
       <h3 className="mb-4 text-lg font-bold" style={{ color: "var(--text)" }}>
-        Journal d'audit
+        Journal d&apos;audit
       </h3>
       <div className="space-y-2">
         {logs.slice(0, 50).map((log) => {
