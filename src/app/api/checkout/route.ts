@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getStripeServer } from "@/lib/stripe/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendMail } from "@/lib/mail";
 
 const checkoutSchema = z.object({
   items: z
     .array(
       z.object({
-        id: z.string().min(1), // Product ID
+        id: z.string().min(1),
         name: z.string().min(1),
         eur: z.number().positive(),
         quantity: z.number().int().positive(),
@@ -21,11 +21,19 @@ const checkoutSchema = z.object({
     phone: z.string().min(1),
     email: z.string().email().optional().or(z.literal("")),
   }),
-  promo: z.object({
-    code: z.string(),
-    discount: z.number(),
-  }).nullable().optional(),
+  promo: z
+    .object({ code: z.string(), discount: z.number() })
+    .nullable()
+    .optional(),
 });
+
+interface PurchaseResult {
+  purchase_id: string;
+  customer_email: string | null;
+  customer_name: string;
+  total_amount: number;
+  codes: Array<{ code: string; product_name: string; unit_price: number }>;
+}
 
 export async function POST(request: Request) {
   try {
@@ -42,182 +50,203 @@ export async function POST(request: Request) {
     const { items, paymentMethod, customer, promo } = parsed.data;
     const supabase = await createClient();
 
-    // 1. Validation du stock et récupération des prix d'achat
+    // Authentication required — sold_to_user_id NOT NULL constraint on gift_codes
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
+    }
+
+    // 1. Validate stock and fetch pricing from DB
     const productIds = items.map((item) => item.id);
     const { data: products, error: prodError } = await supabase
       .from("products")
-      .select("id, stock_available, buy_price, sell_price, category_id")
+      .select("id, stock_available, buy_price, category_id")
       .in("id", productIds);
 
     if (prodError || !products) {
-      return NextResponse.json({ error: "Erreur lors de la récupération des produits" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Erreur lors de la récupération des produits" },
+        { status: 500 },
+      );
     }
 
     const productMap = new Map(products.map((p) => [p.id, p]));
-    
+
     for (const item of items) {
       const product = productMap.get(item.id);
       if (!product || item.quantity > product.stock_available) {
-        return NextResponse.json({ error: `Stock insuffisant pour ${item.name}` }, { status: 400 });
+        return NextResponse.json(
+          { error: `Stock insuffisant pour ${item.name}` },
+          { status: 400 },
+        );
       }
     }
 
-    // 2. Calcul des montants
+    // 2. Calculate amounts
     let totalSale = 0;
     let totalCost = 0;
-
-    items.forEach(item => {
+    for (const item of items) {
       const product = productMap.get(item.id)!;
       totalSale += item.eur * item.quantity;
       totalCost += product.buy_price * item.quantity;
-    });
-
-    const finalAmount = totalSale - (promo?.discount || 0);
+    }
+    const finalAmount = totalSale - (promo?.discount ?? 0);
     const totalProfit = finalAmount - totalCost;
 
-    // 3. Création de la commande (Purchase)
-    // On récupère l'ID de l'utilisateur connecté si possible
-    const { data: { user } } = await supabase.auth.getUser();
+    // 3. Atomic reservation — SELECT FOR UPDATE SKIP LOCKED inside the RPC.
+    //    Creates the purchase (pending) + cart_reservations + purchase_items
+    //    in one transaction. Any exception rolls everything back.
+    const { data: reservation, error: rpcError } = await supabase.rpc(
+      "checkout_reserve_codes",
+      {
+        p_items: items.map((item) => ({
+          product_id:  item.id,
+          name:        item.name,
+          quantity:    item.quantity,
+          unit_price:  item.eur,
+          unit_cost:   productMap.get(item.id)!.buy_price,
+          category_id: productMap.get(item.id)!.category_id,
+        })),
+        p_customer: {
+          full_name: customer.fullName,
+          phone:     customer.phone,
+          email:     customer.email ?? "",
+        },
+        p_payment_method: paymentMethod,
+        p_total_amount:   finalAmount,
+        p_total_cost:     totalCost,
+        p_total_profit:   totalProfit,
+        p_user_id:        user.id,
+      },
+    );
 
-    const { data: purchase, error: purchaseError } = await supabase
-      .from("purchases")
-      .insert({
-        user_id: user?.id || null,
-        total_amount: finalAmount,
-        status: "pending",
-        payment_method: paymentMethod,
-        customer_name: customer.fullName,
-        customer_phone: customer.phone,
-        customer_email: customer.email || null,
-        total_cost: totalCost,
-        total_profit: totalProfit,
-      })
-      .select()
-      .single();
-
-    if (purchaseError || !purchase) {
-      return NextResponse.json({ error: "Erreur lors de la création de la commande", message:purchaseError }, { status: 500 });
+    if (rpcError || !reservation) {
+      const msg = rpcError?.message ?? "";
+      if (msg.includes("gift_code_not_available")) {
+        return NextResponse.json(
+          { error: "Plus de codes disponibles pour un ou plusieurs articles" },
+          { status: 400 },
+        );
+      }
+      if (msg.includes("too_many_reservations")) {
+        return NextResponse.json(
+          { error: "Trop de commandes en attente, veuillez patienter quelques minutes" },
+          { status: 429 },
+        );
+      }
+      console.error("checkout_reserve_codes error:", rpcError);
+      return NextResponse.json(
+        { error: "Erreur lors de la réservation" },
+        { status: 500 },
+      );
     }
 
-    // 4. Réservation des codes cadeaux (Gift Codes)
-    // Pour chaque item, on cherche des codes 'available'
-    const allPurchasedCodes: { productName: string; codes: string[] }[] = [];
+    const purchaseId = (reservation as { purchase_id: string }).purchase_id;
 
-    for (const item of items) {
-      const { data: availableCodes, error: codeError } = await supabase
-        .from("gift_codes")
-        .select("id, code")
-        .eq("product_id", item.id)
-        .eq("status", "available")
-        .limit(item.quantity);
+    // 4a. Stripe card payment — webhook will finalize once paid
+    if (paymentMethod === "card") {
+      const { getStripeServer } = await import("@/lib/stripe/server");
+      const stripe = getStripeServer();
+      const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-      if (codeError || !availableCodes || availableCodes.length < item.quantity) {
-        return NextResponse.json({ error: `Plus de codes disponibles pour ${item.name}` }, { status: 400 });
-      }
-
-      const codeData = availableCodes.map(c => ({ id: c.id, code: c.code }));
-      const codeIds = codeData.map(c => c.id);
-
-      await supabase
-        .from("gift_codes")
-        .update({
-          status: "reserved",
-          sold_to_user_id: user?.id || null,
-          sold_at: new Date().toISOString()
-        })
-        .in("id", codeIds);
-
-      allPurchasedCodes.push({
-        productName: item.name,
-        codes: codeData.map(c => c.code)
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        line_items: items.map((item) => ({
+          price_data: {
+            currency:     "eur",
+            product_data: { name: item.name },
+            unit_amount:  Math.round(item.eur * 100),
+          },
+          quantity: item.quantity,
+        })),
+        metadata:    { purchase_id: purchaseId },
+        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url:  `${origin}/cart`,
       });
 
-      for (const codeId of codeIds) {
-        const product = productMap.get(item.id)!;
-        await supabase.from("purchase_items").insert({
-          purchase_id: purchase.id,
-          product_id: item.id,
-          category_id: product.category_id,
-          gift_code_id: codeId,
-          quantity: 1,
-          unit_price: item.eur,
-          unit_cost: product.buy_price,
-          total_price: item.eur,
-        });
-      }
+      await supabase
+        .from("purchases")
+        .update({ stripe_session_id: session.id })
+        .eq("id", purchaseId);
+
+      return NextResponse.json({ data: { url: session.url, id: session.id } });
     }
 
-    // Envoi des codes par email
+    // 4b. Local payment (djamo, moov, wave) — finalize immediately
+    const { data: finalized, error: finalizeError } = await supabase.rpc(
+      "finalize_purchase",
+      { p_purchase_id: purchaseId, p_stripe_session_id: null },
+    );
+
+    if (finalizeError || !finalized) {
+      console.error("finalize_purchase error:", finalizeError);
+      return NextResponse.json(
+        { error: "Erreur lors de la finalisation de la commande" },
+        { status: 500 },
+      );
+    }
+
+    const result = finalized as PurchaseResult;
+
     if (customer.email) {
-      try {
-        const { sendMail } = await import("@/lib/mail");
-        
-        const codesHtml = allPurchasedCodes
-          .map(item => `
-            <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #eee; border-radius: 8px;">
-              <strong style="color: #00ffe0;">${item.productName}</strong><br/>
-              ${item.codes.map(c => `<code style="display: block; background: #f4f4f4; padding: 4px; margin-top: 5px; font-family: monospace;">${c}</code>`).join('')}
-            </div>
-          `).join('');
-
-        await sendMail({
-          to: customer.email,
-          subject: `Confirmation de commande - Adex Card`,
-          text: `Merci pour votre achat ! Voici vos codes : \n\n${allPurchasedCodes.map(i => `${i.productName}: ${i.codes.join(', ')}`).join('\n\n')}`,
-          html: `
-            <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #00ffe0;">Merci pour votre commande !</h2>
-              <p>Votre paiement a été validé avec succès. Voici vos codes cadeaux :</p>
-              ${codesHtml}
-              <p style="margin-top: 30px; font-size: 12px; color: #888;">Ceci est un email automatique, merci de ne pas y répondre.</p>
-            </div>
-          `,
-        });
-      } catch (mailError) {
-        console.error("Email sending failed:", mailError);
-        // On ne bloque pas la réponse 200 si seul l'email échoue, mais on log l'erreur
-      }
+      sendPurchaseConfirmationEmail(customer.email, result).catch((e) =>
+        console.error("Email sending failed:", e),
+      );
     }
 
-    return NextResponse.json({ data: { statut: "success" } });
-
-    // // 5. Intégration Stripe
-    // const stripe = getStripeServer();
-    // const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
-    // const session = await stripe.checkout.sessions.create({
-    //   payment_method_types: ["card"],
-    //   mode: "payment",
-    //   line_items: items.map((item) => ({
-    //     price_data: {
-    //       currency: "eur",
-    //       product_data: { name: item.name },
-    //       unit_amount: Math.round(item.eur * 100),
-    //     },
-    //     quantity: item.quantity,
-    //   })),
-    //   // On ajoute la réduction si présente via Stripe Coupons ou en ajustant le prix
-    //   // Pour simplifier ici, on utilise le montant total calculé
-    //   payment_intent_data: {
-    //     metadata: { purchase_id: purchase.id },
-    //   },
-    //   success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-    //   cancel_url: `${origin}/cart`,
-    //   metadata: {
-    //     purchase_id: purchase.id,
-    //   },
-    // });
-
-    // // Mise à jour de la purchase avec le stripe_session_id
-    // await supabase
-    //   .from("purchases")
-    //   .update({ stripe_session_id: session.id })
-    //   .eq("id", purchase.id);
-
-    // return NextResponse.json({ data: { url: session.url, id: session.id } });
-
+    return NextResponse.json({ data: { statut: "success", purchase_id: purchaseId } });
   } catch (error) {
     console.error("Checkout error:", error);
-    return NextResponse.json({ error: "Erreur interne lors du checkout" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erreur interne lors du checkout" },
+      { status: 500 },
+    );
   }
+}
+
+export async function sendPurchaseConfirmationEmail(
+  email: string,
+  result: PurchaseResult,
+) {
+  // Group codes by product name for a cleaner email layout
+  const byProduct = result.codes.reduce<Record<string, string[]>>(
+    (acc, { product_name, code }) => {
+      (acc[product_name] ??= []).push(code);
+      return acc;
+    },
+    {},
+  );
+
+  const codesHtml = Object.entries(byProduct)
+    .map(
+      ([name, codes]) => `
+        <div style="margin-bottom:20px;padding:12px;border:1px solid #333;border-radius:8px;">
+          <strong style="color:#00ffe0;">${name}</strong><br/>
+          ${codes
+            .map(
+              (c) =>
+                `<code style="display:block;background:#1a1a1a;color:#fff;padding:6px 8px;margin-top:6px;font-family:monospace;border-radius:4px;">${c}</code>`,
+            )
+            .join("")}
+        </div>`,
+    )
+    .join("");
+
+  const textCodes = Object.entries(byProduct)
+    .map(([name, codes]) => `${name}:\n${codes.join("\n")}`)
+    .join("\n\n");
+
+  await sendMail({
+    to: email,
+    subject: "Confirmation de commande — Adex Card",
+    text: `Merci pour votre achat !\n\nVoici vos codes :\n\n${textCodes}\n\nCeci est un email automatique.`,
+    html: `
+      <div style="font-family:sans-serif;color:#eee;background:#0d0d0d;max-width:600px;margin:0 auto;padding:24px;border-radius:12px;">
+        <h2 style="color:#00ffe0;margin-top:0;">Merci pour votre commande !</h2>
+        <p>Votre paiement a été validé. Voici vos codes cadeaux :</p>
+        ${codesHtml}
+        <p style="margin-top:30px;font-size:12px;color:#666;">Ceci est un email automatique, merci de ne pas y répondre.</p>
+      </div>`,
+  });
 }

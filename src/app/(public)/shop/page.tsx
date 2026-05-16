@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { ProductCard } from "@/components/products/product-card";
-import { ProductModal } from "@/components/products/ProductModal"; // ← adjust import path
-import Link from "next/link";
+import { ProductModal } from "@/components/products/ProductModal";
+import { useCart } from "@/context/CartContext";
 
 // ─────────────────────────────────────────
 //  TYPES
@@ -17,7 +16,7 @@ interface Product {
   cat: string;
   tag: string;
   image: string;
-  stock_available: boolean;
+  stock_available: number;
   is_active: boolean;
 }
 
@@ -111,8 +110,8 @@ function SkeletonCard() {
 // ─────────────────────────────────────────
 
 function ShopCard({
-  product, index, onOpenModal,
-}: { product: Product; index: number; onOpenModal: (p: Product) => void }) {
+  product, index, onOpenModal, addToCart,
+}: { product: Product; index: number; onOpenModal: (p: Product) => void; addToCart: (p: Product) => Promise<{ success: boolean; error?: string }> }) {
   const [added, setAdded] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -124,12 +123,16 @@ function ShopCard({
     ? `radial-gradient(circle at 35% 35%, rgba(${meta.accentRgb},0.12), rgba(255,255,255,0.9))`
     : `radial-gradient(circle at 35% 35%, rgba(${meta.accentRgb},0.2), rgba(0,0,0,0.4))`;
 
-  const handleAdd = (e: React.MouseEvent) => {
+  const inStock = product.stock_available > 0;
+
+  const handleAdd = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!product.stock_available) return;
-    // integrate your cart logic here
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1600);
+    if (!inStock) return;
+    const result = await addToCart(product);
+    if (result.success) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1600);
+    }
   };
 
   return (
@@ -205,16 +208,16 @@ function ShopCard({
       {/* Actions */}
       <div className="shop-card-actions">
         <button
-          className={`shop-card-btn${added ? " shop-card-btn--ok" : ""}${!product.stock_available ? " shop-card-btn--off" : ""}`}
-          style={added ? {} : product.stock_available ? {
+          className={`shop-card-btn${added ? " shop-card-btn--ok" : ""}${!inStock ? " shop-card-btn--off" : ""}`}
+          style={added ? {} : inStock ? {
             borderColor: `rgba(${meta.accentRgb},0.45)`,
             background: `rgba(${meta.accentRgb},0.08)`,
             color: meta.accent,
           } : {}}
           onClick={handleAdd}
-          disabled={!product.stock_available}
+          disabled={!inStock}
         >
-          {added ? "✓ Ajouté !" : product.stock_available ? "+ Panier" : "Indisponible"}
+          {added ? "✓ Ajouté !" : inStock ? "+ Panier" : "Indisponible"}
         </button>
         <button
           className="shop-card-detail"
@@ -271,6 +274,7 @@ function CategoryPill({ slug, label, icon, count, active, onClick }: {
 // ─────────────────────────────────────────
 
 export default function ShopPage() {
+  const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Array<{ slug: string | null; name: string; icon: string; count: number }>>([]);
@@ -314,10 +318,10 @@ export default function ShopPage() {
     setProducts(slug ? allProducts.filter((p) => p.cat === slug) : allProducts);
   }, [allProducts]);
 
-  const handleModalAdd = useCallback((p: any) => {
-    // integrate your cart logic here
+  const handleModalAdd = useCallback((p: { id: string; name: string; eur: number; cat?: string; image?: string; quantity: number; total: number }) => {
+    addToCart(p);
     setModalProduct(null);
-  }, []);
+  }, [addToCart]);
 
   return (
     <div className="shop-page">
@@ -377,7 +381,7 @@ export default function ShopPage() {
       ) : (
         <div className="shop-grid">
           {products.map((p, i) => (
-            <ShopCard key={p.id} product={p} index={i} onOpenModal={setModalProduct} />
+            <ShopCard key={p.id} product={p} index={i} onOpenModal={setModalProduct} addToCart={addToCart} />
           ))}
         </div>
       )}

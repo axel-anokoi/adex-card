@@ -14,67 +14,102 @@ interface ActivityFeedProps {
   activities: Activity[];
 }
 
-const eventTypeLabels: Record<string, { label: string; color: string }> = {
-  purchase: { label: "Commande", color: "text-emerald-600 bg-emerald-100" },
-  refund_request: { label: "Remboursement", color: "text-amber-600 bg-amber-100" },
-  new_user: { label: "Nouveau", color: "text-violet-600 bg-violet-100" },
+const eventTypeConfig: Record<string, { label: string; bg: string; color: string }> = {
+  purchase:        { label: "Commande",       bg: "rgba(16,185,129,0.15)",  color: "#10b981" },
+  refund_request:  { label: "Remboursement",  bg: "rgba(245,158,11,0.15)",  color: "#f59e0b" },
+  new_user:        { label: "Nouveau client", bg: "rgba(139,92,246,0.15)",  color: "#8b5cf6" },
 };
 
-const statusLabels: Record<string, { label: string; color: string }> = {
-  paid: { label: "Payé", color: "text-emerald-600" },
-  pending: { label: "En attente", color: "text-amber-600" },
-  refunded: { label: "Remboursé", color: "text-gray-600" },
-  approved: { label: "Approuvé", color: "text-cyan-600" },
-  rejected: { label: "Rejeté", color: "text-red-600" },
-  registered: { label: "Inscription", color: "text-violet-600" },
+const statusConfig: Record<string, { label: string; color: string }> = {
+  paid:       { label: "Payé",       color: "#10b981" },
+  pending:    { label: "En attente", color: "#f59e0b" },
+  refunded:   { label: "Remboursé",  color: "var(--text-muted)" },
+  approved:   { label: "Approuvé",   color: "var(--cyan)" },
+  rejected:   { label: "Rejeté",     color: "#ef4444" },
+  registered: { label: "Inscription", color: "#8b5cf6" },
+};
+
+const card: React.CSSProperties = {
+  background: "var(--bg-card)",
+  border: "1px solid var(--border)",
+  borderRadius: 12,
+  padding: "16px 20px",
+};
+
+const row: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  borderRadius: 8,
+  border: "1px solid var(--border)",
+  padding: "10px 12px",
+  background: "color-mix(in srgb, var(--text) 2%, transparent)",
 };
 
 export function ActivityFeed({ activities }: ActivityFeedProps) {
   if (!activities || activities.length === 0) {
     return (
-      <div className="rounded-xl border border-black/10 bg-white p-6">
-        <h3 className="mb-4 text-lg font-bold">Activité récente</h3>
-        <p className="text-center text-black/60">Aucune activité récente</p>
+      <div style={card}>
+        <h3 className="mb-4 text-lg font-bold" style={{ color: "var(--text)" }}>
+          Activité récente
+        </h3>
+        <p className="text-center text-sm" style={{ color: "var(--text-muted)" }}>
+          Aucune activité récente
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-black/10 bg-white p-6">
-      <h3 className="mb-4 text-lg font-bold">Activité récente</h3>
-      <div className="space-y-3">
-        {activities.slice(0, 10).map((activity) => {
-          const typeInfo = eventTypeLabels[activity.event_type] || { label: activity.event_type, color: "text-gray-600 bg-gray-100" };
-          const statusInfo = activity.status ? (statusLabels[activity.status] || { label: activity.status, color: "text-gray-600" }) : null;
+    <div style={card}>
+      <h3 className="mb-4 text-lg font-bold" style={{ color: "var(--text)" }}>
+        Activité récente
+      </h3>
+      <div className="space-y-2">
+        {activities.slice(0, 5).map((activity) => {
+          const typeInfo = eventTypeConfig[activity.event_type] ?? {
+            label: activity.event_type,
+            bg: "color-mix(in srgb, var(--text) 8%, transparent)",
+            color: "var(--text-muted)",
+          };
+          const statusInfo = activity.status
+            ? (statusConfig[activity.status] ?? { label: activity.status, color: "var(--text-muted)" })
+            : null;
 
           return (
-            <div
-              key={activity.event_id}
-              className="flex items-center gap-3 rounded-lg border border-black/5 p-3"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeInfo.color}`}>
+            <div key={activity.event_id} style={row}>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                    style={{ background: typeInfo.bg, color: typeInfo.color }}
+                  >
                     {typeInfo.label}
                   </span>
                   {statusInfo && (
-                    <span className={`text-xs font-medium ${statusInfo.color}`}>
+                    <span className="text-xs font-medium" style={{ color: statusInfo.color }}>
                       {statusInfo.label}
                     </span>
                   )}
                 </div>
                 {activity.actor_email && (
-                  <p className="mt-1 truncate text-sm text-black/80">{activity.actor_email}</p>
+                  <p className="mt-1 truncate text-sm" style={{ color: "var(--text)" }}>
+                    {activity.actor_email}
+                  </p>
                 )}
                 {activity.detail && (
-                  <p className="mt-1 truncate text-xs text-black/50">{activity.detail}</p>
+                  <p className="mt-0.5 truncate text-xs" style={{ color: "var(--text-muted)" }}>
+                    {activity.detail}
+                  </p>
                 )}
               </div>
-              <div className="text-right">
+              <div className="flex-shrink-0 text-right">
                 {activity.amount !== null && (
-                  <p className="text-sm font-medium">{activity.amount.toFixed(2)} FCFA</p>
+                  <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+                    {activity.amount.toFixed(0)} FCFA
+                  </p>
                 )}
-                <p className="text-xs text-black/40">
+                <p className="text-xs" style={{ color: "var(--text-faint)" }}>
                   {new Date(activity.occurred_at).toLocaleDateString("fr-FR", {
                     day: "numeric",
                     month: "short",

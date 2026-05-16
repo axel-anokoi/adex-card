@@ -17,11 +17,12 @@ const paymentMethods = [
 ];
 
 export default function CheckoutPage() {
-  const { cart } = useCart();
+  const { cart, clearCart } = useCart();
   const [selectedPayment, setSelectedPayment] = useState("djamo");
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
@@ -55,7 +56,7 @@ export default function CheckoutPage() {
 
           if (profile) {
             setUserData({
-              fullName: profile.nom + " " + profile.prenoms || "",
+              fullName: [profile.prenoms, profile.nom].filter(Boolean).join(" "),
               phone: profile.telephone || "",
               email: profile.email || user.email || "",
             });
@@ -111,10 +112,11 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (!userData.fullName || !userData.phone) {
-      alert("Veuillez remplir les champs obligatoires (Nom et Téléphone)");
+      setCheckoutError("Veuillez remplir les champs obligatoires (Nom et Téléphone)");
       return;
     }
 
+    setCheckoutError(null);
     setLoading(true);
     try {
       const response = await fetch("/api/checkout", {
@@ -129,21 +131,18 @@ export default function CheckoutPage() {
       });
       const data = await response.json();
       if (data.error) {
-        alert(data.error);
-        setLoading(false);
+        setCheckoutError(data.error);
         return;
       }
       if (data.url) {
         window.location.href = data.url;
       } else if (data.data?.statut === "success") {
+        clearCart();
         setShowSuccessModal(true);
-        // Vider le panier après succès
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('cart');
-        }
       }
     } catch (err) {
       console.error(err);
+      setCheckoutError("Une erreur inattendue s'est produite. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -383,6 +382,17 @@ export default function CheckoutPage() {
                     </div>
                     <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "right" }}>{toFCFA(total)} FCFA</p>
                   </div>
+
+                  {/* Error message */}
+                  {checkoutError && (
+                    <div style={{
+                      marginBottom: 12, padding: "10px 14px", borderRadius: 10,
+                      background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.35)",
+                      fontSize: 13, color: "#ef4444", lineHeight: 1.5,
+                    }}>
+                      {checkoutError}
+                    </div>
+                  )}
 
                   {/* CTA */}
                   <button

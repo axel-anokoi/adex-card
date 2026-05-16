@@ -6,6 +6,9 @@ const profileSchema = z.object({
   email: z.string().email().optional(),
   role: z.enum(["client", "admin"]).optional(),
   is_blocked: z.boolean().optional(),
+  nom: z.string().max(100).optional(),
+  prenoms: z.string().max(150).optional(),
+  telephone: z.string().max(30).optional(),
 });
 
 async function checkAdmin() {

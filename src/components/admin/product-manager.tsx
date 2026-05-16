@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Pagination } from "./pagination";
 
 interface Category {
   id: string;
@@ -49,6 +50,8 @@ export function ProductManager() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
 const [formData, setFormData] = useState({
     category_id: "",
@@ -183,6 +186,7 @@ const resetForm = () => {
   const filteredProducts = filterCategory
     ? products.filter((p) => p.category?.slug === filterCategory)
     : products;
+  const paginatedProducts = filteredProducts.slice(page * pageSize, (page + 1) * pageSize);
 
   if (loading) {
     return (
@@ -197,7 +201,7 @@ const resetForm = () => {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex gap-2 overflow-x-auto">
           <button
-            onClick={() => setFilterCategory(null)}
+            onClick={() => { setFilterCategory(null); setPage(0); }}
             className={`rounded-lg px-3 py-1 text-sm font-medium whitespace-nowrap ${
               filterCategory === null
                 ? "bg-cyan text-black"
@@ -209,7 +213,7 @@ const resetForm = () => {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setFilterCategory(cat.slug)}
+              onClick={() => { setFilterCategory(cat.slug); setPage(0); }}
               className={`rounded-lg px-3 py-1 text-sm font-medium whitespace-nowrap ${
                 filterCategory === cat.slug
                   ? "bg-cyan text-black"
@@ -344,7 +348,7 @@ const resetForm = () => {
         <p className="text-center text-black/60">Aucun produit</p>
       ) : (
 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product) => {
+          {paginatedProducts.map((product) => {
             // Display product image, fallback to category logo if no product image
             const displayImage = product.image_url || product.category?.logo_url;
             return (
@@ -379,6 +383,13 @@ const resetForm = () => {
           })}
         </div>
       )}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={filteredProducts.length}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+      />
     </div>
   );
 }

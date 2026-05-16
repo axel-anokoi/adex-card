@@ -186,6 +186,41 @@ export async function GET() {
     });
     const refundReasons = Object.entries(reasonMap).map(([reason, count]) => ({ reason, count }));
     
+    // Payment stats by method and status
+    const { data: allPurchasesForPayment } = await supabase
+      .from("purchases")
+      .select("payment_method, status, total_amount");
+
+    const paymentMethodMap: Record<string, {
+      method: string;
+      paid: number;
+      pending: number;
+      failed: number;
+      refunded: number;
+      total: number;
+      revenue: number;
+    }> = {};
+
+    allPurchasesForPayment?.forEach(p => {
+      const method = p.payment_method || "unknown";
+      if (!paymentMethodMap[method]) {
+        paymentMethodMap[method] = { method, paid: 0, pending: 0, failed: 0, refunded: 0, total: 0, revenue: 0 };
+      }
+      paymentMethodMap[method].total++;
+      if (p.status === "paid") {
+        paymentMethodMap[method].paid++;
+        paymentMethodMap[method].revenue += p.total_amount || 0;
+      } else if (p.status === "pending" || p.status === "pending_manual_review") {
+        paymentMethodMap[method].pending++;
+      } else if (p.status === "failed") {
+        paymentMethodMap[method].failed++;
+      } else if (p.status === "refunded") {
+        paymentMethodMap[method].refunded++;
+      }
+    });
+
+    const paymentMethodStats = Object.values(paymentMethodMap).sort((a, b) => b.total - a.total);
+
     // Get customer stats
     const { data: allPurchases } = await supabase
       .from("purchases")
@@ -235,7 +270,8 @@ export async function GET() {
       averageOrderValue,
       hourlySales,
       totalOrders,
-      totalRevenue
+      totalRevenue,
+      paymentMethodStats
     });
   } catch (error) {
     console.error("Stats error:", error);

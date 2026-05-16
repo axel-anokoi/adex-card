@@ -99,7 +99,7 @@ export default function CartPage() {
                                   onClick={() => removeFromCart(item.id)}
                                   className="ml-auto px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-xs font-bold uppercase tracking-wider hover:bg-red-500/30 hover:border-red-500 transition-all"
                                 >
-                                  🗑️ Supprimer
+                                  🗑️
                                 </button>
                               </div>
                             </div>

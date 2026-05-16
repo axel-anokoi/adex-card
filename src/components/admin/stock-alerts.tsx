@@ -15,39 +15,64 @@ interface StockAlertsProps {
   alerts: StockAlert[];
 }
 
+const card: React.CSSProperties = {
+  background: "var(--bg-card)",
+  border: "1px solid var(--border)",
+  borderRadius: 12,
+  padding: "20px 24px",
+};
+
 export function StockAlerts({ alerts }: StockAlertsProps) {
   if (!alerts || alerts.length === 0) {
     return (
-      <div className="rounded-xl border border-black/10 bg-white p-6">
-        <h3 className="mb-4 text-lg font-bold">Alertes stock</h3>
-        <p className="text-center text-emerald-600">✓ Tous les produits sont bien approvisionnés</p>
+      <div style={card}>
+        <h3 className="mb-3 text-lg font-bold" style={{ color: "var(--text)" }}>
+          Alertes stock
+        </h3>
+        <p className="text-center text-sm font-medium" style={{ color: "var(--green)" }}>
+          ✓ Tous les produits sont bien approvisionnés
+        </p>
       </div>
     );
   }
 
   const outOfStock = alerts.filter((a) => a.is_out_of_stock);
-  const lowStock = alerts.filter((a) => a.is_low_stock && !a.is_out_of_stock);
+  const lowStock   = alerts.filter((a) => a.is_low_stock && !a.is_out_of_stock);
 
   return (
-    <div className="rounded-xl border border-black/10 bg-white p-6">
-      <h3 className="mb-4 text-lg font-bold">Alertes stock</h3>
-      
+    <div style={card}>
+      <h3 className="mb-4 text-lg font-bold" style={{ color: "var(--text)" }}>
+        Alertes stock
+      </h3>
+
       {outOfStock.length > 0 && (
         <div className="mb-4">
-          <p className="mb-2 text-sm font-medium text-red-600">
+          <p className="mb-2 text-sm font-semibold" style={{ color: "#ef4444" }}>
             Rupture de stock ({outOfStock.length})
           </p>
           <div className="space-y-2">
             {outOfStock.map((item) => (
               <div
                 key={item.product_id}
-                className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-3 py-2"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderRadius: 8,
+                  border: "1px solid rgba(239,68,68,0.25)",
+                  background: "rgba(239,68,68,0.06)",
+                  padding: "8px 12px",
+                }}
               >
                 <div>
-                  <p className="font-medium">{item.product_label}</p>
-                  <p className="text-xs text-red-600/80">{item.category_name}</p>
+                  <p className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                    {item.product_label}
+                  </p>
+                  <p className="text-xs" style={{ color: "rgba(239,68,68,0.75)" }}>
+                    {item.category_name}
+                  </p>
                 </div>
-                <span className="text-sm font-bold text-red-600">0</span>
+                <span className="text-sm font-bold" style={{ color: "#ef4444" }}>0</span>
               </div>
             ))}
           </div>
@@ -56,22 +81,34 @@ export function StockAlerts({ alerts }: StockAlertsProps) {
 
       {lowStock.length > 0 && (
         <div>
-          <p className="mb-2 text-sm font-medium text-amber-600">
+          <p className="mb-2 text-sm font-semibold" style={{ color: "#f59e0b" }}>
             Stock faible ({lowStock.length})
           </p>
           <div className="space-y-2">
             {lowStock.map((item) => (
               <div
                 key={item.product_id}
-                className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderRadius: 8,
+                  border: "1px solid rgba(245,158,11,0.25)",
+                  background: "rgba(245,158,11,0.06)",
+                  padding: "8px 12px",
+                }}
               >
                 <div>
-                  <p className="font-medium">{item.product_label}</p>
-                  <p className="text-xs text-amber-600/80">
-                    Seuil: {item.low_stock_threshold}
+                  <p className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                    {item.product_label}
+                  </p>
+                  <p className="text-xs" style={{ color: "rgba(245,158,11,0.75)" }}>
+                    Seuil&nbsp;: {item.low_stock_threshold}
                   </p>
                 </div>
-                <span className="text-sm font-bold text-amber-600">{item.stock_available}</span>
+                <span className="text-sm font-bold" style={{ color: "#f59e0b" }}>
+                  {item.stock_available}
+                </span>
               </div>
             ))}
           </div>

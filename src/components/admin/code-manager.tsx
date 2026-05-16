@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { Pagination } from "./pagination";
 
 interface Product {
   id: string;
@@ -31,6 +32,8 @@ export function CodeManager() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [filterProduct, setFilterProduct] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
 const [formData, setFormData] = useState({
     product_id: "",
@@ -154,6 +157,7 @@ const filteredCodes = codes.filter((c) => {
     if (filterProduct && c.product?.id !== filterProduct) return false;
     return true;
   });
+  const paginatedCodes = filteredCodes.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     <div>
@@ -161,7 +165,7 @@ const filteredCodes = codes.filter((c) => {
         <div className="flex gap-2">
           <select
             value={filterStatus || ""}
-            onChange={(e) => setFilterStatus(e.target.value || null)}
+            onChange={(e) => { setFilterStatus(e.target.value || null); setPage(0); }}
             className="rounded-lg border border-black/20 p-2"
           >
             <option value="">Tous les statuts</option>
@@ -171,7 +175,7 @@ const filteredCodes = codes.filter((c) => {
           </select>
           <select
             value={filterProduct || ""}
-            onChange={(e) => setFilterProduct(e.target.value || null)}
+            onChange={(e) => { setFilterProduct(e.target.value || null); setPage(0); }}
             className="rounded-lg border border-black/20 p-2"
           >
             <option value="">Tous les produits</option>
@@ -265,7 +269,7 @@ const filteredCodes = codes.filter((c) => {
         <p className="text-center text-black/60">Aucun code</p>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredCodes.map((code) => (
+          {paginatedCodes.map((code) => (
             <div key={code.id} className={`rounded-lg border p-3 ${code.status === "available" ? "border-black/10 bg-white" : "border-black/5 bg-black/5"}`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">{code.product?.category?.name} {code.product?.amount} FCFA</span>
@@ -289,6 +293,13 @@ const filteredCodes = codes.filter((c) => {
           ))}
         </div>
       )}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={filteredCodes.length}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+      />
     </div>
   );
 }

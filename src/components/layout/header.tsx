@@ -258,7 +258,8 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                   style={{
                     color: "var(--text)",
                     background: userMenuOpen ? hoverSurface : "var(--bg)",
-                    border: "1px solid var(--border)",
+                    border: isAdmin ? "1px solid rgba(0,255,224,0.4)" : "1px solid var(--border)",
+                    boxShadow: isAdmin ? "0 0 10px rgba(0,255,224,0.12)" : "none",
                   }}
                   className="nav-link flex items-center gap-1.5"
                   aria-expanded={userMenuOpen}
@@ -267,6 +268,16 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                   </svg>
+                  {isAdmin && (
+                    <span style={{
+                      fontSize: "9px", fontWeight: 800, letterSpacing: "0.06em",
+                      background: "linear-gradient(135deg, var(--cyan), var(--violet))",
+                      color: "#000", borderRadius: "4px", padding: "1px 5px",
+                      textTransform: "uppercase", lineHeight: 1,
+                    }}>
+                      ADMIN
+                    </span>
+                  )}
                   {displayName}
                   <svg
                     className={`dropdown-chevron ${userMenuOpen ? "rotated" : ""}`}

@@ -7,6 +7,7 @@ import { CategoryPieChart } from "./category-pie-chart";
 import { TopProductsChart } from "./top-products-chart";
 import { RefundStats } from "./refund-stats";
 import { HourlyHeatmap } from "./hourly-heatmap";
+import { PaymentMethodStats } from "./payment-method-stats";
 import {
   LineChart,
   Line,
@@ -39,6 +40,15 @@ export interface StatsData {
     newCustomersLast30d: number;
   };
   hourlySales: number[];
+  paymentMethodStats: {
+    method: string;
+    paid: number;
+    pending: number;
+    failed: number;
+    refunded: number;
+    total: number;
+    revenue: number;
+  }[];
 }
 
 interface StatsTabProps {
@@ -183,6 +193,9 @@ export function StatsTab({ stats: initialStats }: StatsTabProps) {
         <TopProductsChart data={data.topProducts || []} />
         <HourlyHeatmap data={data.hourlySales || []} />
       </div>
+
+      {/* Payment Method Stats */}
+      <PaymentMethodStats data={data.paymentMethodStats || []} />
 
       {/* Refund Stats */}
       <RefundStats
