@@ -80,7 +80,7 @@ export default function CartPage() {
                             </div>
                             <div>
                               <p className="font-bold text-inherit group-hover:text-cyan-400 transition-colors" style={{ color: "var(--text)" }}>{item.name}</p>
-                              <p className="mt-1 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}> {toFCFA(item.eur)} FCFA</p>
+                              <p className="mt-1 text-sm font-bold leading-relaxed" style={{ color: "var(--cyan)" }}>{toFCFA(item.eur)} FCFA</p>
                               <div className="mt-2 flex items-center gap-2">
                                 <button 
                                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -104,7 +104,7 @@ export default function CartPage() {
                               </div>
                             </div>
                           </div>
-                          <p className="text-lg font-bold" style={{ color: "var(--text)" }}>{(item.eur * item.quantity).toFixed(2)} FCFA</p>
+                          <p className="text-lg font-bold" style={{ color: "var(--text)" }}>{toFCFA(item.eur * item.quantity)} FCFA</p>
                         </div>
                       </li>
                     ))}
@@ -126,15 +126,15 @@ export default function CartPage() {
                 <div className="space-y-3 text-sm relative z-10">
                   <div className="flex items-center justify-between py-2">
                     <span style={{ color: "var(--text-muted)" }}>Sous-total</span>
-                    <span className="font-semibold" style={{ color: "var(--text)" }}>{subtotal.toFixed(2)} FCFA</span>
+                    <span className="font-semibold" style={{ color: "var(--text)" }}>{toFCFA(subtotal)} FCFA</span>
                   </div>
                   <div className="flex items-center justify-between py-2">
                     <span style={{ color: "var(--text-muted)" }}>Frais de service</span>
-                    <span className="font-semibold" style={{ color: "var(--text)" }}>{fees.toFixed(2)} FCFA</span>
+                    <span className="font-semibold" style={{ color: "var(--text)" }}>{toFCFA(fees)} FCFA</span>
                   </div>
                   <div className="mt-4 border-t border-[var(--border)] pt-4 flex items-center justify-between">
                     <span className="font-bold text-base" style={{ color: "var(--text)" }}>Total</span>
-<span className="text-2xl font-black text-gradient-cyan">{total.toFixed(2)} FCFA</span>
+                    <span className="text-2xl font-black text-gradient-cyan">{toFCFA(total)} FCFA</span>
                   </div>
                 </div>
 

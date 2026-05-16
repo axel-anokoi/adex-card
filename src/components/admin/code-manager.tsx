@@ -7,6 +7,7 @@ interface Product {
   id: string;
   category: { name: string };
   amount: number;
+  buy_price: number;
 }
 
 interface GiftCode {
@@ -40,7 +41,6 @@ const [formData, setFormData] = useState({
     codes: "",
     buy_price: 0,
     batch_reference: "",
-    expires_at: "",
   });
 
 const fetchData = useCallback(async () => {
@@ -87,13 +87,12 @@ body: JSON.stringify({
           product_id: formData.product_id,
           codes: codeList.map((code) => ({ code, buy_price: formData.buy_price })),
           batch_reference: formData.batch_reference || undefined,
-          expires_at: formData.expires_at || undefined,
         }),
       });
 
       if (res.ok) {
         setMessage({ type: "success", text: `${codeList.length} code(s) ajouté(s)` });
-        setFormData({ product_id: "", codes: "", buy_price: 0, batch_reference: "", expires_at: "" });
+        setFormData({ product_id: "", codes: "", buy_price: 0, batch_reference: "" });
         fetchData();
       } else {
         const { error } = await res.json();
@@ -206,7 +205,10 @@ const filteredCodes = codes.filter((c) => {
               <label className="mb-1 block text-sm font-medium">Produit</label>
               <select
                 value={formData.product_id}
-                onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
+                onChange={(e) => {
+                  const selected = products.find((p) => p.id === e.target.value);
+                  setFormData({ ...formData, product_id: e.target.value, buy_price: selected?.buy_price ?? 0 });
+                }}
                 className="w-full rounded-lg border border-black/20 p-2"
               >
                 <option value="">Sélectionner...</option>
@@ -225,35 +227,15 @@ const filteredCodes = codes.filter((c) => {
                 className="w-full rounded-lg border border-black/20 p-2 font-mono text-sm"
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium">Prix d&apos;achat (FCFA)</label>
-                <input
-                  type="number"
-                  value={formData.buy_price}
-                  onChange={(e) => setFormData({ ...formData, buy_price: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-lg border border-black/20 p-2"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">RéférenceBatch</label>
-                <input
-                  type="text"
-                  value={formData.batch_reference}
-                  onChange={(e) => setFormData({ ...formData, batch_reference: e.target.value })}
-                  placeholder="Optionnel"
-                  className="w-full rounded-lg border border-black/20 p-2"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Expire le</label>
-                <input
-                  type="date"
-                  value={formData.expires_at}
-                  onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                  className="w-full rounded-lg border border-black/20 p-2"
-                />
-              </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Référence batch</label>
+              <input
+                type="text"
+                value={formData.batch_reference}
+                onChange={(e) => setFormData({ ...formData, batch_reference: e.target.value })}
+                placeholder="Optionnel"
+                className="w-full rounded-lg border border-black/20 p-2"
+              />
             </div>
           </div>
           <div className="mt-4 flex gap-2">

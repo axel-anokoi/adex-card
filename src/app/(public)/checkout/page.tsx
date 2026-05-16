@@ -221,14 +221,23 @@ export default function CheckoutPage() {
                           )}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</p>
-                          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Qté : {item.quantity} · Instantané</p>
+                          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</p>
+                          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                            {item.amount && (
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--cyan)", background: "rgba(0,255,224,0.08)", border: "1px solid rgba(0,255,224,0.2)", borderRadius: 99, padding: "1px 8px" }}>
+                                {item.amount}€
+                              </span>
+                            )}
+                            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>× {item.quantity} · Instantané</span>
+                          </div>
                         </div>
                         <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <p style={{ fontSize: 15, fontWeight: 700, background: "linear-gradient(135deg,#00ffe0,#7b2fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                            {item.eur} FCFA
+                          <p style={{ fontSize: 15, fontWeight: 800, background: "linear-gradient(135deg,#00ffe0,#7b2fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                            {toFCFA(item.eur)} FCFA
                           </p>
-                          <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{toFCFA(item.eur)} FCFA</p>
+                          {item.quantity > 1 && (
+                            <p style={{ fontSize: 11, color: "var(--text-muted)" }}>Total : {toFCFA(item.eur * item.quantity)} FCFA</p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -357,16 +366,19 @@ export default function CheckoutPage() {
                   {/* Lines */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
                     {cart.map((item) => (
-                      <div key={item.id} style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: 13, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                      <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        <span style={{ fontSize: 13, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
                           {item.image && typeof item.image === 'string' && item.image.startsWith('http') ? (
-                            <img src={item.image} alt={item.name} style={{ width: 16, height: 16, borderRadius: 4, objectFit: "cover" }} />
+                            <img src={item.image} alt={item.name} style={{ width: 16, height: 16, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
                           ) : (
-                            <span>{item.cat === 'gaming' ? '🎮' : '💎'}</span>
+                            <span style={{ flexShrink: 0 }}>{item.cat === 'gaming' ? '🎮' : '💎'}</span>
                           )}
-                          {item.name}
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {item.name}
+                            {item.quantity > 1 && <span style={{ color: "var(--cyan)", marginLeft: 4 }}>× {item.quantity}</span>}
+                          </span>
                         </span>
-                        <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 600 }}>{item.eur} FCFA</span>
+                        <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 700, flexShrink: 0 }}>{toFCFA(item.eur * item.quantity)} FCFA</span>
                       </div>
                     ))}
                     <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />
@@ -387,7 +399,7 @@ export default function CheckoutPage() {
                             Supprimer
                           </button>
                         </div>
-                        <span style={{ fontSize: 13, color: "#00ff88", fontWeight: 600 }}>-{appliedPromo.discount.toFixed(2)} FCFA</span>
+                        <span style={{ fontSize: 13, color: "#00ff88", fontWeight: 600 }}>-{toFCFA(appliedPromo.discount)} FCFA</span>
                       </div>
                     ) : (
                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -433,13 +445,12 @@ export default function CheckoutPage() {
 
                   {/* Total */}
                   <div style={{ borderRadius: 12, border: "1px solid rgba(0,255,224,0.2)", background: "rgba(0,255,224,0.06)", padding: "14px 16px", marginBottom: 20 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>Total</span>
                       <span className="text-gradient-cyan" style={{ fontSize: 22, fontWeight: 800 }}>
-                        {total} FCFA
+                        {toFCFA(total)} FCFA
                       </span>
                     </div>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "right" }}>{toFCFA(total)} FCFA</p>
                   </div>
 
                   {/* Error message */}
@@ -467,7 +478,7 @@ export default function CheckoutPage() {
                       </>
                     ) : (
                       <>
-                        Payer {total} FCFA
+                        Payer {toFCFA(total)} FCFA
                         <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                         </svg>

@@ -201,8 +201,8 @@ function ShopCard({
 
       {/* Price */}
       <div className="shop-card-prices">
-        <span className="shop-card-eur" style={{ color: meta.accent }}>{product.eur} FCFA</span>
-        <span className="shop-card-fcfa">{toFCFA(product.eur)} FCFA</span>
+        <span className="shop-card-eur" style={{ color: meta.accent }}>{toFCFA(product.eur)} FCFA</span>
+        <span className="shop-card-fcfa">{product.amount}€</span>
       </div>
 
       {/* Actions */}
