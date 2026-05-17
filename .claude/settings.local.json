@@ -5,7 +5,8 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Sort-Object)",
       "Bash(npm run *)",
-      "Bash(mkdir -p \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\\\\.github\\\\workflows\")"
+      "Bash(mkdir -p \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\\\\.github\\\\workflows\")",
+      "Bash(python -c ' *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\AxelA\\Desktop\\Dev\\Web\\adex-card\\.github"
