@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
+import { createClient } from "@/lib/supabase/client";
 
 interface AdminHeaderProps {
   title: string;
@@ -38,7 +39,7 @@ export function AdminHeader({
   const [notifOpen, setNotifOpen]     = useState(false);
   const [signingOut, setSigningOut]   = useState(false);
   const router = useRouter();
-  const { user, profile, supabase } = useAuth();
+  const { user, profile } = useAuth();
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef   = useRef<HTMLDivElement>(null);
   const searchRef  = useRef<HTMLDivElement>(null);
@@ -77,10 +78,10 @@ export function AdminHeader({
         throw new Error(data?.error || "Logout failed");
       }
 
-      await supabase.auth.signOut();
+      await createClient().auth.signOut();
     } catch (error) {
       console.error("Logout error:", error);
-      await supabase.auth.signOut();
+      await createClient().auth.signOut();
     } finally {
       setProfileOpen(false);
       router.replace("/");
