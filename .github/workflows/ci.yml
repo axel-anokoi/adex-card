@@ -71,10 +71,22 @@ jobs:
       - name: Deploy preview
         id: deploy
         run: |
-          DEPLOY_LOG=$(netlify deploy --build --alias "pr-${{ github.event.number }}" 2>&1)
-          echo "$DEPLOY_LOG"
-          PREVIEW_URL=$(echo "$DEPLOY_LOG" | grep -oP 'https://[^\s]+\.netlify\.app' | head -1)
-          echo "preview_url=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+          netlify deploy \
+            --build \
+            --alias "pr-${{ github.event.number }}" \
+            --json 2>/dev/null | tee deploy.json
+
+          cat deploy.json
+
+          PREVIEW_URL=$(jq -r '.deploy_url' deploy.json)
+
+          if [[ -z "$PREVIEW_URL" || "$PREVIEW_URL" == "null" ]]; then
+            echo "❌ Failed to extract preview URL"
+            cat deploy.json
+            exit 1
+          fi
+
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
 
       - name: Comment PR with preview URL
         uses: actions/github-script@v7
