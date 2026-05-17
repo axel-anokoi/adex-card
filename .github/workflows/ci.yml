@@ -71,17 +71,27 @@ jobs:
       - name: Deploy preview
         id: deploy
         run: |
+          if [[ -z "$NETLIFY_AUTH_TOKEN" ]]; then
+            echo "❌ NETLIFY_AUTH_TOKEN secret is not set"
+            exit 1
+          fi
+          if [[ -z "$NETLIFY_SITE_ID" ]]; then
+            echo "❌ NETLIFY_SITE_ID secret is not set"
+            exit 1
+          fi
+
           netlify deploy \
             --build \
             --alias "pr-${{ github.event.number }}" \
-            --json 2>/dev/null | tee deploy.json
+            --json 2>build.log | tee deploy.json
 
-          cat deploy.json
+          # Show build log regardless
+          cat build.log
 
-          PREVIEW_URL=$(jq -r '.deploy_url' deploy.json)
+          PREVIEW_URL=$(jq -r '.deploy_url // empty' deploy.json)
 
-          if [[ -z "$PREVIEW_URL" || "$PREVIEW_URL" == "null" ]]; then
-            echo "❌ Failed to extract preview URL"
+          if [[ -z "$PREVIEW_URL" ]]; then
+            echo "❌ Failed to extract preview URL. Raw output:"
             cat deploy.json
             exit 1
           fi
