@@ -135,8 +135,10 @@ export async function GET() {
       .gte("created_at", twelveMonthsAgo.toISOString());
     
     const categoryMap: Record<string, { name: string; value: number; count: number }> = {};
-    categorySales?.forEach(item => {
-      const catName = item.product?.category?.name || "Autre";
+    categorySales?.forEach((item: any) => {
+      const product = Array.isArray(item.product) ? item.product[0] : item.product;
+      const category = Array.isArray(product?.category) ? product?.category[0] : product?.category;
+      const catName = category?.name || "Autre";
       if (!categoryMap[catName]) {
         categoryMap[catName] = { name: catName, value: 0, count: 0 };
       }
@@ -158,9 +160,11 @@ export async function GET() {
       .limit(10);
     
     const topProductsMap: Record<string, { id: string; name: string; revenue: number; quantity: number }> = {};
-    productSales?.forEach(item => {
-      const prodId = item.product?.id;
-      const prodName = `${item.product?.category?.name || "Produit"} ${item.product?.amount} FCFA`;
+    productSales?.forEach((item: any) => {
+      const product = Array.isArray(item.product) ? item.product[0] : item.product;
+      const category = Array.isArray(product?.category) ? product?.category[0] : product?.category;
+      const prodId = product?.id;
+      const prodName = `${category?.name || "Produit"} ${product?.amount} FCFA`;
       if (!topProductsMap[prodId]) {
         topProductsMap[prodId] = { id: prodId, name: prodName, revenue: 0, quantity: 0 };
       }
@@ -186,6 +190,41 @@ export async function GET() {
     });
     const refundReasons = Object.entries(reasonMap).map(([reason, count]) => ({ reason, count }));
     
+    // Payment stats by method and status
+    const { data: allPurchasesForPayment } = await supabase
+      .from("purchases")
+      .select("payment_method, status, total_amount");
+
+    const paymentMethodMap: Record<string, {
+      method: string;
+      paid: number;
+      pending: number;
+      failed: number;
+      refunded: number;
+      total: number;
+      revenue: number;
+    }> = {};
+
+    allPurchasesForPayment?.forEach(p => {
+      const method = p.payment_method || "unknown";
+      if (!paymentMethodMap[method]) {
+        paymentMethodMap[method] = { method, paid: 0, pending: 0, failed: 0, refunded: 0, total: 0, revenue: 0 };
+      }
+      paymentMethodMap[method].total++;
+      if (p.status === "paid") {
+        paymentMethodMap[method].paid++;
+        paymentMethodMap[method].revenue += p.total_amount || 0;
+      } else if (p.status === "pending" || p.status === "pending_manual_review") {
+        paymentMethodMap[method].pending++;
+      } else if (p.status === "failed") {
+        paymentMethodMap[method].failed++;
+      } else if (p.status === "refunded") {
+        paymentMethodMap[method].refunded++;
+      }
+    });
+
+    const paymentMethodStats = Object.values(paymentMethodMap).sort((a, b) => b.total - a.total);
+
     // Get customer stats
     const { data: allPurchases } = await supabase
       .from("purchases")
@@ -235,7 +274,8 @@ export async function GET() {
       averageOrderValue,
       hourlySales,
       totalOrders,
-      totalRevenue
+      totalRevenue,
+      paymentMethodStats
     });
   } catch (error) {
     console.error("Stats error:", error);

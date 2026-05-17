@@ -138,7 +138,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <p style={{ textAlign: "center", fontSize: 13, color: "var(--text-muted)", marginTop: 20 }}>
-          Besoin d'aide ?{" "}
+          Besoin d&apos;aide ?{" "}
           <Link href="/login" style={{ color: "var(--cyan)", fontWeight: 600, textDecoration: "none" }}>
             Retour à la connexion →
           </Link>

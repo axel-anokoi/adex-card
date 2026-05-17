@@ -6,6 +6,7 @@ export interface CartItem {
   id: string;
   name: string;
   eur: number;
+  amount?: number;
   quantity: number;
   image?: string;
   cat?: string;
@@ -103,13 +104,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevCart, { 
-        id: productId, 
-        name: product.name, 
-        eur: product.eur, 
-        quantity: 1, 
-        image: product.image, 
-        cat: product.cat 
+      return [...prevCart, {
+        id: productId,
+        name: product.name,
+        eur: product.eur,
+        amount: product.amount,
+        quantity: 1,
+        image: product.image,
+        cat: product.cat
       }];
     });
 

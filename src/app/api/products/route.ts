@@ -57,14 +57,13 @@ let query = supabase
       const catSlug = product.category?.slug || "unknown";
       const catName = product.category?.name || "Unknown";
       const logoUrl = product.category?.logo_url;
-      const eurAmount = product.sell_price;
 
-      console.log("Transforming product:", { id: product.id, catSlug, catName, eurAmount, logoUrl });
-      
+      console.log("Transforming product:", { id: product.id, catSlug, catName, amount: product.amount, sellPrice: product.sell_price, logoUrl });
+
       return {
         id: product.id,
-        name: `Carte ${catName} ${eurAmount} FCFA`,
-        eur: eurAmount,
+        name: `Carte ${catName} ${product.amount}€`,
+        eur: product.sell_price,
         amount: product.amount,
         cat: catSlug,
         tag: CATEGORY_TAGS[catSlug] || catName,

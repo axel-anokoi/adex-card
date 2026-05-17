@@ -17,23 +17,26 @@ const paymentMethods = [
 ];
 
 export default function CheckoutPage() {
-  const { cart } = useCart();
+  const { cart, clearCart } = useCart();
   const [selectedPayment, setSelectedPayment] = useState("djamo");
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [createAccountConsent, setCreateAccountConsent] = useState(true);
+  const [implicitAccountCreated, setImplicitAccountCreated] = useState(false);
+  const [purchasedCodes, setPurchasedCodes] = useState<Array<{ code: string; product_name: string; unit_price: number }>>([]);
 
   const [userData, setUserData] = useState({
     fullName: "",
     phone: "",
     email: "",
   });
-
-  const [userLoading, setUserLoading] = useState(true);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 80);
@@ -47,6 +50,7 @@ export default function CheckoutPage() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
+          setIsAuthenticated(true);
           const { data: profile } = await supabase
             .from("users")
             .select("nom, prenoms, telephone, email")
@@ -55,7 +59,7 @@ export default function CheckoutPage() {
 
           if (profile) {
             setUserData({
-              fullName: profile.nom + " " + profile.prenoms || "",
+              fullName: [profile.prenoms, profile.nom].filter(Boolean).join(" "),
               phone: profile.telephone || "",
               email: profile.email || user.email || "",
             });
@@ -63,8 +67,6 @@ export default function CheckoutPage() {
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
-      } finally {
-        setUserLoading(false);
       }
     }
     fetchUser();
@@ -111,10 +113,16 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (!userData.fullName || !userData.phone) {
-      alert("Veuillez remplir les champs obligatoires (Nom et Téléphone)");
+      setCheckoutError("Veuillez remplir les champs obligatoires (Nom et Téléphone)");
       return;
     }
 
+    if (!isAuthenticated && !userData.email) {
+      setCheckoutError("Un email est requis pour recevoir vos codes et activer votre compte.");
+      return;
+    }
+
+    setCheckoutError(null);
     setLoading(true);
     try {
       const response = await fetch("/api/checkout", {
@@ -124,26 +132,26 @@ export default function CheckoutPage() {
           items: cart,
           paymentMethod: selectedPayment,
           customer: userData,
+          createAccountConsent: !isAuthenticated ? createAccountConsent : undefined,
           promo: appliedPromo,
         }),
       });
       const data = await response.json();
       if (data.error) {
-        alert(data.error);
-        setLoading(false);
+        setCheckoutError(data.error);
         return;
       }
       if (data.url) {
         window.location.href = data.url;
       } else if (data.data?.statut === "success") {
+        setImplicitAccountCreated(Boolean(data.data?.implicitAccountCreated));
+        setPurchasedCodes(data.data?.codes ?? []);
+        clearCart();
         setShowSuccessModal(true);
-        // Vider le panier après succès
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('cart');
-        }
       }
     } catch (err) {
       console.error(err);
+      setCheckoutError("Une erreur inattendue s'est produite. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -151,7 +159,13 @@ export default function CheckoutPage() {
 
   return (
     <>
-      {showSuccessModal && <SuccessModal onClose={() => setShowSuccessModal(false)} />}
+      {showSuccessModal && (
+        <SuccessModal
+          accountCreated={implicitAccountCreated}
+          codes={purchasedCodes}
+          onClose={() => setShowSuccessModal(false)}
+        />
+      )}
       <main style={{ background: "var(--bg)", minHeight: "100vh", padding: "5rem 1rem 3rem", position: "relative", overflow: "hidden" }}>
         {/* Background grid */}
         <div style={{ position: "absolute", inset: 0, opacity: 0.04,
@@ -207,14 +221,23 @@ export default function CheckoutPage() {
                           )}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</p>
-                          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>Qté : {item.quantity} · Instantané</p>
+                          <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</p>
+                          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                            {item.amount && (
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--cyan)", background: "rgba(0,255,224,0.08)", border: "1px solid rgba(0,255,224,0.2)", borderRadius: 99, padding: "1px 8px" }}>
+                                {item.amount}€
+                              </span>
+                            )}
+                            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>× {item.quantity} · Instantané</span>
+                          </div>
                         </div>
                         <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <p style={{ fontSize: 15, fontWeight: 700, background: "linear-gradient(135deg,#00ffe0,#7b2fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                            {item.eur} FCFA
+                          <p style={{ fontSize: 15, fontWeight: 800, background: "linear-gradient(135deg,#00ffe0,#7b2fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                            {toFCFA(item.eur)} FCFA
                           </p>
-                          <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{toFCFA(item.eur)} FCFA</p>
+                          {item.quantity > 1 && (
+                            <p style={{ fontSize: 11, color: "var(--text-muted)" }}>Total : {toFCFA(item.eur * item.quantity)} FCFA</p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -250,7 +273,9 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Email (Optionnel)</label>
+                      <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>
+                        Email {isAuthenticated ? "(Optionnel)" : "*"}
+                      </label>
                       <input
                         type="email"
                         value={userData.email}
@@ -259,6 +284,48 @@ export default function CheckoutPage() {
                         style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontSize: 14, outline: "none" }}
                       />
                     </div>
+                    {!isAuthenticated && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <label style={{
+                          display: "grid",
+                          gridTemplateColumns: "18px 1fr",
+                          gap: 10,
+                          alignItems: "start",
+                          borderRadius: 12,
+                          border: createAccountConsent
+                            ? "1px solid rgba(0,255,224,0.35)"
+                            : "1px solid rgba(255,255,255,0.12)",
+                          background: createAccountConsent
+                            ? "rgba(0,255,224,0.06)"
+                            : "rgba(255,255,255,0.03)",
+                          padding: "12px 14px",
+                          cursor: "pointer",
+                          transition: "border-color 0.2s, background 0.2s",
+                        }}>
+                          <input
+                            type="checkbox"
+                            checked={createAccountConsent}
+                            onChange={(e) => setCreateAccountConsent(e.target.checked)}
+                            style={{ marginTop: 2, accentColor: "var(--cyan)" }}
+                          />
+                          <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 700 }}>
+                              Créer mon compte Adex Card
+                            </span>
+                            <span style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.55 }}>
+                              Un lien d&apos;activation vous sera envoyé par email pour définir votre mot de passe et retrouver l&apos;historique de vos commandes.
+                            </span>
+                          </span>
+                        </label>
+                        <p style={{ fontSize: 11, color: "var(--text-faint, rgba(255,255,255,0.3))", lineHeight: 1.5, paddingLeft: 2 }}>
+                          En validant, vous acceptez notre{" "}
+                          <Link href="/privacy" style={{ color: "var(--cyan)", textDecoration: "none" }}>
+                            politique de confidentialité
+                          </Link>
+                          . Vous pouvez supprimer votre compte depuis votre profil.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -299,16 +366,19 @@ export default function CheckoutPage() {
                   {/* Lines */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
                     {cart.map((item) => (
-                      <div key={item.id} style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: 13, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                      <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        <span style={{ fontSize: 13, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
                           {item.image && typeof item.image === 'string' && item.image.startsWith('http') ? (
-                            <img src={item.image} alt={item.name} style={{ width: 16, height: 16, borderRadius: 4, objectFit: "cover" }} />
+                            <img src={item.image} alt={item.name} style={{ width: 16, height: 16, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
                           ) : (
-                            <span>{item.cat === 'gaming' ? '🎮' : '💎'}</span>
+                            <span style={{ flexShrink: 0 }}>{item.cat === 'gaming' ? '🎮' : '💎'}</span>
                           )}
-                          {item.name}
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {item.name}
+                            {item.quantity > 1 && <span style={{ color: "var(--cyan)", marginLeft: 4 }}>× {item.quantity}</span>}
+                          </span>
                         </span>
-                        <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 600 }}>{item.eur} FCFA</span>
+                        <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 700, flexShrink: 0 }}>{toFCFA(item.eur * item.quantity)} FCFA</span>
                       </div>
                     ))}
                     <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />
@@ -329,7 +399,7 @@ export default function CheckoutPage() {
                             Supprimer
                           </button>
                         </div>
-                        <span style={{ fontSize: 13, color: "#00ff88", fontWeight: 600 }}>-{appliedPromo.discount.toFixed(2)} FCFA</span>
+                        <span style={{ fontSize: 13, color: "#00ff88", fontWeight: 600 }}>-{toFCFA(appliedPromo.discount)} FCFA</span>
                       </div>
                     ) : (
                       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -375,14 +445,24 @@ export default function CheckoutPage() {
 
                   {/* Total */}
                   <div style={{ borderRadius: 12, border: "1px solid rgba(0,255,224,0.2)", background: "rgba(0,255,224,0.06)", padding: "14px 16px", marginBottom: 20 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>Total</span>
                       <span className="text-gradient-cyan" style={{ fontSize: 22, fontWeight: 800 }}>
-                        {total} FCFA
+                        {toFCFA(total)} FCFA
                       </span>
                     </div>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "right" }}>{toFCFA(total)} FCFA</p>
                   </div>
+
+                  {/* Error message */}
+                  {checkoutError && (
+                    <div style={{
+                      marginBottom: 12, padding: "10px 14px", borderRadius: 10,
+                      background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.35)",
+                      fontSize: 13, color: "#ef4444", lineHeight: 1.5,
+                    }}>
+                      {checkoutError}
+                    </div>
+                  )}
 
                   {/* CTA */}
                   <button
@@ -398,7 +478,7 @@ export default function CheckoutPage() {
                       </>
                     ) : (
                       <>
-                        Payer {total} FCFA
+                        Payer {toFCFA(total)} FCFA
                         <svg style={{ width: 16, height: 16 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                         </svg>
@@ -445,53 +525,222 @@ export default function CheckoutPage() {
   );
 }
 
-function SuccessModal({ onClose }: { onClose: () => void }) {
+function SuccessModal({
+  accountCreated,
+  codes,
+  onClose,
+}: {
+  accountCreated: boolean;
+  codes: Array<{ code: string; product_name: string; unit_price: number }>;
+  onClose: () => void;
+}) {
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const copy = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    });
+  };
+
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 1000,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "1rem",
-      backdropFilter: "blur(8px)",
-      backgroundColor: "rgba(0,0,0,0.6)"
-    }}>
-      <div className="glass" style={{
-        maxWidth: 400, width: "100%", borderRadius: 24, padding: "2.5rem 2rem",
-        textAlign: "center", position: "relative",
-        border: "1px solid var(--cyan)",
-        boxShadow: "0 0 30px rgba(0,255,224,0.2)",
-        animation: "modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
-      }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: "50%", background: "rgba(0,255,224,0.1)",
-          border: "2px solid var(--cyan)", display: "flex", alignItems: "center",
-          justifyContent: "center", fontSize: 32, margin: "0 auto 20px"
-        }}>
-          ✅
-        </div>
-        <h2 style={{
-          fontSize: "1.5rem", fontWeight: 800, color: "var(--text)",
-          marginBottom: 12, fontFamily: "var(--font-display)"
-        }}>
-          Paiement Réussi !
-        </h2>
-        <p style={{
-          fontSize: 14, color: "var(--text-muted)",
-          lineHeight: 1.6, marginBottom: 24
-        }}>
-          Votre commande a été validée. Vos codes cadeaux ont été envoyés à votre adresse email.
-        </p>
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "1rem",
+        backdropFilter: "blur(12px)",
+        backgroundColor: "rgba(0,0,0,0.7)",
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="glass"
+        style={{
+          width: "100%", maxWidth: 520,
+          maxHeight: "90vh",
+          borderRadius: 24,
+          border: "1px solid rgba(0,255,224,0.35)",
+          boxShadow: "0 0 0 1px rgba(0,255,224,0.08), 0 40px 100px rgba(0,0,0,0.7), 0 0 60px rgba(0,255,224,0.12)",
+          display: "flex", flexDirection: "column",
+          position: "relative",
+          overflow: "hidden",
+          animation: "modalPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        }}
+      >
+        {/* Rainbow top border */}
+        <div style={{ height: 3, flexShrink: 0, background: "linear-gradient(90deg, transparent, #00ffe0, #7b2fff, transparent)" }} />
+
+        {/* Close button */}
         <button
           onClick={onClose}
-          className="btn-primary"
-          style={{ width: "100%", padding: "12px" }}
+          aria-label="Fermer"
+          style={{
+            position: "absolute", top: 16, right: 16, zIndex: 10,
+            width: 32, height: 32, borderRadius: "50%",
+            background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+            color: "var(--text-muted)", fontSize: 16, lineHeight: 1,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.12)";
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--text)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
+          }}
         >
-          Continuer mes achats
+          ✕
         </button>
+
+        {/* Scrollable content */}
+        <div style={{ overflowY: "auto", flex: 1, padding: "2rem 1.75rem 1.5rem" }}>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: "50%",
+              background: "rgba(0,255,224,0.08)", border: "2px solid var(--cyan)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 28, margin: "0 auto 16px",
+              animation: "popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
+            }}>
+              ✅
+            </div>
+            <h2 style={{
+              fontSize: "1.5rem", fontWeight: 800, color: "var(--text)",
+              marginBottom: 6, fontFamily: "var(--font-display)",
+            }}>
+              Paiement réussi !
+            </h2>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
+              Vos codes sont prêts. Copiez-les et utilisez-les immédiatement.
+            </p>
+          </div>
+
+          {/* Codes */}
+          {codes.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                🎁 Vos codes cadeaux
+              </p>
+              {codes.map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    borderRadius: 14,
+                    border: "1px solid rgba(0,255,224,0.18)",
+                    background: "rgba(0,255,224,0.04)",
+                    padding: "14px 16px",
+                    transition: "border-color 0.2s",
+                  }}
+                >
+                  {/* Product name + price */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", background: "rgba(0,255,224,0.1)", border: "1px solid rgba(0,255,224,0.2)", padding: "2px 8px", borderRadius: 99 }}>
+                      {item.product_name}
+                    </span>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      {item.unit_price} FCFA
+                    </span>
+                  </div>
+
+                  {/* Code + copy */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <code style={{
+                      flex: 1, minWidth: 0,
+                      fontSize: 15, fontWeight: 700, letterSpacing: "0.12em",
+                      color: "#00ffe0",
+                      background: "rgba(0,0,0,0.3)",
+                      border: "1px solid rgba(0,255,224,0.15)",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      fontFamily: "monospace",
+                      wordBreak: "break-all",
+                      display: "block",
+                    }}>
+                      {item.code}
+                    </code>
+                    <button
+                      onClick={() => copy(item.code)}
+                      title="Copier"
+                      style={{
+                        flexShrink: 0,
+                        width: 40, height: 40, borderRadius: 10,
+                        border: copiedCode === item.code
+                          ? "1px solid rgba(0,255,136,0.5)"
+                          : "1px solid rgba(0,255,224,0.3)",
+                        background: copiedCode === item.code
+                          ? "rgba(0,255,136,0.1)"
+                          : "rgba(0,255,224,0.07)",
+                        color: copiedCode === item.code ? "#00ff88" : "var(--cyan)",
+                        fontSize: 17,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      aria-label="Copier le code"
+                    >
+                      {copiedCode === item.code ? "✓" : "⎘"}
+                    </button>
+                  </div>
+
+                  {/* Copied feedback */}
+                  {copiedCode === item.code && (
+                    <p style={{ fontSize: 11, color: "#00ff88", marginTop: 6, fontWeight: 600 }}>
+                      ✓ Copié dans le presse-papier
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Email reminder */}
+          <div style={{
+            borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+            padding: "10px 14px", marginBottom: accountCreated ? 12 : 20,
+          }}>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
+              📧 Ces codes ont également été envoyés à votre adresse email.
+            </p>
+          </div>
+
+          {/* Account activation banner */}
+          {accountCreated && (
+            <div style={{
+              borderRadius: 10, background: "rgba(0,255,224,0.05)", border: "1px solid rgba(0,255,224,0.2)",
+              padding: "10px 14px", marginBottom: 20,
+            }}>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
+                🔑 Un email d&apos;activation a été envoyé. Cliquez sur le lien pour définir votre mot de passe et accéder à votre historique de commandes.
+              </p>
+            </div>
+          )}
+
+          {/* CTA */}
+          <button
+            onClick={onClose}
+            className="btn-primary"
+            style={{ width: "100%", justifyContent: "center", padding: "13px" }}
+          >
+            Continuer mes achats
+          </button>
+        </div>
       </div>
+
       <style>{`
         @keyframes modalPop {
-          from { transform: scale(0.8); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
+          from { transform: scale(0.88); opacity: 0; }
+          to   { transform: scale(1);    opacity: 1; }
+        }
+        @keyframes popIn {
+          from { transform: scale(0.5); opacity: 0; }
+          to   { transform: scale(1);   opacity: 1; }
+        }
+        @media (max-width: 540px) {
+          .success-modal-card { border-radius: 16px !important; }
         }
       `}</style>
     </div>

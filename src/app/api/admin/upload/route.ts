@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -122,7 +122,7 @@ async function checkAdmin() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { isAdmin: false, user: null, supabase: null };
+    return { isAdmin: false, user: null, supabase };
   }
 
   const { data: userData } = await supabase

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { Pagination } from "./pagination";
 
 interface Product {
   id: string;
   category: { name: string };
   amount: number;
+  buy_price: number;
 }
 
 interface GiftCode {
@@ -31,13 +33,14 @@ export function CodeManager() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [filterProduct, setFilterProduct] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
 const [formData, setFormData] = useState({
     product_id: "",
     codes: "",
     buy_price: 0,
     batch_reference: "",
-    expires_at: "",
   });
 
 const fetchData = useCallback(async () => {
@@ -84,13 +87,12 @@ body: JSON.stringify({
           product_id: formData.product_id,
           codes: codeList.map((code) => ({ code, buy_price: formData.buy_price })),
           batch_reference: formData.batch_reference || undefined,
-          expires_at: formData.expires_at || undefined,
         }),
       });
 
       if (res.ok) {
         setMessage({ type: "success", text: `${codeList.length} code(s) ajouté(s)` });
-        setFormData({ product_id: "", codes: "", buy_price: 0, batch_reference: "", expires_at: "" });
+        setFormData({ product_id: "", codes: "", buy_price: 0, batch_reference: "" });
         fetchData();
       } else {
         const { error } = await res.json();
@@ -154,6 +156,7 @@ const filteredCodes = codes.filter((c) => {
     if (filterProduct && c.product?.id !== filterProduct) return false;
     return true;
   });
+  const paginatedCodes = filteredCodes.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     <div>
@@ -161,7 +164,7 @@ const filteredCodes = codes.filter((c) => {
         <div className="flex gap-2">
           <select
             value={filterStatus || ""}
-            onChange={(e) => setFilterStatus(e.target.value || null)}
+            onChange={(e) => { setFilterStatus(e.target.value || null); setPage(0); }}
             className="rounded-lg border border-black/20 p-2"
           >
             <option value="">Tous les statuts</option>
@@ -171,7 +174,7 @@ const filteredCodes = codes.filter((c) => {
           </select>
           <select
             value={filterProduct || ""}
-            onChange={(e) => setFilterProduct(e.target.value || null)}
+            onChange={(e) => { setFilterProduct(e.target.value || null); setPage(0); }}
             className="rounded-lg border border-black/20 p-2"
           >
             <option value="">Tous les produits</option>
@@ -202,7 +205,10 @@ const filteredCodes = codes.filter((c) => {
               <label className="mb-1 block text-sm font-medium">Produit</label>
               <select
                 value={formData.product_id}
-                onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
+                onChange={(e) => {
+                  const selected = products.find((p) => p.id === e.target.value);
+                  setFormData({ ...formData, product_id: e.target.value, buy_price: selected?.buy_price ?? 0 });
+                }}
                 className="w-full rounded-lg border border-black/20 p-2"
               >
                 <option value="">Sélectionner...</option>
@@ -221,35 +227,15 @@ const filteredCodes = codes.filter((c) => {
                 className="w-full rounded-lg border border-black/20 p-2 font-mono text-sm"
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium">Prix d&apos;achat (FCFA)</label>
-                <input
-                  type="number"
-                  value={formData.buy_price}
-                  onChange={(e) => setFormData({ ...formData, buy_price: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-lg border border-black/20 p-2"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">RéférenceBatch</label>
-                <input
-                  type="text"
-                  value={formData.batch_reference}
-                  onChange={(e) => setFormData({ ...formData, batch_reference: e.target.value })}
-                  placeholder="Optionnel"
-                  className="w-full rounded-lg border border-black/20 p-2"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Expire le</label>
-                <input
-                  type="date"
-                  value={formData.expires_at}
-                  onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                  className="w-full rounded-lg border border-black/20 p-2"
-                />
-              </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Référence batch</label>
+              <input
+                type="text"
+                value={formData.batch_reference}
+                onChange={(e) => setFormData({ ...formData, batch_reference: e.target.value })}
+                placeholder="Optionnel"
+                className="w-full rounded-lg border border-black/20 p-2"
+              />
             </div>
           </div>
           <div className="mt-4 flex gap-2">
@@ -265,7 +251,7 @@ const filteredCodes = codes.filter((c) => {
         <p className="text-center text-black/60">Aucun code</p>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredCodes.map((code) => (
+          {paginatedCodes.map((code) => (
             <div key={code.id} className={`rounded-lg border p-3 ${code.status === "available" ? "border-black/10 bg-white" : "border-black/5 bg-black/5"}`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">{code.product?.category?.name} {code.product?.amount} FCFA</span>
@@ -289,6 +275,13 @@ const filteredCodes = codes.filter((c) => {
           ))}
         </div>
       )}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={filteredCodes.length}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+      />
     </div>
   );
 }

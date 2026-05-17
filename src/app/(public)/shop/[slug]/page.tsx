@@ -67,7 +67,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
           <p className="text-white/60 text-lg max-w-2xl leading-relaxed mb-8">
             Livraison immédiate par email après confirmation du paiement.
-            L'accès à vos contenus gaming n'a jamais été aussi rapide.
+            L&apos;accès à vos contenus gaming n&apos;a jamais été aussi rapide.
           </p>
 
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-10">

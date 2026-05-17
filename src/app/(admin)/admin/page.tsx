@@ -16,6 +16,8 @@ import { CategoryManager } from "@/components/admin/category-manager";
 import { ProductManager } from "@/components/admin/product-manager";
 import { CodeManager } from "@/components/admin/code-manager";
 import { StatsTab, StatsData } from "@/components/admin/stats/stats-tab";
+import { PaymentsTab } from "@/components/admin/payments-tab";
+import { ClientManager } from "@/components/admin/client-manager";
 
 type TabType = "overview" | "stats" | "purchases" | "refunds" | "discounts" | "users" | "audit" | "categorie" | "produit" | "code" | "profil";
 
@@ -102,6 +104,35 @@ interface RefundRequest {
   user?: { email: string };
 }
 
+interface PurchaseFull {
+  id: string;
+  total_amount: number;
+  total_buy_cost: number;
+  profit: number;
+  status: string;
+  payment_method: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  customer_email: string | null;
+  created_at: string;
+  user: { email: string; nom: string | null; prenoms: string | null; telephone: string | null } | null;
+  purchase_items: {
+    id: string;
+    quantity: number;
+    unit_price: number;
+    unit_cost?: number;
+    total_price: number;
+    product: {
+      id: string;
+      amount: number;
+      sell_price: number;
+      buy_price: number;
+      category: { name: string; slug: string; logo_url: string | null } | null;
+    } | null;
+    gift_code: { code: string } | null;
+  }[];
+}
+
 import { DiscountCode } from "@/types/discounts";
 
 import { AuditLog } from "@/types/audit";
@@ -109,10 +140,12 @@ import { AuditLog } from "@/types/audit";
 export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([]);
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
+  const [purchases, setPurchases] = useState<PurchaseFull[]>([]);
   const [refunds, setRefunds] = useState<RefundRequest[]>([]);
   const [discounts, setDiscounts] = useState<DiscountCode[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -138,9 +171,12 @@ export default function AdminPage() {
         ]);
 
         setStats(statsData);
-        
-        // Calculate daily revenue from purchases data
+
+        // Store full purchases data
         if (purchasesData?.data) {
+          setPurchases(purchasesData.data as PurchaseFull[]);
+
+          // Calculate daily revenue from purchases data
           const byDay: Record<string, DailyRevenue> = {};
           purchasesData.data.forEach((p: { created_at: string; total_amount: number; status: string }) => {
             if (p.status === "paid") {
@@ -174,7 +210,7 @@ export default function AdminPage() {
         setDiscounts(discountsData?.data || []);
 
         // For now, use purchases as recent activity (placeholder)
-        setActivities(purchasesData?.data?.slice(0, 10).map((p: { id: string; created_at: string; user: { email: string }; status: string; total_amount: number }) => ({
+        setActivities(purchasesData?.data?.slice(0, 5).map((p: { id: string; created_at: string; user: { email: string }; status: string; total_amount: number }) => ({
           event_type: "purchase",
           event_id: p.id,
           occurred_at: p.created_at,
@@ -218,6 +254,21 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error("Failed to reject refund:", error);
+    }
+  };
+
+  const handleUpdatePurchaseStatus = async (id: string, status: string) => {
+    try {
+      const res = await fetch(`/api/admin/purchases/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        setPurchases((prev) => prev.map((p) => p.id === id ? { ...p, status } : p));
+      }
+    } catch (error) {
+      console.error("Failed to update purchase status:", error);
     }
   };
 
@@ -268,14 +319,15 @@ if (loading) {
 
 const handleTabChange = (tab: string) => {
     const tabMap: Record<string, TabType> = {
-      dashboard: "overview",
-      stats: "stats",
-      categorie: "categorie",
-      produit: "produit",
-      code: "code",
-      client: "users",
-      publicite: "discounts",
-      paiement: "purchases",
+      dashboard:  "overview",
+      stats:      "stats",
+      categorie:  "categorie",
+      produit:    "produit",
+      code:       "code",
+      client:     "users",
+      publicite:  "discounts",
+      paiement:   "purchases",
+      profil:     "profil",
     };
     setActiveTab(tabMap[tab] || (tab as TabType));
   };
@@ -283,22 +335,26 @@ const handleTabChange = (tab: string) => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <AdminSidebar 
-        activeTab={activeTab} 
+      <AdminSidebar
+        activeTab={activeTab}
         onTabChange={handleTabChange}
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        onToggle={() => setMobileMenuOpen((prev) => !prev)}
       />
 
-{/* Main Content Area */}
+      {/* Main Content Area */}
       <div className="flex-1 md:ml-64">
         {/* Header */}
         <AdminHeader
-          title={activeTab} 
+          title={activeTab}
           notificationCount={stats?.refundsPending || 0}
+          onMobileMenuToggle={() => setMobileMenuOpen((prev) => !prev)}
         />
 
         {/* Content */}
-        <main 
-          className="p-6"
+        <main
+          className="p-3 md:p-6"
           style={{ background: "var(--bg)" }}
         >
           {/* Overview Tab */}
@@ -345,44 +401,7 @@ const handleTabChange = (tab: string) => {
 
           {/* Purchases Tab */}
           {activeTab === "purchases" && (
-            <div className="rounded-xl border p-6" style={{ 
-              background: "var(--bg-card)", 
-              borderColor: "var(--border)" 
-            }}>
-              <h3 className="mb-4 text-lg font-bold" style={{ color: "var(--text)" }}>Commandes récentes</h3>
-              {activities.length === 0 ? (
-                <p className="text-center" style={{ color: "var(--text-muted)" }}>Aucune commande</p>
-              ) : (
-                <div className="space-y-2">
-                  {activities.map((activity) => (
-                    <div
-                      key={activity.event_id}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                      style={{ 
-                        borderColor: "var(--border)",
-                        background: "color-mix(in srgb, var(--bg) 50%, transparent)"
-                      }}
-                    >
-                      <div>
-                        <p className="font-medium" style={{ color: "var(--text)" }}>{activity.actor_email}</p>
-                        <p className="text-xs" style={{ color: "var(--text-faint)" }}>
-                          {new Date(activity.occurred_at).toLocaleDateString("fr-FR")}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium" style={{ color: "var(--text)" }}>{(activity.amount || 0).toFixed(2)} FCFA</p>
-                        <span className={`text-xs ${
-                          activity.status === "paid" ? "text-emerald-600" :
-                          activity.status === "pending" ? "text-amber-600" : "text-red-600"
-                        }`}>
-                          {activity.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <PaymentsTab purchases={purchases} onUpdateStatus={handleUpdatePurchaseStatus} />
           )}
 
           {/* Refunds Tab */}
@@ -405,33 +424,22 @@ const handleTabChange = (tab: string) => {
           )}
 
           {/* Users Tab */}
-          {activeTab === "users" && (
-            <div className="rounded-xl border p-6" style={{ 
-              background: "var(--bg-card)", 
-              borderColor: "var(--border)" 
-            }}>
-              <h3 className="mb-4 text-lg font-bold" style={{ color: "var(--text)" }}>Gestion des utilisateurs</h3>
-              <p style={{ color: "var(--text-muted)" }}>Page en construction...</p>
-            </div>
-          )}
+          {activeTab === "users" && <ClientManager />}
 
           {/* Audit Tab */}
           {activeTab === "audit" && (
             <AuditLogs logs={auditLogs} />
           )}
 
-{/* Placeholder for other tabs */}
-          {["categorie", "produit", "code", "profil"].includes(activeTab) && (
-            <div className="rounded-xl border p-6" style={{ 
-              background: "var(--bg-card)", 
-              borderColor: "var(--border)" 
-            }}>
+{["categorie", "produit", "code"].includes(activeTab) && (
+            <div className="rounded-xl border p-6" style={{ background: "var(--bg-card)", borderColor: "var(--border)" }}>
               {activeTab === "categorie" && <CategoryManager />}
               {activeTab === "produit" && <ProductManager />}
               {activeTab === "code" && <CodeManager />}
-              {activeTab === "profil" && <ProfileEditor />}
             </div>
           )}
+
+          {activeTab === "profil" && <ProfileEditor />}
         </main>
       </div>
     </div>

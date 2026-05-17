@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
-// Replace the existing DiscountCode interface in AdminPage (around line 143-154)
 import { DiscountCode } from "@/types/discounts";
 
 interface DiscountManagerProps {
@@ -12,28 +10,37 @@ interface DiscountManagerProps {
 }
 
 const typeLabels = {
-  percentage: "Pourcentage",
+  percentage:   "Pourcentage",
   fixed_amount: "Montant fixe",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", borderRadius: 8,
+  border: "1px solid var(--border)",
+  background: "color-mix(in srgb, var(--bg) 60%, transparent)",
+  color: "var(--text)", padding: "9px 12px", fontSize: 13,
+  outline: "none", boxSizing: "border-box",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block", fontSize: 12, fontWeight: 600,
+  color: "var(--text-muted)", marginBottom: 6,
 };
 
 export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountManagerProps) {
   const [showCreate, setShowCreate] = useState(false);
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [newCode, setNewCode] = useState({
-    code: "",
-    description: "",
+  const [filter, setFilter]         = useState<"all" | "active" | "inactive">("all");
+  const [saving, setSaving]         = useState(false);
+  const [message, setMessage]       = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [newCode, setNewCode]       = useState({
+    code: "", description: "",
     discount_type: "percentage" as "percentage" | "fixed_amount",
-    discount_value: 0,
-    max_discount_amount: 0,
-    min_order_amount: 0,
-    max_uses: 0,
-    max_uses_per_user: 1,
+    discount_value: 0, max_discount_amount: 0,
+    min_order_amount: 0, max_uses: 0, max_uses_per_user: 1,
   });
 
   const filteredCodes = codes.filter((c) => {
-    if (filter === "active") return c.is_active;
+    if (filter === "active")   return c.is_active;
     if (filter === "inactive") return !c.is_active;
     return true;
   });
@@ -59,179 +66,190 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
         body: JSON.stringify(newCode),
       });
       if (res.ok) {
-        setMessage({ type: "success", text: "Code promo créé" });
-        setNewCode({
-          code: "",
-          description: "",
-          discount_type: "percentage",
-          discount_value: 0,
-          max_discount_amount: 0,
-          min_order_amount: 0,
-          max_uses: 0,
-          max_uses_per_user: 1,
-        });
+        setMessage({ type: "success", text: "Code promo créé avec succès" });
+        setNewCode({ code: "", description: "", discount_type: "percentage", discount_value: 0, max_discount_amount: 0, min_order_amount: 0, max_uses: 0, max_uses_per_user: 1 });
         setShowCreate(false);
       } else {
         const { error } = await res.json();
-        setMessage({ type: "error", text: error || "Erreur" });
+        setMessage({ type: "error", text: error || "Erreur lors de la création" });
       }
-    } catch (error) {
-      setMessage({ type: "error", text: "Erreur lors de la création" });
+    } catch {
+      setMessage({ type: "error", text: "Erreur réseau. Veuillez réessayer." });
     } finally {
       setSaving(false);
     }
   };
 
+  const filterOpts: { key: "all" | "active" | "inactive"; label: string }[] = [
+    { key: "all", label: "Tout" },
+    { key: "active", label: "Actif" },
+    { key: "inactive", label: "Inactif" },
+  ];
+
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      {/* Top bar */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2">
-          {(["all", "active", "inactive"] as const).map((f) => (
+          {filterOpts.map(({ key, label }) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
-                filter === f
-                  ? "bg-cyan text-black"
-                  : "bg-black/5 text-black/60 hover:bg-black/10"
-              }`}
+              key={key}
+              onClick={() => setFilter(key)}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all"
+              style={{
+                background: filter === key ? "var(--cyan)" : "color-mix(in srgb, var(--text) 6%, transparent)",
+                color: filter === key ? "#000" : "var(--text-muted)",
+                border: `1px solid ${filter === key ? "var(--border-cyan)" : "var(--border)"}`,
+              }}
             >
-              {f === "all" ? "Tout" : f === "active" ? "Actif" : "Inactif"}
+              {label}
             </button>
           ))}
         </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="rounded-lg bg-cyan px-4 py-2 text-sm font-medium text-black hover:bg-cyan/80"
+          className="rounded-lg px-4 py-2 text-sm font-semibold transition-all"
+          style={{ background: "var(--cyan)", color: "#000", border: "none" }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
           + Nouveau code
         </button>
       </div>
 
+      {/* Feedback message */}
       {message && (
-        <div className={`mb-4 rounded-lg p-3 text-sm ${message.type === "success" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"}`}>
+        <div
+          className="mb-4 rounded-lg p-3 text-sm"
+          style={{
+            background: message.type === "success" ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)",
+            color: message.type === "success" ? "#10b981" : "#ef4444",
+            border: `1px solid ${message.type === "success" ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`,
+          }}
+        >
           {message.text}
         </div>
       )}
 
+      {/* Create form */}
       {showCreate && (
-        <div className="mb-6 rounded-xl border border-cyan/30 bg-white p-6">
-          <h4 className="mb-4 text-lg font-bold">Créer un code promo</h4>
+        <div
+          className="mb-6 rounded-xl p-6"
+          style={{
+            border: "1px solid var(--border-cyan)",
+            background: "var(--bg-card)",
+          }}
+        >
+          <h4 className="mb-4 text-lg font-bold" style={{ color: "var(--text)" }}>
+            Créer un code promo
+          </h4>
           <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              { label: "Code", key: "code", type: "text", placeholder: "EXEMPLE2024" },
+              { label: newCode.discount_type === "percentage" ? "Pourcentage (%)" : "Montant (FCFA)", key: "discount_value", type: "number" },
+              { label: "Montant max (FCFA)", key: "max_discount_amount", type: "number", placeholder: "Optionnel" },
+              { label: "Commande min (FCFA)", key: "min_order_amount", type: "number" },
+              { label: "Utilisation max", key: "max_uses", type: "number", placeholder: "Illimité si 0" },
+            ].map(({ label, key, type, placeholder }) => (
+              <div key={key}>
+                <label style={labelStyle}>{label}</label>
+                <input
+                  type={type}
+                  value={(newCode as Record<string, string | number>)[key]}
+                  placeholder={placeholder}
+                  onChange={(e) => setNewCode({
+                    ...newCode,
+                    [key]: type === "text" ? e.target.value.toUpperCase() : (parseFloat(e.target.value) || 0),
+                  })}
+                  style={inputStyle}
+                />
+              </div>
+            ))}
             <div>
-              <label className="mb-1 block text-sm font-medium">Code</label>
-              <input
-                type="text"
-                value={newCode.code}
-                onChange={(e) => setNewCode({ ...newCode, code: e.target.value.toUpperCase() })}
-                placeholder="EXEMPLE2024"
-                className="w-full rounded-lg border border-black/20 p-2"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Type</label>
+              <label style={labelStyle}>Type</label>
               <select
                 value={newCode.discount_type}
                 onChange={(e) => setNewCode({ ...newCode, discount_type: e.target.value as "percentage" | "fixed_amount" })}
-                className="w-full rounded-lg border border-black/20 p-2"
+                style={inputStyle}
               >
                 <option value="percentage">Pourcentage (%)</option>
                 <option value="fixed_amount">Montant fixe (FCFA)</option>
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                {newCode.discount_type === "percentage" ? "Pourcentage" : "Montant (FCFA)"}
-              </label>
-              <input
-                type="number"
-                value={newCode.discount_value}
-                onChange={(e) => setNewCode({ ...newCode, discount_value: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-lg border border-black/20 p-2"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Montant max (FCFA)</label>
-              <input
-                type="number"
-                value={newCode.max_discount_amount}
-                onChange={(e) => setNewCode({ ...newCode, max_discount_amount: parseFloat(e.target.value) || 0 })}
-                placeholder="Optionnel"
-                className="w-full rounded-lg border border-black/20 p-2"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Commande min (FCFA)</label>
-              <input
-                type="number"
-                value={newCode.min_order_amount}
-                onChange={(e) => setNewCode({ ...newCode, min_order_amount: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-lg border border-black/20 p-2"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Utilisation max</label>
-              <input
-                type="number"
-                value={newCode.max_uses}
-                onChange={(e) => setNewCode({ ...newCode, max_uses: parseInt(e.target.value) || 0 })}
-                placeholder="Illimité si vide"
-                className="w-full rounded-lg border border-black/20 p-2"
-              />
-            </div>
           </div>
           <div className="mt-4">
-            <label className="mb-1 block text-sm font-medium">Description</label>
+            <label style={labelStyle}>Description</label>
             <input
               type="text"
               value={newCode.description}
               onChange={(e) => setNewCode({ ...newCode, description: e.target.value })}
               placeholder="Description optionnelle"
-              className="w-full rounded-lg border border-black/20 p-2"
+              style={inputStyle}
             />
           </div>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <button
               onClick={() => setShowCreate(false)}
-              className="rounded-lg border border-black/20 px-4 py-2"
+              className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+              style={{ border: "1px solid var(--border)", background: "transparent", color: "var(--text-muted)" }}
             >
               Annuler
             </button>
             <button
               onClick={handleCreate}
               disabled={saving}
-              className="rounded-lg bg-cyan px-4 py-2 font-medium text-black hover:bg-cyan/80 disabled:opacity-50"
+              className="rounded-lg px-4 py-2 text-sm font-semibold transition-all disabled:opacity-50"
+              style={{ background: "var(--cyan)", color: "#000", border: "none" }}
             >
-              {saving ? "Création..." : "Créer"}
+              {saving ? "Création…" : "Créer"}
             </button>
           </div>
         </div>
       )}
 
+      {/* Code list */}
       {filteredCodes.length === 0 ? (
-        <p className="text-center text-black/60">Aucun code promo</p>
+        <p className="py-10 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+          Aucun code promo
+        </p>
       ) : (
         <div className="space-y-2">
           {filteredCodes.map((code) => (
             <div
               key={code.id}
-              className={`flex items-center justify-between rounded-xl border p-4 ${
-                code.is_active ? "border-black/10 bg-white" : "border-black/5 bg-black/5"
-              }`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12,
+                borderRadius: 12,
+                border: "1px solid var(--border)",
+                background: code.is_active
+                  ? "var(--bg-card)"
+                  : "color-mix(in srgb, var(--text) 3%, transparent)",
+                padding: "14px 16px",
+              }}
             >
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold">{code.code}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    code.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
-                  }`}>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono font-bold" style={{ color: "var(--text)" }}>
+                    {code.code}
+                  </span>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                    style={{
+                      background: code.is_active ? "rgba(16,185,129,0.15)" : "color-mix(in srgb, var(--text) 8%, transparent)",
+                      color: code.is_active ? "#10b981" : "var(--text-muted)",
+                    }}
+                  >
                     {code.is_active ? "Actif" : "Inactif"}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-black/60">
+                <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
                   {code.description || typeLabels[code.discount_type]} • {formatDiscount(code)}
                 </p>
-                <p className="mt-1 text-xs text-black/40">
+                <p className="mt-0.5 text-xs" style={{ color: "var(--text-faint)" }}>
                   {code.uses_count}/{code.max_uses || "∞"} utilisations
                   {code.min_order_amount > 0 && ` • Min ${code.min_order_amount} FCFA`}
                 </p>
@@ -239,17 +257,33 @@ export function DiscountManager({ codes, onToggleActive, onDelete }: DiscountMan
               <div className="flex gap-2">
                 <button
                   onClick={() => onToggleActive(code.id, !code.is_active)}
-                  className="rounded-lg border border-black/20 px-3 py-1 text-sm hover:bg-black/5"
+                  className="rounded-lg px-3 py-1.5 text-sm transition-all"
+                  style={{
+                    border: "1px solid var(--border)",
+                    background: "transparent",
+                    color: "var(--text-muted)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border-cyan)";
+                    e.currentTarget.style.color = "var(--cyan)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.color = "var(--text-muted)";
+                  }}
                 >
                   {code.is_active ? "Désactiver" : "Activer"}
                 </button>
                 <button
-                  onClick={() => {
-                    if (confirm("Supprimer ce code?")) {
-                      onDelete(code.id);
-                    }
+                  onClick={() => { if (confirm("Supprimer ce code ?")) onDelete(code.id); }}
+                  className="rounded-lg px-3 py-1.5 text-sm transition-all"
+                  style={{
+                    border: "1px solid rgba(239,68,68,0.25)",
+                    background: "rgba(239,68,68,0.06)",
+                    color: "#ef4444",
                   }}
-                  className="rounded-lg border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239,68,68,0.12)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(239,68,68,0.06)")}
                 >
                   Supprimer
                 </button>

@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
+import { createClient } from "@/lib/supabase/client";
 
 const categories = [
   { slug: "playstation", name: "PlayStation", icon: "🎮", colorClass: "text-blue-400" },
@@ -20,10 +21,12 @@ const navLinks = [
 
 export function Header() {
   const pathname      = usePathname();
-const { isAuthenticated, isAdmin, user, supabase } = useAuth();
+  const router = useRouter();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [catsOpen, setCatsOpen]     = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const { totalItems: cartCount }          = useCart();
   const dropdownRef                 = useRef<HTMLDivElement>(null);
   const userDropdownRef            = useRef<HTMLDivElement>(null);
@@ -52,8 +55,12 @@ const { isAuthenticated, isAdmin, user, supabase } = useAuth();
 
   // Close mobile menu on route change
   useEffect(() => {
-    setMobileOpen(false);
-    setCatsOpen(false);
+    const timeoutId = window.setTimeout(() => {
+      setMobileOpen(false);
+      setCatsOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [pathname]);
 
   // Lock body scroll when mobile menu is open
@@ -72,12 +79,30 @@ const { isAuthenticated, isAdmin, user, supabase } = useAuth();
     color: "var(--text-muted)",
   } as const;
 
-const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
+  const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
 
-// Handle user sign out
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
+    if (signingOut) return;
+
+    setSigningOut(true);
+
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Logout failed");
+      }
+
+      await createClient().auth.signOut();
+    } catch (error) {
+      console.error("Logout error:", error);
+      await createClient().auth.signOut();
+    } finally {
+      router.replace("/");
+      router.refresh();
+      setSigningOut(false);
+    }
   };
 
   // Get user display name
@@ -258,7 +283,8 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                   style={{
                     color: "var(--text)",
                     background: userMenuOpen ? hoverSurface : "var(--bg)",
-                    border: "1px solid var(--border)",
+                    border: isAdmin ? "1px solid rgba(0,255,224,0.4)" : "1px solid var(--border)",
+                    boxShadow: isAdmin ? "0 0 10px rgba(0,255,224,0.12)" : "none",
                   }}
                   className="nav-link flex items-center gap-1.5"
                   aria-expanded={userMenuOpen}
@@ -267,6 +293,16 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                   </svg>
+                  {isAdmin && (
+                    <span style={{
+                      fontSize: "9px", fontWeight: 800, letterSpacing: "0.06em",
+                      background: "linear-gradient(135deg, var(--cyan), var(--violet))",
+                      color: "#000", borderRadius: "4px", padding: "1px 5px",
+                      textTransform: "uppercase", lineHeight: 1,
+                    }}>
+                      ADMIN
+                    </span>
+                  )}
                   {displayName}
                   <svg
                     className={`dropdown-chevron ${userMenuOpen ? "rotated" : ""}`}
@@ -280,7 +316,7 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                   <div className="dropdown-menu dropdown-anim" role="menu">
                     <div style={{ padding: "6px" }}>
                       <Link
-                        href={isAdmin ? "/dashboard" : "/client"}
+                        href="/dashboard"
                         onClick={() => setUserMenuOpen(false)}
                         role="menuitem"
                         className="dropdown-item"
@@ -294,12 +330,35 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                           e.currentTarget.style.color = "var(--text-muted)";
                         }}
                       >
-                        <span>👤</span>
+                        <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
                         <span>Mon compte</span>
                       </Link>
 
                       <Link
-                        href="/dashboard/purchases"
+                        href="/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        role="menuitem"
+                        className="dropdown-item"
+                        style={{ color: "var(--text-muted)" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = hoverSurface;
+                          e.currentTarget.style.color = "var(--text)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--text-muted)";
+                        }}
+                      >
+                        <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                        </svg>
+                        <span>Mon profil</span>
+                      </Link>
+
+                      <Link
+                        href="/dashboard"
                         onClick={() => setUserMenuOpen(false)}
                         role="menuitem"
                         className="dropdown-item"
@@ -320,13 +379,15 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                       <div style={{ margin: "4px 0", borderTop: "1px solid var(--border)" }} />
 
                       <button
+                        type="button"
                         onClick={() => {
                           setUserMenuOpen(false);
                           handleSignOut();
                         }}
+                        disabled={signingOut}
                         role="menuitem"
                         className="dropdown-item"
-                        style={{ color: "var(--text-muted)", width: "100%", border: "none", background: "transparent", cursor: "pointer" }}
+                        style={{ color: "var(--text-muted)", width: "100%", border: "none", background: "transparent", cursor: signingOut ? "wait" : "pointer" }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = hoverSurface;
                           e.currentTarget.style.color = "var(--text)";
@@ -369,7 +430,7 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
           <div className="mobile-actions">
             <ThemeToggle />
 
-<Link
+            <Link
               href="/cart"
               style={{ ...softSurface }}
               className="cart-btn relative"
@@ -384,6 +445,23 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                 </span>
               )}
             </Link>
+
+            {isAuthenticated && (
+              <Link
+                href="/dashboard"
+                aria-label="Mon compte"
+                className="cart-btn"
+                style={{
+                  ...softSurface,
+                  border: isAdmin ? "1px solid rgba(0,255,224,0.4)" : softSurface.border,
+                  boxShadow: isAdmin ? "0 0 10px rgba(0,255,224,0.12)" : "none",
+                }}
+              >
+                <svg className="w-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </Link>
+            )}
 
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -460,15 +538,23 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
             {isAuthenticated ? (
               <div className="drawer-auth">
                 <Link
-                  href={isAdmin ? "/dashboard" : "/client"}
+                  href="/dashboard"
                   onClick={() => setMobileOpen(false)}
                   style={{ ...softSurface, textAlign: "center" }}
                   className="drawer-auth-btn"
                 >
-                  👤 Mon compte
+                  🏠 Mon compte
                 </Link>
                 <Link
-                  href="/dashboard/purchases"
+                  href="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  style={{ ...softSurface, textAlign: "center" }}
+                  className="drawer-auth-btn"
+                >
+                  👤 Mon profil
+                </Link>
+                <Link
+                  href="/dashboard"
                   onClick={() => setMobileOpen(false)}
                   style={{ ...softSurface, textAlign: "center" }}
                   className="drawer-auth-btn"
@@ -476,15 +562,17 @@ const hoverSurface = "color-mix(in srgb, var(--text) 10%, transparent)";
                   🎁 Mes achats
                 </Link>
                 <button
+                  type="button"
                   onClick={() => {
                     setMobileOpen(false);
                     handleSignOut();
                   }}
+                  disabled={signingOut}
                   style={{
                     ...softSurface,
                     textAlign: "center",
                     border: "none",
-                    cursor: "pointer",
+                    cursor: signingOut ? "wait" : "pointer",
                   }}
                   className="drawer-auth-btn"
                 >

@@ -2,6 +2,16 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getStripeServer } from "@/lib/stripe/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { sendPurchaseConfirmationEmail } from "@/app/api/checkout/route";
+
+interface PurchaseResult {
+  purchase_id: string;
+  customer_email: string | null;
+  customer_name: string;
+  total_amount: number;
+  codes: Array<{ code: string; product_name: string; unit_price: number }>;
+}
 
 export async function POST(request: Request) {
   const stripe = getStripeServer();
@@ -25,16 +35,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Signature invalide" }, { status: 400 });
   }
 
-  const { createClient } = await import("@/lib/supabase/server");
+  // Use service-role client: bypasses RLS on webhook_events and purchase tables
+  const supabase = createAdminClient();
 
   try {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log("Checkout completed:", session.id);
 
-        // Check if already processed
-        const supabase = await createClient();
+        // Idempotency guard — Stripe may retry webhooks
         const { data: existingEvent } = await supabase
           .from("webhook_events")
           .select("id")
@@ -43,38 +52,66 @@ export async function POST(request: Request) {
           .single();
 
         if (existingEvent) {
-          console.log("Event already processed:", event.id);
           return NextResponse.json({ received: true });
         }
 
-        // Record webhook event for idempotency
-        await supabase
-          .from("webhook_events")
-          .insert({ provider: "stripe", event_id: event.id, event_type: "checkout.session.completed" });
-
-        // Fetch session details with Stripe
-        const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-          expand: ["line_items"],
+        await supabase.from("webhook_events").insert({
+          provider:   "stripe",
+          event_id:   event.id,
+          event_type: "checkout.session.completed",
         });
 
-        // Update purchase status and assign codes
-        if (fullSession.client_reference_id) {
-          // TODO: Implement purchase update and code assignment
-          // This should be done in a transaction to ensure atomicity
-          const { error: updateError } = await supabase
-            .from("purchases")
-            .update({ status: "paid" })
-            .eq("stripe_session_id", session.id);
+        const purchaseId = session.metadata?.purchase_id;
+        if (!purchaseId) {
+          console.error("checkout.session.completed: missing purchase_id in metadata", session.id);
+          break;
+        }
 
-          if (updateError) {
-            console.error("Failed to update purchase:", updateError);
-          }
+        // Finalize atomically: codes → sold, purchase → paid, reservations deleted
+        const { data: finalized, error: finalizeError } = await supabase.rpc(
+          "finalize_purchase",
+          { p_purchase_id: purchaseId, p_stripe_session_id: session.id },
+        );
+
+        if (finalizeError) {
+          console.error("finalize_purchase failed:", finalizeError, { purchaseId });
+          // Return 500 so Stripe retries the webhook
+          return NextResponse.json(
+            { error: "Erreur finalisation achat" },
+            { status: 500 },
+          );
+        }
+
+        const result = finalized as PurchaseResult;
+
+        if (result?.customer_email) {
+          sendPurchaseConfirmationEmail(result.customer_email, result).catch((e) =>
+            console.error("Webhook email failed:", e),
+          );
         }
 
         break;
       }
+
+      case "checkout.session.expired": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const purchaseId = session.metadata?.purchase_id;
+
+        if (!purchaseId) break;
+
+        // The cart_reservation expiry (32 min) and purge_expired_reservations()
+        // handle cleanup automatically. Optionally mark purchase as failed here.
+        await supabase
+          .from("purchases")
+          .update({ status: "failed" })
+          .eq("id", purchaseId)
+          .eq("status", "pending");
+
+        break;
+      }
+
       default:
-        console.log(`Unhandled Stripe event type: ${event.type}`);
+        break;
     }
 
     return NextResponse.json({ received: true });

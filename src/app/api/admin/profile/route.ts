@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -6,6 +6,9 @@ const profileSchema = z.object({
   email: z.string().email().optional(),
   role: z.enum(["client", "admin"]).optional(),
   is_blocked: z.boolean().optional(),
+  nom: z.string().max(100).optional(),
+  prenoms: z.string().max(150).optional(),
+  telephone: z.string().max(30).optional(),
 });
 
 async function checkAdmin() {
@@ -15,7 +18,7 @@ async function checkAdmin() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { isAdmin: false, user: null, supabase: null };
+    return { isAdmin: false, user: null, supabase };
   }
 
   const { data: userData } = await supabase

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
   const router = useRouter();
@@ -205,7 +205,7 @@ export default function ResetPasswordPage() {
         </div>
 
         <p style={{ textAlign: "center", fontSize: 13, color: "var(--text-muted)", marginTop: 20 }}>
-          Vous n'avez pas reçu le code ?{" "}
+          Vous n&apos;avez pas reçu le code ?{" "}
           <Link href="/auth/forgot-password" style={{ color: "var(--cyan)", fontWeight: 600, textDecoration: "none" }}>
             Renvoyer un code →
           </Link>
@@ -231,5 +231,13 @@ export default function ResetPasswordPage() {
         }
       `}</style>
     </main>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

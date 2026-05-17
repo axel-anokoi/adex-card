@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Pagination } from "./pagination";
 
 interface Category {
   id: string;
@@ -49,6 +50,8 @@ export function ProductManager() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
 const [formData, setFormData] = useState({
     category_id: "",
@@ -102,7 +105,8 @@ const handleSubmit = async (e: React.FormEvent) => {
         }
       }
 
-      const payload = { ...formData, image_url: imageUrl };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { stock_available: _, ...payload } = { ...formData, image_url: imageUrl };
       const method = editingId ? "PUT" : "POST";
       const res = await fetch("/api/admin/products", {
         method,
@@ -183,6 +187,7 @@ const resetForm = () => {
   const filteredProducts = filterCategory
     ? products.filter((p) => p.category?.slug === filterCategory)
     : products;
+  const paginatedProducts = filteredProducts.slice(page * pageSize, (page + 1) * pageSize);
 
   if (loading) {
     return (
@@ -197,7 +202,7 @@ const resetForm = () => {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex gap-2 overflow-x-auto">
           <button
-            onClick={() => setFilterCategory(null)}
+            onClick={() => { setFilterCategory(null); setPage(0); }}
             className={`rounded-lg px-3 py-1 text-sm font-medium whitespace-nowrap ${
               filterCategory === null
                 ? "bg-cyan text-black"
@@ -209,7 +214,7 @@ const resetForm = () => {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setFilterCategory(cat.slug)}
+              onClick={() => { setFilterCategory(cat.slug); setPage(0); }}
               className={`rounded-lg px-3 py-1 text-sm font-medium whitespace-nowrap ${
                 filterCategory === cat.slug
                   ? "bg-cyan text-black"
@@ -253,7 +258,7 @@ const resetForm = () => {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Montant (FCFA)</label>
+              <label className="mb-1 block text-sm font-medium">Montant ( € )</label>
               <input
                 type="number"
                 value={formData.amount}
@@ -273,7 +278,7 @@ const resetForm = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Prix d'achat (FCFA)</label>
+              <label className="mb-1 block text-sm font-medium">Prix d&apos;achat (FCFA)</label>
               <input
                 type="number"
                 value={formData.buy_price}
@@ -283,13 +288,16 @@ const resetForm = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Stock</label>
+              <label className="mb-1 block text-sm font-medium text-black/40">
+                Stock
+                <span className="ml-2 text-xs font-normal italic">calculé automatiquement</span>
+              </label>
               <input
                 type="number"
                 value={formData.stock_available}
-                onChange={(e) => setFormData({ ...formData, stock_available: parseInt(e.target.value) || 0 })}
-                required
-                className="w-full rounded-lg border border-black/20 p-2"
+                readOnly
+                tabIndex={-1}
+                className="w-full rounded-lg border border-black/10 bg-black/5 p-2 text-black/40 cursor-not-allowed select-none"
               />
             </div>
 <div>
@@ -344,7 +352,7 @@ const resetForm = () => {
         <p className="text-center text-black/60">Aucun produit</p>
       ) : (
 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProducts.map((product) => {
+          {paginatedProducts.map((product) => {
             // Display product image, fallback to category logo if no product image
             const displayImage = product.image_url || product.category?.logo_url;
             return (
@@ -359,13 +367,13 @@ const resetForm = () => {
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className="font-bold">{product.category?.name || "Produit"}</span>
+                  <span className="font-bold">{product.category?.name || "Produit"} {product.amount} €</span>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${product.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
                     {product.is_active ? "Actif" : "Inactif"}
                   </span>
                 </div>
-                <p className="mt-2 text-2xl font-bold">{product.amount} FCFA</p>
-                <p className="text-sm text-black/60">Vente: {product.sell_price} FCFA / Achat: {product.buy_price} FCFA</p>
+                <p className="mt-2 text-2xl font-bold">Vente: {product.sell_price} FCFA</p>
+                <p className="text-sm text-black/60"> Achat: {product.buy_price} FCFA</p>
                 <p className="mt-1 text-sm">Stock: {product.stock_available}</p>
                 <div className="mt-3 flex gap-2">
                   <button onClick={() => handleEdit(product)} className="rounded-lg border border-black/20 px-2 py-1 text-xs hover:bg-black/5">Modifier</button>
@@ -379,6 +387,13 @@ const resetForm = () => {
           })}
         </div>
       )}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={filteredProducts.length}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+      />
     </div>
   );
 }

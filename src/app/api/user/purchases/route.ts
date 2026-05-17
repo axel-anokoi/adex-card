@@ -22,7 +22,8 @@ export async function GET(request: Request) {
         created_at,
         purchase_items(
           id,
-          product:product_id(id, amount, category_id),
+          product:product_id(id, amount, category:category_id(name)),
+          gift_code:gift_code_id(code, expires_at),
           quantity,
           unit_price
         )

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Pagination } from "./pagination";
 
 interface Category {
   id: string;
@@ -37,6 +38,8 @@ export function CategoryManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
 const [formData, setFormData] = useState({
     name: "",
@@ -295,7 +298,7 @@ const resetForm = () => {
         <p className="text-center text-black/60">Aucune catégorie</p>
       ) : (
         <div className="space-y-2">
-          {categories.map((category) => (
+          {categories.slice(page * pageSize, (page + 1) * pageSize).map((category) => (
             <div
               key={category.id}
               className={`flex items-center justify-between rounded-xl border p-4 ${
@@ -342,6 +345,13 @@ const resetForm = () => {
           ))}
         </div>
       )}
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={categories.length}
+        onPageChange={setPage}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
+      />
     </div>
   );
 }

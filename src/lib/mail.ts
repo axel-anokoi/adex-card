@@ -1,11 +1,12 @@
 import nodemailer from 'nodemailer';
+import type Mail from 'nodemailer/lib/mailer';
 
 interface MailOptions {
   to: string | string[];
   subject: string;
   text: string;
   html?: string;
-  attachments?: nodemailer.Attachment[];
+  attachments?: Mail.Attachment[];
 }
 
 export async function sendMail({ to, subject, text, html, attachments }: MailOptions) {
