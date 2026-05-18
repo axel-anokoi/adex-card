@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# NEXT_PUBLIC_* vars are inlined into the JS bundle at build time.
+# These fallback values ensure the build works even if the Netlify dashboard
+# has missing or incorrectly formatted values for these public variables.
+[build.environment]
+  NEXT_PUBLIC_SUPABASE_URL      = "https://fqdonqlxygaxmfnyjhvh.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxZG9ucWx4eWdheG1mbnlqaHZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NjgxNzQsImV4cCI6MjA5NDM0NDE3NH0.Lk02vk4bgG5wXdML4tKvYCwYjvRQWdzcNCyq15nitro"
+  NEXT_PUBLIC_SITE_URL          = "https://adex-card.netlify.app"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

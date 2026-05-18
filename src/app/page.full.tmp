@@ -1,0 +1,372 @@
+"use client";
+
+import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
+
+// FCFA conversion rate (1 EUR ≈ 655 FCFA)
+const EUR_TO_FCFA = 655;
+function toFCFA(eur: number) {
+  return (eur * EUR_TO_FCFA).toLocaleString("fr-FR");
+}
+
+const heroProducts = [
+  {
+    category: "Apple",
+    categorySlug: "apple",
+    categoryColor: "bg-gray-600/80",
+    categoryTextColor: "text-gray-200",
+    icon: "🍎",
+    iconBg: "gradient-apple",
+    name: "iTunes App Store Cards",
+    description: "Achetez apps, musiques, films, séries sur l'App Store et iTunes. Valable pour les comptes US.",
+    amounts: [5, 10, 25],
+    slug: "apple",
+    glow: "glow-apple",
+    borderClass: "border-apple",
+  },
+  {
+    category: "PlayStation",
+    categorySlug: "playstation",
+    categoryColor: "bg-blue-600/80",
+    categoryTextColor: "text-blue-200",
+    icon: "🎮",
+    iconBg: "gradient-playstation",
+    name: "PlayStation Network Cards",
+    description: "Rechargez votre wallet PSN pour acheter des jeux, DLC et abonnements PS Plus.",
+    amounts: [10, 20, 50],
+    slug: "playstation",
+    glow: "glow-playstation",
+    borderClass: "border-playstation",
+  },
+  {
+    category: "Xbox",
+    categorySlug: "xbox",
+    categoryColor: "bg-green-700/80",
+    categoryTextColor: "text-green-200",
+    icon: "🎯",
+    iconBg: "gradient-xbox",
+    name: "Xbox Gift Cards",
+    description: "Achetez des jeux, du contenu additionnel et souscrivez au Xbox Game Pass Ultimate.",
+    amounts: [10, 25, 50],
+    slug: "xbox",
+    glow: "glow-xbox",
+    borderClass: "border-xbox",
+  },
+  {
+    category: "Nintendo",
+    categorySlug: "nintendo",
+    categoryColor: "bg-red-600/80",
+    categoryTextColor: "text-red-200",
+    icon: "🍄",
+    iconBg: "gradient-nintendo",
+    name: "Nintendo eShop Cards",
+    description: "Achetez des jeux Nintendo Switch, DLC et abonnements Nintendo Switch Online.",
+    amounts: [10, 20, 35],
+    slug: "nintendo",
+    glow: "glow-nintendo",
+    borderClass: "border-nintendo",
+  },
+];
+
+const features = [
+  {
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+      </svg>
+    ),
+    title: "Livraison < 2 min",
+    description: "Code livré instantanément par email après paiement",
+    accent: "text-[#00E5FF]",
+    bg: "bg-[#00E5FF]/10",
+    border: "border-[#00E5FF]/20",
+  },
+  {
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+    ),
+    title: "Paiement sécurisé",
+    description: "Djamo, Moov Money & Wave acceptés",
+    accent: "text-[#7B2FFF]",
+    bg: "bg-[#7B2FFF]/10",
+    border: "border-[#7B2FFF]/20",
+  },
+  {
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    title: "100% Officiel",
+    description: "Codes authentiques garantis, jamais utilisés",
+    accent: "text-[#00FF88]",
+    bg: "bg-[#00FF88]/10",
+    border: "border-[#00FF88]/20",
+  },
+  {
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+      </svg>
+    ),
+    title: "Support 24/7",
+    description: "Assistance rapide sur WhatsApp",
+    accent: "text-[#FFB800]",
+    bg: "bg-[#FFB800]/10",
+    border: "border-[#FFB800]/20",
+  },
+];
+
+const categories = [
+  {
+    name: "PlayStation",
+    slug: "playstation",
+    icon: "🎮",
+    description: "PSN, PS Plus, PS Stars",
+    gradient: "gradient-playstation",
+    glow: "glow-playstation",
+    border: "border-playstation",
+    count: "12 cartes",
+  },
+  {
+    name: "Xbox",
+    slug: "xbox",
+    icon: "🎯",
+    description: "Xbox Live, Game Pass",
+    gradient: "gradient-xbox",
+    glow: "glow-xbox",
+    border: "border-xbox",
+    count: "8 cartes",
+  },
+  {
+    name: "Nintendo",
+    slug: "nintendo",
+    icon: "🍄",
+    description: "eShop, NSO",
+    gradient: "gradient-nintendo",
+    glow: "glow-nintendo",
+    border: "border-nintendo",
+    count: "6 cartes",
+  },
+  {
+    name: "Apple",
+    slug: "apple",
+    icon: "🍎",
+    description: "iTunes, App Store",
+    gradient: "gradient-apple",
+    glow: "glow-apple",
+    border: "border-apple",
+    count: "5 cartes",
+  },
+];
+
+const steps = [
+  {
+    number: "01",
+    title: "Choisissez votre carte",
+    description: "Parcourez notre catalogue et sélectionnez la carte et le montant souhaités.",
+    icon: (
+      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+      </svg>
+    ),
+  },
+  {
+    number: "02",
+    title: "Payez en toute sécurité",
+    description: "Réglez avec Djamo, Moov Money, Wave ou carte bancaire. 100% sécurisé.",
+    icon: (
+      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+      </svg>
+    ),
+  },
+  {
+    number: "03",
+    title: "Recevez votre code",
+    description: "Votre code est livré par email en moins de 2 minutes. Prêt à l'emploi !",
+    icon: (
+      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+      </svg>
+    ),
+  },
+];
+
+const testimonials = [
+  {
+    name: "Kouamé A.",
+    city: "Abidjan",
+    avatar: "K",
+    avatarColor: "bg-blue-500",
+    rating: 5,
+    text: "Incroyable ! J'ai reçu mon code PSN en moins d'une minute. Le paiement Djamo est super pratique. Je recommande à 100% !",
+    product: "PSN 20FCFA",
+  },
+  {
+    name: "Fatou D.",
+    city: "Bouaké",
+    avatar: "F",
+    avatarColor: "bg-purple-500",
+    rating: 5,
+    text: "Service rapide et fiable. J'ai acheté une carte iTunes pour mon fils, le code a fonctionné immédiatement. Merci AdexCard !",
+    product: "iTunes 10FCFA",
+  },
+  {
+    name: "Yves K.",
+    city: "Abidjan",
+    avatar: "Y",
+    avatarColor: "bg-green-500",
+    rating: 5,
+    text: "Le meilleur site pour acheter des cartes gaming en Côte d'Ivoire. Prix corrects et livraison ultra rapide. Mon go-to !",
+    product: "Xbox 25FCFA",
+  },
+];
+
+const stats = [
+  { value: "1 200+", label: "Clients satisfaits" },
+  { value: "< 2 min", label: "Délai de livraison" },
+  { value: "100%", label: "Codes authentiques" },
+  { value: "24/7", label: "Support disponible" },
+];
+
+function HeroCarousel() {
+  const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState<"right" | "left">("right");
+  const [selectedAmount, setSelectedAmount] = useState<number>(0);
+  const [animating, setAnimating] = useState(false);
+
+  const product = heroProducts[current];
+
+  // Auto-advance
+  useEffect(() => {
+    const timer = setInterval(() => {
+      goNext();
+    }, 5000);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current]);
+
+  // Reset selected amount when product changes
+  useEffect(() => {
+    setSelectedAmount(0);
+  }, [current]);
+
+  const goNext = useCallback(() => {
+    if (animating) return;
+    setAnimating(true);
+    setDirection("right");
+    setTimeout(() => {
+      setCurrent((c) => (c + 1) % heroProducts.length);
+      setAnimating(false);
+    }, 300);
+  }, [animating]);
+
+  const goPrev = useCallback(() => {
+    if (animating) return;
+    setAnimating(true);
+    setDirection("left");
+    setTimeout(() => {
+      setCurrent((c) => (c - 1 + heroProducts.length) % heroProducts.length);
+      setAnimating(false);
+    }, 300);
+  }, [animating]);
+
+  const amount = product.amounts[selectedAmount];
+
+  return (
+    <div className="relative flex min-h-[520px] items-center overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 -z-10 bg-mesh-animated" />
+      <div className="absolute inset-0 -z-10 bg-grid opacity-50" />
+      <div className="absolute inset-0 -z-10 hero-spotlight" />
+
+      {/* Decorative orbs */}
+      <div className="pointer-events-none absolute -left-32 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-[#7B2FFF]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-[#00E5FF]/8 blur-3xl" />
+
+      <div className="mx-auto w-full max-w-6xl px-4 py-20 sm:py-28">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+
+          {/* Left: Text content */}
+          <div className={`transition-all duration-300 ${animating ? "opacity-0 translate-x-4" : "opacity-100 translate-x-0"}`}>
+            {/* Category badge */}
+            <div className="mb-5 inline-flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${product.categoryColor} ${product.categoryTextColor} backdrop-blur-sm`}>
+                <span>{product.icon}</span>
+                <span>{product.category.toUpperCase()}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 px-3 py-1 text-xs font-medium text-[#00E5FF]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#00E5FF] animate-pulse" />
+                En stock
+              </span>
+            </div>
+
+            {/* Title */}
+            <h1 className="mb-4 text-4xl font-bold leading-tight text-white sm:text-5xl" style={{ fontFamily: "var(--font-display)" }}>
+              {product.name}
+            </h1>
+
+            {/* Description */}
+            <p className="mb-8 text-base leading-relaxed text-white/60 sm:text-lg">
+              {product.description}
+            </p>
+
+            {/* Price options */}
+            <div className="mb-8">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/40">
+                Choisissez un montant
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {product.amounts.map((amt, i) => (
+                  <button
+                    key={amt}
+                    onClick={() => setSelectedAmount(i)}
+                    className={`price-option rounded-lg border px-4 py-2.5 text-sm font-semibold transition-all ${
+                      selectedAmount === i
+                        ? "border-[#00E5FF]/50 bg-[#00E5FF]/15 text-[#00E5FF]"
+                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white"
+                    }`}
+                  >
+                    <span className="font-bold">{amt} FCFA</span>
+                    <span className="ml-1.5 text-xs opacity-60">→ {toFCFA(amt)} FCFA</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href={`/shop?category=${product.categorySlug}`}
+                className="btn-press cta-neon group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#00B8D4] px-7 py-3.5 text-sm font-bold text-black transition-all hover:scale-105"
+              >
+                Acheter {amount} FCFA
+                <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-7 py-3.5 text-sm font-medium text-white/70 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
+              >
+                Voir tout
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: Product visual */}
+          <div className="flex items-center justify-center">
+            <div className={`relative transition-all duration-300 ${animating ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}>
+              {/* Card */}
+              <div className={`relative overflow-hidden rounded-2xl border bg-[#1A1A28] p-8 shadow-2xl ${product.borderClass}`} style={{ width: 300, minHeight: 200 }}>
+                {/* Gradient overlay */}
+                <div className={`absolute inset-0 opacity-10 ${product.iconBg}`} />
+
+                {/* Icon */}
+                <div className={`relative mb-6 flex h-20 w-20 items-center justify-center rounded-2xl ${product.iconBg} shadow-xl`}>
+                  <span className="text-4xl">{product.icon}</span>
+                </div>
+
