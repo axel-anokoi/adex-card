@@ -5,14 +5,14 @@ import { useState } from "react";
 type Theme = "dark" | "light";
 
 function getThemeFromDomOrStorage(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
 
   const root = document.documentElement;
-  if (root.classList.contains("light")) return "light";
   if (root.classList.contains("dark")) return "dark";
+  if (root.classList.contains("light")) return "light";
 
   const saved = localStorage.getItem("theme");
-  return saved === "light" ? "light" : "dark";
+  return saved === "dark" ? "dark" : "light";
 }
 
 function applyTheme(theme: Theme) {

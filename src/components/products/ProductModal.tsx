@@ -1,5 +1,7 @@
 // ProductModal.tsx — Design premium, responsive mobile/tablette/desktop
+"use client";
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 // ─── Types ───────────────────────────────────────────────
 interface Product {
@@ -94,6 +96,7 @@ const toFCFA = (eur: number) => eur.toLocaleString("fr-FR");
 // ─── Main Component ──────────────────────────────────────
 export function ProductModal({ product, onClose, onAddToCart }: ProductModalProps) {
   const isLight = useTheme();
+  const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [selectedAmount, setSelectedAmount] = useState(product?.eur ?? 0);
   const [phase, setPhase] = useState<"idle" | "loading" | "success">("idle");
@@ -130,8 +133,8 @@ export function ProductModal({ product, onClose, onAddToCart }: ProductModalProp
     await new Promise((r) => setTimeout(r, 600));
     onAddToCart({ ...product, eur: selectedAmount, quantity, total });
     setPhase("success");
-    setTimeout(() => { onClose(); }, 1800);
-  }, [phase, product, selectedAmount, quantity, total, onAddToCart, onClose]);
+    setTimeout(() => { onClose(); router.push("/cart"); }, 800);
+  }, [phase, product, selectedAmount, quantity, total, onAddToCart, onClose, router]);
 
   if (!product) return null;
 
