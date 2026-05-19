@@ -6,7 +6,9 @@
       "Bash(Sort-Object)",
       "Bash(npm run *)",
       "Bash(mkdir -p \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\\\\.github\\\\workflows\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "WebFetch(domain:startselect.com)",
+      "Bash(npx tsc *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\AxelA\\Desktop\\Dev\\Web\\adex-card\\.github"

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { useCart } from "@/context/CartContext";
 import { ProductModal } from "@/components/products/ProductModal"; // ← adjust import path
@@ -149,6 +150,7 @@ function HeroProductCard({
   const meta = getMeta(product.cat);
   const isLight = useTheme();
   const { addToCart } = useCart();
+  const router = useRouter();
 
   const gradient = isLight ? meta.gradientLight : meta.gradient;
   const gradientHero = isLight ? meta.gradientHeroLight : meta.gradientHero;
@@ -162,7 +164,7 @@ function HeroProductCard({
     const result = await addToCart(product);
     if (result.success) {
       setAdded(true);
-      setTimeout(() => setAdded(false), 1800);
+      router.push("/cart");
     }
   };
 

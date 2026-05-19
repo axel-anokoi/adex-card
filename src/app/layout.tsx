@@ -7,7 +7,7 @@ const themeInitScript = `
 (function() {
   try {
     var saved = localStorage.getItem("theme");
-    var theme = saved === "light" ? "light" : "dark";
+    var theme = saved === "dark" ? "dark" : "light";
     var root = document.documentElement;
     root.classList.remove("dark", "light");
     root.classList.add(theme);
@@ -30,9 +30,9 @@ const barlow = Barlow({
 });
 
 export const metadata: Metadata = {
-  title: "AdexCard CI | Cartes Cadeaux Gaming Côte d'Ivoire",
+  title: "AdexCard CI | Toutes Vos Cartes Cadeaux Digitales",
   description:
-    "Achetez vos cartes PSN, Xbox, iTunes, Google Play. Paiement Djamo & Moov Money. Livraison instantanée en Côte d'Ivoire.",
+    "Achetez vos cartes iTunes, Google Play, Steam, Netflix et bien plus. Payez en quelques secondes via Mobile Money pour une Livraison instantanée ",
   keywords: ["cartes cadeau", "gaming", "PSN", "Xbox", "Côte d'Ivoire", "Djamo", "Moov Money"],
 };
 
@@ -40,14 +40,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="fr"
-      className={`${orbitron.variable} ${barlow.variable} h-full antialiased dark`}
+      className={`${orbitron.variable} ${barlow.variable} h-full antialiased light`}
       suppressHydrationWarning
     >
       <body
         className="relative min-h-full flex flex-col overflow-x-hidden"
         style={{ background: "var(--bg)", color: "var(--text)" }}
       >
-        {/* <script dangerouslySetInnerHTML={{ __html: themeInitScript }} /> */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {/* Particle canvas + custom cursor — mounts client-side only */}
         {/* <GamingBackground /> */}
 

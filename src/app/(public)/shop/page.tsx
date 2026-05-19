@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ProductModal } from "@/components/products/ProductModal";
 import { useCart } from "@/context/CartContext";
 
@@ -125,13 +126,15 @@ function ShopCard({
 
   const inStock = product.stock_available > 0;
 
+  const router = useRouter();
+
   const handleAdd = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!inStock) return;
     const result = await addToCart(product);
     if (result.success) {
       setAdded(true);
-      setTimeout(() => setAdded(false), 1600);
+      router.push("/cart");
     }
   };
 
@@ -275,6 +278,7 @@ function CategoryPill({ slug, label, icon, count, active, onClick }: {
 
 export default function ShopPage() {
   const { addToCart } = useCart();
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Array<{ slug: string | null; name: string; icon: string; count: number }>>([]);
@@ -321,7 +325,8 @@ export default function ShopPage() {
   const handleModalAdd = useCallback((p: { id: string; name: string; eur: number; cat?: string; image?: string; quantity: number; total: number }) => {
     addToCart(p);
     setModalProduct(null);
-  }, [addToCart]);
+    router.push("/cart");
+  }, [addToCart, router]);
 
   return (
     <div className="shop-page">
