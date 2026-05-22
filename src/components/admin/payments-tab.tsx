@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Pagination } from "./pagination";
 
 interface PurchaseItem {
@@ -57,9 +57,12 @@ const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }
 };
 
 const PAYMENT_LABELS: Record<string, { label: string; icon: string }> = {
-  djamo: { label: "Djamo",      icon: "💳" },
-  moov:  { label: "Moov Money", icon: "📱" },
-  wave:  { label: "Wave",       icon: "🌊" },
+  djamo:        { label: "Djamo",        icon: "💳" },
+  moov:         { label: "Moov Money",   icon: "📱" },
+  moov_money:   { label: "Moov Money",   icon: "📱" },
+  wave:         { label: "Wave",         icon: "🌊" },
+  orange_money: { label: "Orange Money", icon: "🟠" },
+  geniuspay:    { label: "GeniusPay",    icon: "💰" },
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -327,6 +330,487 @@ function PurchaseModal({
           to   { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
+    </div>
+  );
+}
+
+// ─── GeniusPay live transactions ─────────────────────────────────────────────
+
+interface GPPurchaseItem {
+  id: string;
+  quantity: number;
+  unit_price: number;
+  unit_cost?: number;
+  total_price: number;
+  product: {
+    id: string;
+    amount: number;
+    sell_price: number;
+    buy_price: number;
+    category: { name: string; slug: string; logo_url: string | null } | null;
+  } | null;
+  gift_code: { code: string } | null;
+}
+
+interface GPDbPurchase {
+  id: string;
+  customer_name: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  status: string;
+  total_amount: number;
+  total_buy_cost: number;
+  profit: number;
+  user: { email: string; nom: string | null; prenoms: string | null; telephone: string | null } | null;
+  purchase_items: GPPurchaseItem[];
+}
+
+interface GeniusPayTransaction {
+  reference: string;
+  amount: number;
+  currency: string;
+  status: string;
+  payment_method: string | null;
+  customer?: { name?: string; phone?: string; email?: string };
+  metadata?: { purchase_id?: string };
+  created_at: string;
+  db_purchase?: GPDbPurchase;
+}
+
+const GP_STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
+  success:   { label: "Succès",     bg: "rgba(16,185,129,0.12)",  color: "#10b981" },
+  pending:   { label: "En attente", bg: "rgba(245,158,11,0.12)",  color: "#f59e0b" },
+  failed:    { label: "Échoué",     bg: "rgba(239,68,68,0.12)",   color: "#ef4444" },
+  expired:   { label: "Expiré",     bg: "rgba(239,68,68,0.08)",   color: "#ef4444" },
+  cancelled: { label: "Annulé",     bg: "rgba(255,255,255,0.06)", color: "var(--text-muted)" },
+};
+
+type Concordance = "ok" | "critical" | "stale" | "mismatch";
+
+function getGpConcordance(gpStatus: string, db?: GPDbPurchase): Concordance {
+  if (!db) return gpStatus === "success" ? "critical" : "ok";
+  if (gpStatus === "success") return db.status === "paid" ? "ok" : "critical";
+  if (["failed", "expired", "cancelled"].includes(gpStatus)) {
+    if (db.status === "paid")    return "mismatch";
+    if (db.status === "pending") return "stale";
+  }
+  return "ok";
+}
+
+const CONCORDANCE_BADGE: Record<Concordance, { label: string; bg: string; color: string } | null> = {
+  ok:       null,
+  critical: { label: "⚠ Webhook manqué",      bg: "rgba(239,68,68,0.15)",  color: "#ef4444" },
+  stale:    { label: "🔒 Réservation bloquée", bg: "rgba(245,158,11,0.15)", color: "#f59e0b" },
+  mismatch: { label: "🚨 Incohérence grave",   bg: "rgba(239,68,68,0.15)",  color: "#ef4444" },
+};
+
+function GeniusPaySection() {
+  const [transactions, setTransactions] = useState<GeniusPayTransaction[]>([]);
+  const [meta, setMeta]       = useState<{ total?: number; page?: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+  const [open, setOpen]       = useState(false);
+  const [page, setPage]       = useState(1);
+  const [filterStatus, setFilterStatus] = useState("");
+  const [expanded, setExpanded]   = useState<string | null>(null);
+  const [actioning, setActioning] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<Record<string, string>>({});
+
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: "25" });
+      if (filterStatus) params.set("status", filterStatus);
+      const res  = await fetch(`/api/admin/geniuspay-payments?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setTransactions(data.data || []);
+      setMeta(data.meta ?? null);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, filterStatus]);
+
+  useEffect(() => {
+    if (open) fetchTransactions();
+  }, [open, fetchTransactions]);
+
+  const handleAction = useCallback(async (
+    tx: GeniusPayTransaction,
+    action: "finalize" | "cancel",
+  ) => {
+    const key = tx.reference;
+    setActioning(key);
+    setActionError((prev) => { const n = { ...prev }; delete n[key]; return n; });
+    try {
+      const res = await fetch("/api/admin/geniuspay-payments", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          purchase_id:         tx.metadata?.purchase_id,
+          geniuspay_reference: tx.reference,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      await fetchTransactions();
+    } catch (e: unknown) {
+      setActionError((prev) => ({ ...prev, [key]: e instanceof Error ? e.message : "Erreur" }));
+    } finally {
+      setActioning(null);
+    }
+  }, [fetchTransactions]);
+
+  return (
+    <div style={{ borderRadius: 14, border: "1px solid var(--border)", overflow: "hidden" }}>
+      {/* Header toggle */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "14px 16px", background: "color-mix(in srgb, var(--bg2) 70%, transparent)",
+          border: "none", cursor: "pointer", color: "var(--text)",
+        }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 18 }}>💰</span>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>Transactions GeniusPay</span>
+          {meta?.total != null && (
+            <span style={{ fontSize: 11, background: "rgba(0,255,224,0.1)", border: "1px solid rgba(0,255,224,0.2)", borderRadius: 99, padding: "1px 8px", color: "var(--cyan)" }}>
+              {meta.total} total
+            </span>
+          )}
+        </span>
+        <svg style={{ width: 16, height: 16, color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{ padding: "14px 16px", borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Controls */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <select
+              value={filterStatus}
+              onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+              style={{ borderRadius: 10, border: "1px solid var(--border)", background: "color-mix(in srgb, var(--bg2) 60%, transparent)", color: "var(--text)", padding: "8px 12px", fontSize: 13, outline: "none", cursor: "pointer" }}
+            >
+              <option value="">Tous les statuts</option>
+              <option value="success">Succès</option>
+              <option value="pending">En attente</option>
+              <option value="failed">Échoué</option>
+              <option value="expired">Expiré</option>
+              <option value="cancelled">Annulé</option>
+            </select>
+            <button
+              onClick={fetchTransactions}
+              disabled={loading}
+              style={{ padding: "8px 14px", borderRadius: 10, border: "1px solid var(--border)", background: "transparent", color: "var(--text-muted)", fontSize: 13, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}
+            >
+              {loading ? "Chargement…" : "↻ Actualiser"}
+            </button>
+          </div>
+
+          {error && (
+            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", fontSize: 13, color: "#ef4444" }}>
+              {error}
+            </div>
+          )}
+
+          {!loading && transactions.length === 0 && !error && (
+            <div style={{ textAlign: "center", padding: "32px 0", color: "var(--text-muted)", fontSize: 13 }}>
+              Aucune transaction trouvée
+            </div>
+          )}
+
+          {transactions.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {transactions.map((tx) => {
+                const st           = GP_STATUS_STYLES[tx.status] ?? { label: tx.status, bg: "rgba(255,255,255,0.05)", color: "var(--text-muted)" };
+                const pm           = tx.payment_method ? (PAYMENT_LABELS[tx.payment_method] ?? { label: tx.payment_method, icon: "💰" }) : null;
+                const db           = tx.db_purchase;
+                const isOpen       = expanded === tx.reference;
+                const hasDetail    = !!db;
+                const concordance  = getGpConcordance(tx.status, db);
+                const concBadge    = CONCORDANCE_BADGE[concordance];
+                const isActioning  = actioning === tx.reference;
+
+                // Resolved customer: prefer DB user data, fall back to GeniusPay customer fields
+                const displayName  = (db?.user ? [db.user.prenoms, db.user.nom].filter(Boolean).join(" ") : null)
+                  || db?.customer_name || tx.customer?.name || "—";
+                const displayEmail = db?.user?.email || db?.customer_email || tx.customer?.email || null;
+                const displayPhone = db?.user?.telephone || db?.customer_phone || tx.customer?.phone || null;
+
+                return (
+                  <div
+                    key={tx.reference}
+                    style={{
+                      borderRadius: 12,
+                      border: `1px solid ${concordance === "critical" || concordance === "mismatch" ? "rgba(239,68,68,0.5)" : concordance === "stale" ? "rgba(245,158,11,0.4)" : "var(--border)"}`,
+                      background: "color-mix(in srgb, var(--bg) 60%, transparent)",
+                      overflow: "hidden", transition: "border-color 0.2s",
+                      ...(isOpen && concordance === "ok" && { borderColor: "var(--border-cyan)" }),
+                    }}
+                  >
+                    {/* Summary row */}
+                    <button
+                      onClick={() => hasDetail && setExpanded(isOpen ? null : tx.reference)}
+                      style={{
+                        width: "100%", display: "flex", flexWrap: "wrap", alignItems: "center",
+                        gap: 12, padding: "12px 14px", background: "transparent", border: "none",
+                        cursor: hasDetail ? "pointer" : "default", textAlign: "left",
+                      }}
+                    >
+                      {/* Ref + date */}
+                      <div style={{ minWidth: 130 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "var(--cyan)", fontFamily: "monospace" }}>{tx.reference}</p>
+                        <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 2 }}>
+                          {new Date(tx.created_at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}
+                        </p>
+                      </div>
+
+                      {/* Customer */}
+                      <div style={{ flex: 1, minWidth: 120 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{displayName}</p>
+                        {displayPhone && <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>📞 {displayPhone}</p>}
+                        {displayEmail && <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>📧 {displayEmail}</p>}
+                      </div>
+
+                      {/* Amount */}
+                      <p style={{ fontSize: 15, fontWeight: 800, color: "var(--cyan)", fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>
+                        {tx.amount.toLocaleString("fr-FR")} {tx.currency}
+                      </p>
+
+                      {/* Method + status + concordance badge + chevron */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                        {pm && (
+                          <span style={{ fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "3px 8px", background: "rgba(255,255,255,0.06)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                            {pm.icon} {pm.label}
+                          </span>
+                        )}
+                        <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 6, padding: "3px 10px", background: st.bg, color: st.color }}>
+                          {st.label}
+                        </span>
+                        {concBadge && (
+                          <span style={{ fontSize: 11, fontWeight: 700, borderRadius: 6, padding: "3px 10px", background: concBadge.bg, color: concBadge.color }}>
+                            {concBadge.label}
+                          </span>
+                        )}
+                        {hasDetail && (
+                          <svg
+                            style={{ width: 14, height: 14, color: "var(--text-faint)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Expanded purchase detail */}
+                    {isOpen && db && (
+                      <div style={{ borderTop: "1px solid var(--border)", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                          Produits achetés ({db.purchase_items.length})
+                        </p>
+
+                        {db.status === "paid" ? (
+                          db.purchase_items.map((item) => {
+                            const cat      = item.product?.category;
+                            const catIcon  = cat ? (CATEGORY_ICONS[cat.slug] ?? "🎮") : "🎮";
+                            const sellP    = item.unit_price;
+                            const buyP     = item.unit_cost ?? item.product?.buy_price ?? 0;
+                            const profit   = (sellP - buyP) * item.quantity;
+
+                            return (
+                              <div key={item.id} style={{
+                                borderRadius: 10, border: "1px solid var(--border)",
+                                background: "color-mix(in srgb, var(--bg) 60%, transparent)",
+                                overflow: "hidden",
+                              }}>
+                                {/* Category + product */}
+                                <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--border)" }}>
+                                  <div style={{
+                                    width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                                    background: "color-mix(in srgb, var(--bg2) 80%, transparent)",
+                                    border: "1px solid var(--border)",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: 20, overflow: "hidden",
+                                  }}>
+                                    {cat?.logo_url
+                                      ? <img src={cat.logo_url} alt={cat.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                                      : catIcon}
+                                  </div>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>
+                                      {cat?.name ?? "Catégorie inconnue"}
+                                    </p>
+                                    <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                                      Carte {item.product?.amount?.toLocaleString("fr-FR") ?? "—"} FCFA · Qté {item.quantity}
+                                    </p>
+                                  </div>
+                                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                                    <p style={{ fontSize: 10, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Bénéfice</p>
+                                    <p style={{ fontSize: 13, fontWeight: 800, color: profit >= 0 ? "#10b981" : "#ef4444", fontVariantNumeric: "tabular-nums" }}>
+                                      {fmt(profit)}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Gift code */}
+                                <div style={{ padding: "10px 14px", background: "var(--cyan-dim)" }}>
+                                  <p style={{ fontSize: 10, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                                    Code cadeau livré
+                                  </p>
+                                  <p style={{
+                                    fontSize: 14, fontFamily: "monospace", fontWeight: 800, color: "var(--cyan)",
+                                    letterSpacing: "0.06em", wordBreak: "break-all",
+                                    background: "var(--cyan-dim)", borderRadius: 6, padding: "6px 10px",
+                                    border: "1px solid var(--border-cyan)",
+                                  }}>
+                                    {item.gift_code?.code ?? "—"}
+                                  </p>
+                                </div>
+
+                                {/* Price breakdown */}
+                                <div style={{ padding: "8px 14px", display: "flex", gap: 16, flexWrap: "wrap", borderTop: "1px solid var(--border)" }}>
+                                  {[
+                                    { label: "Prix vente", value: fmt(sellP), color: "var(--text)" },
+                                    { label: "Prix achat", value: fmt(buyP),  color: "#f59e0b" },
+                                  ].map(({ label, value, color }) => (
+                                    <div key={label}>
+                                      <p style={{ fontSize: 10, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</p>
+                                      <p style={{ fontSize: 12, fontWeight: 700, color, fontVariantNumeric: "tabular-nums" }}>{value}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div style={{
+                            borderRadius: 10, border: "1px dashed rgba(245,158,11,0.4)",
+                            background: "rgba(245,158,11,0.05)", padding: "20px",
+                            textAlign: "center", color: "#f59e0b", fontSize: 13, fontWeight: 600,
+                          }}>
+                            🔒 Codes non disponibles — paiement {GP_STATUS_STYLES[db.status]?.label?.toLowerCase() ?? db.status}
+                          </div>
+                        )}
+
+                        {/* Totals */}
+                        {db.status === "paid" && (
+                          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 2 }}>
+                            {[
+                              { label: "Total vente", value: fmt(db.total_amount),   color: "var(--cyan)" },
+                              { label: "Coût total",  value: fmt(db.total_buy_cost), color: "#f59e0b" },
+                              { label: "Bénéfice",    value: fmt(db.profit),          color: db.profit >= 0 ? "#10b981" : "#ef4444" },
+                            ].map(({ label, value, color }) => (
+                              <div key={label} style={{
+                                flex: 1, minWidth: 90,
+                                borderRadius: 8, border: "1px solid var(--border)",
+                                background: "color-mix(in srgb, var(--bg) 60%, transparent)",
+                                padding: "8px 12px",
+                              }}>
+                                <p style={{ fontSize: 10, color: "var(--text-faint)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</p>
+                                <p style={{ fontSize: 13, fontWeight: 800, color, fontVariantNumeric: "tabular-nums" }}>{value}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Remediation actions for discordant transactions */}
+                        {concordance === "critical" && (
+                          <div style={{ borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", padding: "12px 14px" }}>
+                            <p style={{ fontSize: 12, color: "#ef4444", fontWeight: 600, marginBottom: 10 }}>
+                              GeniusPay confirme le paiement mais les codes n&apos;ont pas été livrés (webhook manqué).
+                            </p>
+                            {actionError[tx.reference] && (
+                              <p style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>{actionError[tx.reference]}</p>
+                            )}
+                            <button
+                              onClick={() => handleAction(tx, "finalize")}
+                              disabled={isActioning}
+                              style={{
+                                padding: "8px 16px", borderRadius: 8,
+                                border: "1px solid rgba(16,185,129,0.5)",
+                                background: "rgba(16,185,129,0.12)", color: "#10b981",
+                                fontSize: 12, fontWeight: 700,
+                                cursor: isActioning ? "not-allowed" : "pointer",
+                                opacity: isActioning ? 0.6 : 1,
+                              }}
+                            >
+                              {isActioning ? "Traitement…" : "Forcer la livraison des codes"}
+                            </button>
+                          </div>
+                        )}
+
+                        {concordance === "stale" && (
+                          <div style={{ borderRadius: 10, border: "1px solid rgba(245,158,11,0.3)", background: "rgba(245,158,11,0.06)", padding: "12px 14px" }}>
+                            <p style={{ fontSize: 12, color: "#f59e0b", fontWeight: 600, marginBottom: 10 }}>
+                              Le paiement a échoué/expiré mais la réservation est toujours active en base.
+                            </p>
+                            {actionError[tx.reference] && (
+                              <p style={{ fontSize: 11, color: "#ef4444", marginBottom: 8 }}>{actionError[tx.reference]}</p>
+                            )}
+                            <button
+                              onClick={() => handleAction(tx, "cancel")}
+                              disabled={isActioning}
+                              style={{
+                                padding: "8px 16px", borderRadius: 8,
+                                border: "1px solid rgba(245,158,11,0.5)",
+                                background: "rgba(245,158,11,0.12)", color: "#f59e0b",
+                                fontSize: 12, fontWeight: 700,
+                                cursor: isActioning ? "not-allowed" : "pointer",
+                                opacity: isActioning ? 0.6 : 1,
+                              }}
+                            >
+                              {isActioning ? "Traitement…" : "Libérer la réservation"}
+                            </button>
+                          </div>
+                        )}
+
+                        {concordance === "mismatch" && (
+                          <div style={{ borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", padding: "12px 14px" }}>
+                            <p style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>
+                              Incohérence grave : GeniusPay indique un échec mais la commande est marquée payée. Vérifiez manuellement.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {meta && meta.total != null && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--text-muted)", fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer", opacity: page <= 1 ? 0.4 : 1 }}
+              >
+                ← Précédent
+              </button>
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Page {page}</span>
+              <button
+                disabled={transactions.length < 25}
+                onClick={() => setPage((p) => p + 1)}
+                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--text-muted)", fontSize: 12, cursor: transactions.length < 25 ? "not-allowed" : "pointer", opacity: transactions.length < 25 ? 0.4 : 1 }}
+              >
+                Suivant →
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -729,6 +1213,8 @@ export function PaymentsTab({ purchases, onUpdateStatus }: PaymentsTabProps) {
           onPageChange={setPage}
           onPageSizeChange={(s) => { setPageSize(s); setPage(0); }}
         />
+
+        <GeniusPaySection />
       </div>
 
       {/* Purchase detail modal */}

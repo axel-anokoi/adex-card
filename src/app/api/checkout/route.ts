@@ -17,7 +17,7 @@ const checkoutSchema = z.object({
       }),
     )
     .min(1),
-  paymentMethod: z.string().min(1),
+  paymentMethod: z.string().optional().default("geniuspay"),
   customer: z.object({
     fullName: z.string().min(1),
     phone: z.string().min(1),
@@ -227,7 +227,7 @@ export async function POST(request: Request) {
     const purchaseId = (reservation as { purchase_id: string }).purchase_id;
 
     // 4a. Stripe card payment — webhook will finalize once paid
-    if (paymentMethod === "card") {
+    if (paymentMethod === "card" && process.env.STRIPE_SECRET_KEY) {
       const { getStripeServer } = await import("@/lib/stripe/server");
       const stripe = getStripeServer();
       const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -256,7 +256,76 @@ export async function POST(request: Request) {
       return NextResponse.json({ data: { url: session.url, id: session.id } });
     }
 
-    // 4b. Local payment (djamo, moov, wave) — finalize immediately
+    // 4b. GeniusPay — auto or specific method
+    const GENIUSPAY_BASE_URL = "https://pay.genius.ci/api/v1/merchant";
+    const GENIUSPAY_METHOD_MAP: Record<string, string | null> = {
+      geniuspay:    null,          // auto: GeniusPay hosted checkout, user picks
+      wave:         "wave",
+      moov:         "moov_money",
+      orange_money: "orange_money",
+      djamo:        null,
+    };
+
+    if (paymentMethod in GENIUSPAY_METHOD_MAP) {
+      const publicKey  = process.env.GENIUSPAY_PUBLIC_KEY;
+      const secretKey  = process.env.GENIUSPAY_SECRET_KEY;
+
+      if (!publicKey || !secretKey) {
+        return NextResponse.json(
+          { error: "Paiement mobile indisponible pour le moment" },
+          { status: 503 },
+        );
+      }
+
+      const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+      const gpPayload: Record<string, unknown> = {
+        amount:      Math.round(finalAmount),
+        currency:    "XOF",
+        description: "Commande Adex Card",
+        success_url: `${origin}/success?pid=${purchaseId}`,
+        error_url:   `${origin}/payment-failed?pid=${purchaseId}`,
+        metadata:    { purchase_id: purchaseId },
+        customer: {
+          name:  customer.fullName,
+          phone: customer.phone,
+          ...(customer.email ? { email: customer.email } : {}),
+        },
+      };
+
+      const gpMethod = GENIUSPAY_METHOD_MAP[paymentMethod];
+      if (gpMethod) gpPayload.payment_method = gpMethod;
+
+      const gpRes  = await fetch(`${GENIUSPAY_BASE_URL}/payments`, {
+        method:  "POST",
+        headers: {
+          "X-API-Key":    publicKey,
+          "X-API-Secret": secretKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(gpPayload),
+      });
+      const gpData = await gpRes.json();
+
+      if (!gpData.success) {
+        console.error("GeniusPay error:", gpData);
+        await checkoutClient.from("purchases").update({ status: "failed" }).eq("id", purchaseId);
+        return NextResponse.json(
+          { error: gpData.error?.message || "Erreur lors de la création du paiement" },
+          { status: 400 },
+        );
+      }
+
+      const gpTx = gpData.data;
+
+      await checkoutClient
+        .from("purchases")
+        .update({ geniuspay_reference: gpTx.reference })
+        .eq("id", purchaseId);
+
+      return NextResponse.json({ data: { url: gpTx.checkout_url || gpTx.payment_url } });
+    }
+
+    // 4c. Local payment fallback — finalize immediately (legacy / unknown methods)
     const { data: finalized, error: finalizeError } = await checkoutClient.rpc(
       "finalize_purchase",
       { p_purchase_id: purchaseId, p_stripe_session_id: null },

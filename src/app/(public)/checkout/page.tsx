@@ -6,19 +6,10 @@ import { useCart } from "@/context/CartContext";
 import { createClient } from "@/lib/supabase/client";
 
 // FCFA conversion
-const EUR_TO_FCFA = 655;
 const toFCFA = (eur: number) => (eur).toLocaleString("fr-FR");
-
-
-const paymentMethods = [
-  { id: "djamo", label: "Djamo", icon: "💳", desc: "Carte prépayée Djamo", accent: "rgba(0,255,224,0.2)", border: "rgba(0,255,224,0.35)" },
-  { id: "moov", label: "Moov Money", icon: "📱", desc: "Mobile money Moov", accent: "rgba(255,184,0,0.15)", border: "rgba(255,184,0,0.35)" },
-  { id: "wave", label: "Wave", icon: "🌊", desc: "Paiement Wave CI", accent: "rgba(123,47,255,0.15)", border: "rgba(123,47,255,0.35)" },
-];
 
 export default function CheckoutPage() {
   const { cart, clearCart } = useCart();
-  const [selectedPayment, setSelectedPayment] = useState("djamo");
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -130,7 +121,6 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: cart,
-          paymentMethod: selectedPayment,
           customer: userData,
           createAccountConsent: !isAuthenticated ? createAccountConsent : undefined,
           promo: appliedPromo,
@@ -141,8 +131,8 @@ export default function CheckoutPage() {
         setCheckoutError(data.error);
         return;
       }
-      if (data.url) {
-        window.location.href = data.url;
+      if (data.data?.url) {
+        window.location.href = data.data.url;
       } else if (data.data?.statut === "success") {
         setImplicitAccountCreated(Boolean(data.data?.implicitAccountCreated));
         setPurchasedCodes(data.data?.codes ?? []);
@@ -340,29 +330,6 @@ export default function CheckoutPage() {
                 <div style={{ padding: "1.5rem", position: "relative", zIndex: 2 }}>
                   <p className="section-label" style={{ marginBottom: 18 }}>Récapitulatif</p>
 
-                  {/* Payment Method inside Summary */}
-                  <div style={{ marginBottom: 20 }}>
-                    <p className="section-label" style={{ marginBottom: 12, fontSize: 12 }}>Méthode de paiement</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: 10 }} className="payment-methods-grid">
-                      {paymentMethods.map((pm) => (
-                        <button
-                          key={pm.id}
-                          onClick={() => setSelectedPayment(pm.id)}
-                          style={{
-                            borderRadius: 12, padding: "10px 8px", textAlign: "center",
-                            border: selectedPayment === pm.id ? `1px solid ${pm.border}` : "1px solid var(--border)",
-                            background: selectedPayment === pm.id ? pm.accent : "rgba(255,255,255,0.03)",
-                            transition: "all 0.2s",
-                            boxShadow: selectedPayment === pm.id ? `0 0 12px ${pm.accent}` : "none",
-                          }}
-                        >
-                          <div style={{ fontSize: 18, marginBottom: 4 }}>{pm.icon}</div>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", marginBottom: 0 }}>{pm.label}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Lines */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
                     {cart.map((item) => (
@@ -509,14 +476,6 @@ export default function CheckoutPage() {
           @media (max-width: 768px) {
             .checkout-grid {
               grid-template-columns: 1fr !important;
-            }
-            .payment-methods-grid {
-              grid-template-columns: repeat(1, 1fr) !important;
-            }
-          }
-          @media (min-width: 640px) {
-            .payment-methods-grid {
-              grid-template-columns: repeat(3, 1fr) !important;
             }
           }
         `}</style>
