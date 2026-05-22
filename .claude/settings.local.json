@@ -8,7 +8,11 @@
       "Bash(mkdir -p \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\\\\.github\\\\workflows\")",
       "Bash(python -c ' *)",
       "WebFetch(domain:startselect.com)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\" -Force)",
+      "Bash(Select-Object -Property Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\\\\src\" -Recurse -Force | Select-Object FullName, PSIsContainer | ForEach-Object { if \\($_.PSIsContainer\\) { $_.FullName + \"\\\\\" } else { $_.FullName } } | Sort-Object)"
     ],
     "additionalDirectories": [
       "c:\\Users\\AxelA\\Desktop\\Dev\\Web\\adex-card\\.github"
