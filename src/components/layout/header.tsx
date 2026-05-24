@@ -6,7 +6,8 @@ import { useState, useRef, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
+import { setInterval } from "timers";
 
 const categories = [
   { slug: "playstation", name: "PlayStation", icon: "🎮", colorClass: "text-blue-400" },
@@ -22,7 +23,7 @@ const navLinks = [
 export function Header() {
   const pathname      = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isAdmin, user } = useAuth();
+  const { isAuthenticated, isAdmin, user, profile } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [catsOpen, setCatsOpen]     = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -94,19 +95,24 @@ export function Header() {
         throw new Error(data?.error || "Logout failed");
       }
 
-      await createClient().auth.signOut();
+      await supabase?.auth.signOut();
+
+      setInterval(() => {
+        window.location.href = "/";
+      }, 1000);
     } catch (error) {
       console.error("Logout error:", error);
-      await createClient().auth.signOut();
+      await supabase?.auth.signOut();
     } finally {
-      router.replace("/");
-      router.refresh();
       setSigningOut(false);
+      window.location.href = "/";
     }
   };
 
-  // Get user display name
-  const displayName = user?.email?.split("@")[0] || "Mon compte";
+  const displayName =
+    [profile?.prenoms, profile?.nom].filter(Boolean).join(" ") ||
+    user?.email?.split("@")[0] ||
+    "Mon compte";
 
   return (
     <>

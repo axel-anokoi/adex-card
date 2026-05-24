@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { NotificationPanel } from "@/components/dashboard/notification-panel";
 import { PurchaseCard } from "@/components/dashboard/purchase-card";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 interface PurchaseItem {
   id: string;
@@ -71,18 +71,20 @@ export default function DashboardPage() {
   useEffect(() => { fetchPurchases(); }, [fetchPurchases]);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    if (!supabase) return;
+    const sb = supabase;
+    let channel: ReturnType<typeof sb.channel> | null = null;
+    sb.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      const channel = supabase
+      channel = sb
         .channel("purchases-realtime")
         .on("postgres_changes", {
           event: "*", schema: "public", table: "purchases",
           filter: `user_id=eq.${user.id}`,
         }, () => fetchPurchases())
         .subscribe();
-      return () => { supabase.removeChannel(channel); };
     });
+    return () => { if (channel) sb.removeChannel(channel); };
   }, [fetchPurchases]);
 
   const handleRefundRequest = async () => {

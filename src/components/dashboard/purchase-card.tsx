@@ -174,7 +174,7 @@ export function PurchaseCard({ purchase, onRefundRequest }: PurchaseCardProps) {
                   </div>
                 </div>
 
-                {item.gift_code && (
+                {purchase.status === "paid" && item.gift_code && (
                   <div
                     className="mt-3 rounded-md p-3"
                     style={{
