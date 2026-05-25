@@ -35,6 +35,8 @@ export async function GET(
     .eq("id", id)
     .single();
 
+    console.log("Purchase lookup:", { id, error, purchase });
+
   if (error || !purchase) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

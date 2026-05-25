@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 type Step = "loading" | "set-password" | "success" | "error";
 
@@ -19,8 +19,7 @@ export default function ActivatePage() {
 
   useEffect(() => {
     async function checkSession() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase!.auth.getUser();
 
       if (!user) {
         setStep("error");
@@ -66,8 +65,7 @@ export default function ActivatePage() {
 
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase.auth.updateUser({ password });
+      const { error: updateError } = await supabase!.auth.updateUser({ password });
       if (updateError) {
         setError(updateError.message);
         return;

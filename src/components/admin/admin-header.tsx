@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 interface AdminHeaderProps {
   title: string;
@@ -78,10 +78,10 @@ export function AdminHeader({
         throw new Error(data?.error || "Logout failed");
       }
 
-      await createClient().auth.signOut();
+      await supabase?.auth.signOut();
     } catch (error) {
       console.error("Logout error:", error);
-      await createClient().auth.signOut();
+      await supabase?.auth.signOut();
     } finally {
       setProfileOpen(false);
       router.replace("/");

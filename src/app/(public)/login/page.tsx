@@ -42,9 +42,9 @@ export default function LoginPage() {
       }
       const data = await response.json();
       if (data.role === "admin") {
-        router.push("/admin");
+        window.location.href = "/admin";
       } else {
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       }
     } catch {
       setError("Une erreur est survenue. Veuillez réessayer.");

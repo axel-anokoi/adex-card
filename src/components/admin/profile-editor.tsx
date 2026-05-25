@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 interface UserProfile {
   id: string;
@@ -71,8 +71,7 @@ export function ProfileEditor() {
   };
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await supabase?.auth.signOut();
     window.location.href = "/";
   };
 

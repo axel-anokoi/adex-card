@@ -3,13 +3,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { ReservationTimerModal } from "@/components/checkout/ReservationTimerModal";
+
+const RESERVATION_SESSION_KEY = "adex_reservation";
 
 // FCFA conversion
 const toFCFA = (eur: number) => (eur).toLocaleString("fr-FR");
 
 export default function CheckoutPage() {
   const { cart, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -18,10 +23,29 @@ export default function CheckoutPage() {
   const [promoLoading, setPromoLoading] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [createAccountConsent, setCreateAccountConsent] = useState(true);
   const [implicitAccountCreated, setImplicitAccountCreated] = useState(false);
   const [purchasedCodes, setPurchasedCodes] = useState<Array<{ code: string; product_name: string; unit_price: number }>>([]);
+
+  // Reservation timer modal — lazy init from sessionStorage
+  const [timerData, setTimerData] = useState<{
+    expiresAt: string;
+    purchaseId: string;
+    redirectUrl: string;
+    totalMinutes: number;
+  } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = sessionStorage.getItem(RESERVATION_SESSION_KEY);
+      if (!stored) return null;
+      const parsed = JSON.parse(stored) as { purchase_id: string; expires_at: string; redirect_url: string; total_minutes?: number };
+      if (new Date(parsed.expires_at).getTime() > Date.now()) {
+        return { expiresAt: parsed.expires_at, purchaseId: parsed.purchase_id, redirectUrl: parsed.redirect_url, totalMinutes: parsed.total_minutes ?? 32 };
+      }
+      sessionStorage.removeItem(RESERVATION_SESSION_KEY);
+    } catch { /* ignore */ }
+    return null;
+  });
 
   const [userData, setUserData] = useState({
     fullName: "",
@@ -34,34 +58,27 @@ export default function CheckoutPage() {
     return () => clearTimeout(t);
   }, []);
 
+  // Fetch user data as soon as the auth user is known
   useEffect(() => {
-    async function fetchUser() {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          setIsAuthenticated(true);
-          const { data: profile } = await supabase
-            .from("users")
-            .select("nom, prenoms, telephone, email")
-            .eq("id", user.id)
-            .single();
+    if (!user) return;
 
-          if (profile) {
-            setUserData({
-              fullName: [profile.prenoms, profile.nom].filter(Boolean).join(" "),
-              phone: profile.telephone || "",
-              email: profile.email || user.email || "",
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      }
+    async function fetchUserData() {
+      if (!supabase) return;
+      const { data } = await supabase
+        .from("users")
+        .select("nom, prenoms, telephone, email")
+        .eq("id", user!.id)
+        .single();
+
+      setUserData({
+        fullName: [data?.prenoms, data?.nom].filter(Boolean).join(" "),
+        phone: data?.telephone || "",
+        email: data?.email || user!.email || "",
+      });
     }
-    fetchUser();
-  }, []);
+
+    fetchUserData();
+  }, [user]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.eur * item.quantity, 0);
   const discount = appliedPromo?.discount || 0;
@@ -132,7 +149,28 @@ export default function CheckoutPage() {
         return;
       }
       if (data.data?.url) {
-        window.location.href = data.data.url;
+        // Persist reservation so the timer survives the external payment redirect
+        const mins = data.data.reservation_duration_min ?? 32;
+        if (data.data.expires_at && data.data.purchase_id) {
+          try {
+            sessionStorage.setItem(
+              RESERVATION_SESSION_KEY,
+              JSON.stringify({
+                purchase_id:  data.data.purchase_id,
+                expires_at:   data.data.expires_at,
+                redirect_url: data.data.url,
+                total_minutes: mins,
+              }),
+            );
+          } catch { /* ignore */ }
+        }
+        setTimerData({
+          expiresAt:    data.data.expires_at ?? new Date(Date.now() + mins * 60 * 1000).toISOString(),
+          purchaseId:   data.data.purchase_id ?? "",
+          redirectUrl:  data.data.url,
+          totalMinutes: mins,
+        });
+        return; // modal handles the redirect
       } else if (data.data?.statut === "success") {
         setImplicitAccountCreated(Boolean(data.data?.implicitAccountCreated));
         setPurchasedCodes(data.data?.codes ?? []);
@@ -154,6 +192,24 @@ export default function CheckoutPage() {
           accountCreated={implicitAccountCreated}
           codes={purchasedCodes}
           onClose={() => setShowSuccessModal(false)}
+        />
+      )}
+
+      {timerData && (
+        <ReservationTimerModal
+          expiresAt={timerData.expiresAt}
+          purchaseId={timerData.purchaseId}
+          redirectUrl={timerData.redirectUrl}
+          totalMinutes={timerData.totalMinutes}
+          productNames={cart.map((item) => item.name)}
+          onProceed={() => {
+            sessionStorage.removeItem(RESERVATION_SESSION_KEY);
+            window.location.href = timerData.redirectUrl;
+          }}
+          onExpired={() => {
+            sessionStorage.removeItem(RESERVATION_SESSION_KEY);
+            // Keep modal visible in expired state — don't clear timerData
+          }}
         />
       )}
       <main style={{ background: "var(--bg)", minHeight: "100vh", padding: "5rem 1rem 3rem", position: "relative", overflow: "hidden" }}>
@@ -239,42 +295,65 @@ export default function CheckoutPage() {
               <section className="glass" style={{ borderRadius: 20, overflow: "hidden", position: "relative" }}>
                 <div style={{ height: 2, background: "linear-gradient(90deg, transparent, var(--cyan), transparent)" }} />
                 <div style={{ padding: "1.5rem" }}>
-                  <p className="section-label" style={{ marginBottom: 14 }}>Informations client</p>
-                  
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Nom et Prénoms *</label>
-                      <input
-                        type="text"
-                        value={userData.fullName}
-                        onChange={(e) => setUserData({...userData, fullName: e.target.value})}
-                        placeholder="Ex: Jean Dupont"
-                        style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontSize: 14, outline: "none" }}
-                      />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                    <p className="section-label" style={{ margin: 0 }}>Informations client</p>
+                    {isAuthenticated && (
+                      <span style={{ fontSize: 11, color: "var(--cyan)", background: "rgba(0,255,224,0.08)", border: "1px solid rgba(0,255,224,0.2)", borderRadius: 99, padding: "2px 10px", fontWeight: 600 }}>
+                        ✓ Connecté
+                      </span>
+                    )}
+                  </div>
+
+                  {isAuthenticated ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {[
+                        { label: "Nom et Prénoms", value: userData.fullName, icon: "👤" },
+                        { label: "Téléphone", value: userData.phone, icon: "📞" },
+                        { label: "Email", value: userData.email, icon: "✉️" },
+                      ].map(({ label, value, icon }) => (
+                        <div key={label} style={{ display: "flex", alignItems: "center", gap: 12, borderRadius: 10, border: "1px solid var(--border)", background: "rgba(255,255,255,0.02)", padding: "10px 14px" }}>
+                          <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600, marginBottom: 2 }}>{label}</p>
+                            <p style={{ fontSize: 14, color: "var(--text)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {value || <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Non renseigné</span>}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Téléphone *</label>
-                      <input
-                        type="tel"
-                        value={userData.phone}
-                        onChange={(e) => setUserData({...userData, phone: e.target.value})}
-                        placeholder="Ex: +225 0102030405"
-                        style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontSize: 14, outline: "none" }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>
-                        Email {isAuthenticated ? "(Optionnel)" : "*"}
-                      </label>
-                      <input
-                        type="email"
-                        value={userData.email}
-                        onChange={(e) => setUserData({...userData, email: e.target.value})}
-                        placeholder="exemple@mail.com"
-                        style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontSize: 14, outline: "none" }}
-                      />
-                    </div>
-                    {!isAuthenticated && (
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Nom et Prénoms *</label>
+                        <input
+                          type="text"
+                          value={userData.fullName}
+                          onChange={(e) => setUserData({...userData, fullName: e.target.value})}
+                          placeholder="Ex: Jean Dupont"
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontSize: 14, outline: "none" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Téléphone *</label>
+                        <input
+                          type="tel"
+                          value={userData.phone}
+                          onChange={(e) => setUserData({...userData, phone: e.target.value})}
+                          placeholder="Ex: +225 0102030405"
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontSize: 14, outline: "none" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <label style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>Email *</label>
+                        <input
+                          type="email"
+                          value={userData.email}
+                          onChange={(e) => setUserData({...userData, email: e.target.value})}
+                          placeholder="exemple@mail.com"
+                          style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontSize: 14, outline: "none" }}
+                        />
+                      </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <label style={{
                           display: "grid",
@@ -315,8 +394,8 @@ export default function CheckoutPage() {
                           . Vous pouvez supprimer votre compte depuis votre profil.
                         </p>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </section>
             </div>

@@ -22,7 +22,10 @@ as $$
   );
 $$;
 
--- GIFT_CODES: permettre au client de lire ses propres codes via ses purchase_items
+-- GIFT_CODES: le client ne peut lire un code que si la purchase est 'paid'.
+-- Sécurité critique : cancel_purchase ne nulle pas gift_code_id dans purchase_items,
+-- donc sans le filtre p.status='paid', un client avec paiement échoué pourrait
+-- lire le code (qui peut avoir été réattribué à un autre utilisateur).
 drop policy if exists "gift_codes_read_own" on public.gift_codes;
 create policy "gift_codes_read_own"
 on public.gift_codes
@@ -36,6 +39,7 @@ using (
     join public.purchases p on p.id = pi.purchase_id
     where pi.gift_code_id = gift_codes.id
       and p.user_id = auth.uid()
+      and p.status = 'paid'
   )
 );
 
