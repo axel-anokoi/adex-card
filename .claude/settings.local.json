@@ -13,7 +13,9 @@
       "Bash(Select-Object -Property Name, PSIsContainer)",
       "Bash(Format-Table -AutoSize)",
       "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\\\\src\" -Recurse -Force | Select-Object FullName, PSIsContainer | ForEach-Object { if \\($_.PSIsContainer\\) { $_.FullName + \"\\\\\" } else { $_.FullName } } | Sort-Object)",
-      "Bash(node -e \"require\\('@supabase/ssr'\\); console.log\\('ok'\\)\")"
+      "Bash(node -e \"require\\('@supabase/ssr'\\); console.log\\('ok'\\)\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\" -Recurse -Name)",
+      "Bash(Select-String -Pattern \"\\(checkout|cart|payment|reservation|modal|popup|success|failed\\)\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\AxelA\\Desktop\\Dev\\Web\\adex-card\\.github"

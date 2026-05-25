@@ -89,13 +89,16 @@ export function Header() {
 
     try {
       const response = await fetch("/api/auth/logout", { method: "POST" });
+      console.log("Logout response:", response);
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
         throw new Error(data?.error || "Logout failed");
       }
 
-      await supabase?.auth.signOut();
+      // await supabase?.auth.signOut();
+
+    
 
       setInterval(() => {
         window.location.href = "/";

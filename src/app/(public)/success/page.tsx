@@ -10,29 +10,80 @@ interface PurchaseCode {
   unit_price: number;
 }
 
-type PollStatus = "polling" | "paid" | "failed" | "timeout" | "no_id";
+type PollStatus = "polling" | "verifying" | "paid" | "failed" | "timeout" | "no_id";
 
-const POLL_INTERVAL_MS = 2500;
-const POLL_TIMEOUT_MS  = 45_000;
+const POLL_INTERVAL_MS     = 2500;
+const POLL_TIMEOUT_MS      = 45_000;
+// When GeniusPay confirms in the redirect URL (status=success), poll longer
+const POLL_TIMEOUT_CONFIRMED_MS = 5 * 60 * 1000; // 5 minutes
 
 function SuccessPageContent() {
   const searchParams = useSearchParams();
-  const pid = searchParams.get("pid");
+  const pid       = searchParams.get("pid");
+  const gpStatus  = searchParams.get("status");    // "success" when GeniusPay confirms
+  const reference = searchParams.get("reference"); // GeniusPay transaction reference
 
-  const [pollStatus, setPollStatus]   = useState<PollStatus>(pid ? "polling" : "no_id");
+  // If GeniusPay redirect says success, start in "verifying" state to try direct API check first
+  const initialStatus: PollStatus = pid
+    ? gpStatus === "success" && reference ? "verifying" : "polling"
+    : "no_id";
+
+  const [pollStatus, setPollStatus]   = useState<PollStatus>(initialStatus);
   const [codes, setCodes]             = useState<PurchaseCode[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [copiedCode, setCopiedCode]   = useState<string | null>(null);
   const [visible, setVisible]         = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Whether GeniusPay redirect URL indicated payment was confirmed on their side
+  const geniuspayConfirmed = gpStatus === "success" && Boolean(reference);
+  const pollTimeoutMs = geniuspayConfirmed ? POLL_TIMEOUT_CONFIRMED_MS : POLL_TIMEOUT_MS;
+
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 80);
     return () => clearTimeout(t);
   }, []);
 
+  // Step 1: when GeniusPay redirected with status=success, try to finalize immediately
   useEffect(() => {
-    if (!pid) return;
+    if (!pid || !geniuspayConfirmed || pollStatus !== "verifying") return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res  = await fetch(`/api/payment/verify?pid=${pid}&reference=${reference}`);
+        const data = await res.json();
+        if (cancelled) return;
+
+        if (data.status === "paid") {
+          // Fetch codes from purchases endpoint
+          const pr   = await fetch(`/api/purchases/${pid}`);
+          const pd   = await pr.json();
+          setCodes(pd.codes ?? []);
+          setTotalAmount(pd.total_amount ?? 0);
+          setPollStatus("paid");
+          return;
+        }
+
+        if (data.status === "failed" || data.status === "cancelled") {
+          setPollStatus("failed");
+          return;
+        }
+      } catch {
+        // verify call failed — fall through to polling
+      }
+
+      if (!cancelled) setPollStatus("polling");
+    })();
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Step 2: poll purchases endpoint until paid / failed / timeout
+  useEffect(() => {
+    if (!pid || pollStatus !== "polling") return;
 
     let stopped = false;
     const start = Date.now();
@@ -40,7 +91,7 @@ function SuccessPageContent() {
     const poll = async () => {
       if (stopped) return;
 
-      if (Date.now() - start > POLL_TIMEOUT_MS) {
+      if (Date.now() - start > pollTimeoutMs) {
         setPollStatus("timeout");
         return;
       }
@@ -73,7 +124,8 @@ function SuccessPageContent() {
       stopped = true;
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [pid]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pid, pollStatus]);
 
   const copy = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
@@ -181,7 +233,7 @@ function SuccessPageContent() {
 
   // ── Timeout (webhook never arrived in time) ──────────────────────────────────
   if (pollStatus === "timeout") {
-    return <FailureCard reason="timeout" pid={pid} />;
+    return <FailureCard reason="timeout" pid={pid} geniuspayConfirmed={geniuspayConfirmed} />;
   }
 
   // ── No purchase id in URL ────────────────────────────────────────────────────
@@ -196,7 +248,8 @@ function SuccessPageContent() {
     );
   }
 
-  // ── Polling / waiting for webhook ────────────────────────────────────────────
+  // ── Verifying / Polling / waiting for webhook ───────────────────────────────
+  const isVerifying = pollStatus === "verifying";
   return (
     <main style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1rem", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)", backgroundSize: "40px 40px", pointerEvents: "none" }} />
@@ -205,11 +258,20 @@ function SuccessPageContent() {
       <div style={{ maxWidth: 420, width: "100%", textAlign: "center", opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.45s ease, transform 0.45s ease" }}>
         <div style={{ width: 56, height: 56, borderRadius: "50%", border: "3px solid var(--cyan)", borderTopColor: "transparent", animation: "spin 0.9s linear infinite", margin: "0 auto 24px" }} />
         <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text)", marginBottom: 10, fontFamily: "var(--font-display)" }}>
-          Confirmation en cours…
+          {isVerifying ? "Paiement reçu — traitement en cours…" : "Confirmation en cours…"}
         </h1>
         <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, marginBottom: 24 }}>
-          Votre paiement est en cours de validation. Vos codes apparaîtront ici dans quelques secondes.
+          {isVerifying
+            ? "GeniusPay a confirmé votre paiement. Vos codes vont apparaître dans quelques secondes."
+            : "Votre paiement est en cours de validation. Vos codes apparaîtront ici dans quelques secondes."}
         </p>
+        {geniuspayConfirmed && (
+          <div style={{ borderRadius: 12, border: "1px solid rgba(0,255,136,0.2)", background: "rgba(0,255,136,0.04)", padding: "10px 16px", marginBottom: 16 }}>
+            <p style={{ fontSize: 12, color: "#00ff88", margin: 0, fontWeight: 600 }}>
+              ✓ Paiement confirmé par GeniusPay
+            </p>
+          </div>
+        )}
         <div style={{ borderRadius: 12, border: "1px solid rgba(0,255,224,0.15)", background: "rgba(0,255,224,0.04)", padding: "12px 16px" }}>
           <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
             📧 Un email de confirmation sera envoyé à votre adresse.
@@ -234,32 +296,68 @@ export default function SuccessPage() {
 
 // ── Shared failure card ──────────────────────────────────────────────────────
 
-function FailureCard({ reason, pid }: { reason: "declined" | "timeout"; pid: string | null }) {
+function FailureCard({
+  reason,
+  pid,
+  geniuspayConfirmed = false,
+}: {
+  reason: "declined" | "timeout";
+  pid: string | null;
+  geniuspayConfirmed?: boolean;
+}) {
   const [visible, setVisible] = useState(false);
   useEffect(() => { const t = setTimeout(() => setVisible(true), 80); return () => clearTimeout(t); }, []);
+
+  // When GeniusPay confirmed the payment but webhook is delayed, show amber not red
+  const isPaidTimeout = reason === "timeout" && geniuspayConfirmed;
+  const accentRgb   = isPaidTimeout ? "245,158,11" : "239,68,68";
+  const accentHex   = isPaidTimeout ? "#f59e0b"    : "#ef4444";
+  const topGradient = isPaidTimeout
+    ? "linear-gradient(90deg, transparent, #f59e0b, transparent)"
+    : "linear-gradient(90deg, transparent, #ef4444, transparent)";
+  const glowBg = isPaidTimeout
+    ? "radial-gradient(ellipse, rgba(245,158,11,0.06) 0%, transparent 70%)"
+    : "radial-gradient(ellipse, rgba(239,68,68,0.06) 0%, transparent 70%)";
 
   return (
     <main style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1rem", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)", backgroundSize: "40px 40px", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%,-50%)", width: 400, height: 300, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(239,68,68,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%,-50%)", width: 400, height: 300, borderRadius: "50%", background: glowBg, pointerEvents: "none" }} />
 
       <div style={{ maxWidth: 480, width: "100%", opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.45s ease, transform 0.45s ease" }}>
-        <div style={{ borderRadius: 24, border: "1px solid rgba(239,68,68,0.3)", background: "var(--bg2)", boxShadow: "0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(239,68,68,0.08)", overflow: "hidden" }}>
-          <div style={{ height: 3, background: "linear-gradient(90deg, transparent, #ef4444, transparent)" }} />
+        <div style={{ borderRadius: 24, border: `1px solid rgba(${accentRgb},0.3)`, background: "var(--bg2)", boxShadow: `0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(${accentRgb},0.08)`, overflow: "hidden" }}>
+          <div style={{ height: 3, background: topGradient }} />
 
           <div style={{ padding: "2rem 1.75rem", textAlign: "center" }}>
-            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(239,68,68,0.08)", border: "2px solid rgba(239,68,68,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px" }}>
-              ❌
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: `rgba(${accentRgb},0.08)`, border: `2px solid rgba(${accentRgb},0.4)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px" }}>
+              {isPaidTimeout ? "⏳" : "❌"}
             </div>
 
+            {isPaidTimeout && (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 14, padding: "4px 12px", borderRadius: 99, border: "1px solid rgba(245,158,11,0.3)", background: "rgba(245,158,11,0.08)", fontSize: 12, color: "#f59e0b", fontWeight: 600 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b" }} />
+                Paiement reçu — confirmation en attente
+              </div>
+            )}
+
             <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--text)", marginBottom: 8, fontFamily: "var(--font-display)" }}>
-              {reason === "timeout" ? "Confirmation en attente" : "Paiement non abouti"}
+              {isPaidTimeout ? "Vos codes arrivent bientôt" : reason === "timeout" ? "Confirmation en attente" : "Paiement non abouti"}
             </h1>
             <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, marginBottom: 24 }}>
-              {reason === "timeout"
-                ? "La confirmation tarde à arriver. Vos codes vous seront envoyés par email une fois le paiement validé par GeniusPay."
-                : "Votre paiement n'a pas pu être traité. Aucun montant n'a été débité. Vous pouvez réessayer."}
+              {isPaidTimeout
+                ? "Votre paiement a bien été encaissé par GeniusPay. Notre système finalise votre commande — vos codes vous seront envoyés par email dans les prochaines minutes."
+                : reason === "timeout"
+                  ? "La confirmation tarde à arriver. Vos codes vous seront envoyés par email une fois le paiement validé par GeniusPay."
+                  : "Votre paiement n'a pas pu être traité. Aucun montant n'a été débité. Vous pouvez réessayer."}
             </p>
+
+            {isPaidTimeout && (
+              <div style={{ borderRadius: 12, border: "1px solid rgba(245,158,11,0.2)", background: "rgba(245,158,11,0.06)", padding: "12px 16px", marginBottom: 24, textAlign: "left" }}>
+                <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.65, margin: 0 }}>
+                  <strong style={{ color: "#f59e0b" }}>Que faire ?</strong> Attendez l&apos;email avec vos codes (quelques minutes). Si vous ne le recevez pas dans l&apos;heure, contactez le support avec la référence ci-dessous.
+                </p>
+              </div>
+            )}
 
             {pid && (
               <p style={{ fontSize: 11, color: "var(--text-faint)", marginBottom: 20, fontFamily: "monospace" }}>
@@ -268,10 +366,12 @@ function FailureCard({ reason, pid }: { reason: "declined" | "timeout"; pid: str
             )}
 
             <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link href="/checkout" className="btn-primary" style={{ justifyContent: "center" }}>
-                Réessayer le paiement
-              </Link>
-              <Link href="/shop" className="btn-outline">
+              {!isPaidTimeout && (
+                <Link href="/checkout" className="btn-primary" style={{ justifyContent: "center" }}>
+                  Réessayer le paiement
+                </Link>
+              )}
+              <Link href="/shop" className={isPaidTimeout ? "btn-primary" : "btn-outline"} style={{ justifyContent: "center" }}>
                 Retour à la boutique
               </Link>
             </div>

@@ -43,6 +43,8 @@ export async function POST(request: Request) {
     const payload = await request.json();
     const parsed = checkoutSchema.safeParse(payload);
 
+    
+
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Données de commande invalides", details: parsed.error.flatten() },
@@ -56,11 +58,14 @@ export async function POST(request: Request) {
     let implicitAccountCreated = false;
     let activationLink: string | null = null;
 
+    
+
     // Authentication required — sold_to_user_id NOT NULL constraint on gift_codes
     const { data: { user } } = await supabase.auth.getUser();
     let checkoutUserId = user?.id;
 
     if (!checkoutUserId) {
+      
       if (!customer.email) {
         return NextResponse.json(
           { error: "Une adresse email est requise pour créer votre compte et envoyer vos codes." },
@@ -76,6 +81,8 @@ export async function POST(request: Request) {
       }
 
       checkoutClient = createAdminClient();
+
+      
 
       const { data: existingProfile, error: existingProfileError } = await checkoutClient
         .from("users")
@@ -143,7 +150,7 @@ export async function POST(request: Request) {
     const productIds = items.map((item) => item.id);
     const { data: products, error: prodError } = await checkoutClient
       .from("products")
-      .select("id, stock_available, buy_price, category_id")
+      .select("id, stock_available, buy_price, sell_price, category_id")
       .in("id", productIds);
 
     if (prodError || !products) {
@@ -163,14 +170,21 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+      // Server-side price validation — prevents client-side price manipulation
+      if (Math.abs(item.eur - product.sell_price) > 0.5) {
+        return NextResponse.json(
+          { error: `Le prix de "${item.name}" a changé. Veuillez actualiser la page et réessayer.` },
+          { status: 409 },
+        );
+      }
     }
 
-    // 2. Calculate amounts
+    // 2. Calculate amounts using DB prices (not client-supplied)
     let totalSale = 0;
     let totalCost = 0;
     for (const item of items) {
       const product = productMap.get(item.id)!;
-      totalSale += item.eur * item.quantity;
+      totalSale += product.sell_price * item.quantity;
       totalCost += product.buy_price * item.quantity;
     }
     const finalAmount = totalSale - (promo?.discount ?? 0);
@@ -186,7 +200,7 @@ export async function POST(request: Request) {
           product_id:  item.id,
           name:        item.name,
           quantity:    item.quantity,
-          unit_price:  item.eur,
+          unit_price:  productMap.get(item.id)!.sell_price,
           unit_cost:   productMap.get(item.id)!.buy_price,
           category_id: productMap.get(item.id)!.category_id,
         })),
@@ -204,8 +218,10 @@ export async function POST(request: Request) {
     );
 
     if (rpcError || !reservation) {
-      const msg = rpcError?.message ?? "";
-      if (msg.includes("gift_code_not_available")) {
+      const msg  = rpcError?.message ?? "";
+      const code = (rpcError as { code?: string } | null)?.code ?? "";
+
+      if (msg.includes("gift_code_not_available") || code === "23505") {
         return NextResponse.json(
           { error: "Plus de codes disponibles pour un ou plusieurs articles" },
           { status: 400 },
@@ -224,7 +240,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const purchaseId = (reservation as { purchase_id: string }).purchase_id;
+    const rpcResult       = reservation as { purchase_id: string; expires_at: string; reservation_duration_min: number };
+    const purchaseId      = rpcResult.purchase_id;
+    const expiresAt       = rpcResult.expires_at;
+    const reservationMins = rpcResult.reservation_duration_min ?? 32;
 
     // 4a. Stripe card payment — webhook will finalize once paid
     if (paymentMethod === "card" && process.env.STRIPE_SECRET_KEY) {
@@ -253,16 +272,18 @@ export async function POST(request: Request) {
         .update({ stripe_session_id: session.id })
         .eq("id", purchaseId);
 
-      return NextResponse.json({ data: { url: session.url, id: session.id } });
+      return NextResponse.json({ data: { url: session.url, id: session.id, purchase_id: purchaseId, expires_at: expiresAt, reservation_duration_min: reservationMins } });
     }
 
     // 4b. GeniusPay — auto or specific method
     const GENIUSPAY_BASE_URL = "https://pay.genius.ci/api/v1/merchant";
+    // Valid methods per API docs: wave, pawapay, paystack, orange_money, mtn_money, card
     const GENIUSPAY_METHOD_MAP: Record<string, string | null> = {
       geniuspay:    null,          // auto: GeniusPay hosted checkout, user picks
       wave:         "wave",
-      moov:         "moov_money",
+      moov:         "pawapay",     // Moov Money via PawaPay aggregator
       orange_money: "orange_money",
+      mtn_money:    "mtn_money",
       djamo:        null,
     };
 
@@ -274,6 +295,13 @@ export async function POST(request: Request) {
         return NextResponse.json(
           { error: "Paiement mobile indisponible pour le moment" },
           { status: 503 },
+        );
+      }
+
+      if (Math.round(finalAmount) < 200) {
+        return NextResponse.json(
+          { error: "Le montant minimum de commande est de 200 FCFA" },
+          { status: 400 },
         );
       }
 
@@ -304,7 +332,20 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify(gpPayload),
       });
-      const gpData = await gpRes.json();
+
+      console.log("GeniusPay response status:", gpRes.status);
+
+      const gpContentType = gpRes.headers.get("content-type") ?? "";
+      if (!gpContentType.includes("application/json")) {
+        const raw = await gpRes.text();
+        console.error("GeniusPay non-JSON response:", gpRes.status, raw.slice(0, 200));
+        await checkoutClient.from("purchases").update({ status: "failed" }).eq("id", purchaseId);
+        return NextResponse.json(
+          { error: "Service de paiement indisponible, veuillez réessayer" },
+          { status: 502 },
+        );
+      }
+      const gpData = await gpRes.json() as { success: boolean; error?: { message?: string }; data?: { reference?: string; checkout_url?: string; payment_url?: string } };
 
       if (!gpData.success) {
         console.error("GeniusPay error:", gpData);
@@ -315,14 +356,14 @@ export async function POST(request: Request) {
         );
       }
 
-      const gpTx = gpData.data;
+      const gpTx = gpData.data ?? {};
 
       await checkoutClient
         .from("purchases")
         .update({ geniuspay_reference: gpTx.reference })
         .eq("id", purchaseId);
 
-      return NextResponse.json({ data: { url: gpTx.checkout_url || gpTx.payment_url } });
+      return NextResponse.json({ data: { url: gpTx.checkout_url || gpTx.payment_url, purchase_id: purchaseId, expires_at: expiresAt, reservation_duration_min: reservationMins } });
     }
 
     // 4c. Local payment fallback — finalize immediately (legacy / unknown methods)
@@ -359,7 +400,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Checkout error:", error);
     return NextResponse.json(
-      { error: "Erreur interne lors du checkout" },
+      { error: "Erreur interne lors du checkout", message: error instanceof Error ? error.message : String(error) },
       { status: 500 },
     );
   }

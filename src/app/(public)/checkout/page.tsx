@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { ReservationTimerModal } from "@/components/checkout/ReservationTimerModal";
+
+const RESERVATION_SESSION_KEY = "adex_reservation";
 
 // FCFA conversion
 const toFCFA = (eur: number) => (eur).toLocaleString("fr-FR");
@@ -24,6 +27,26 @@ export default function CheckoutPage() {
   const [implicitAccountCreated, setImplicitAccountCreated] = useState(false);
   const [purchasedCodes, setPurchasedCodes] = useState<Array<{ code: string; product_name: string; unit_price: number }>>([]);
 
+  // Reservation timer modal — lazy init from sessionStorage
+  const [timerData, setTimerData] = useState<{
+    expiresAt: string;
+    purchaseId: string;
+    redirectUrl: string;
+    totalMinutes: number;
+  } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = sessionStorage.getItem(RESERVATION_SESSION_KEY);
+      if (!stored) return null;
+      const parsed = JSON.parse(stored) as { purchase_id: string; expires_at: string; redirect_url: string; total_minutes?: number };
+      if (new Date(parsed.expires_at).getTime() > Date.now()) {
+        return { expiresAt: parsed.expires_at, purchaseId: parsed.purchase_id, redirectUrl: parsed.redirect_url, totalMinutes: parsed.total_minutes ?? 32 };
+      }
+      sessionStorage.removeItem(RESERVATION_SESSION_KEY);
+    } catch { /* ignore */ }
+    return null;
+  });
+
   const [userData, setUserData] = useState({
     fullName: "",
     phone: "",
@@ -31,7 +54,6 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    console.log("CheckoutPage mounted", isAuthenticated);
     const t = setTimeout(() => setVisible(true), 80);
     return () => clearTimeout(t);
   }, []);
@@ -127,7 +149,28 @@ export default function CheckoutPage() {
         return;
       }
       if (data.data?.url) {
-        window.location.href = data.data.url;
+        // Persist reservation so the timer survives the external payment redirect
+        const mins = data.data.reservation_duration_min ?? 32;
+        if (data.data.expires_at && data.data.purchase_id) {
+          try {
+            sessionStorage.setItem(
+              RESERVATION_SESSION_KEY,
+              JSON.stringify({
+                purchase_id:  data.data.purchase_id,
+                expires_at:   data.data.expires_at,
+                redirect_url: data.data.url,
+                total_minutes: mins,
+              }),
+            );
+          } catch { /* ignore */ }
+        }
+        setTimerData({
+          expiresAt:    data.data.expires_at ?? new Date(Date.now() + mins * 60 * 1000).toISOString(),
+          purchaseId:   data.data.purchase_id ?? "",
+          redirectUrl:  data.data.url,
+          totalMinutes: mins,
+        });
+        return; // modal handles the redirect
       } else if (data.data?.statut === "success") {
         setImplicitAccountCreated(Boolean(data.data?.implicitAccountCreated));
         setPurchasedCodes(data.data?.codes ?? []);
@@ -149,6 +192,24 @@ export default function CheckoutPage() {
           accountCreated={implicitAccountCreated}
           codes={purchasedCodes}
           onClose={() => setShowSuccessModal(false)}
+        />
+      )}
+
+      {timerData && (
+        <ReservationTimerModal
+          expiresAt={timerData.expiresAt}
+          purchaseId={timerData.purchaseId}
+          redirectUrl={timerData.redirectUrl}
+          totalMinutes={timerData.totalMinutes}
+          productNames={cart.map((item) => item.name)}
+          onProceed={() => {
+            sessionStorage.removeItem(RESERVATION_SESSION_KEY);
+            window.location.href = timerData.redirectUrl;
+          }}
+          onExpired={() => {
+            sessionStorage.removeItem(RESERVATION_SESSION_KEY);
+            // Keep modal visible in expired state — don't clear timerData
+          }}
         />
       )}
       <main style={{ background: "var(--bg)", minHeight: "100vh", padding: "5rem 1rem 3rem", position: "relative", overflow: "hidden" }}>
