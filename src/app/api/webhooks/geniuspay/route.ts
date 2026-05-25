@@ -140,8 +140,19 @@ export async function POST(req: NextRequest) {
       }
 
       const result = finalized as PurchaseResult;
-      if (result?.customer_email) {
-        sendPurchaseConfirmationEmail(result.customer_email, result).catch((e) =>
+      let emailTo = result?.customer_email;
+      if (!emailTo && result?.purchase_id) {
+        const { data: pd } = await supabase
+          .from("purchases")
+          .select("customer_email, user:user_id(email)")
+          .eq("id", result.purchase_id)
+          .single();
+        const rawUser = pd?.user;
+        const userEmail = ((Array.isArray(rawUser) ? rawUser[0] : rawUser) as { email?: string } | null)?.email ?? null;
+        emailTo = pd?.customer_email || userEmail || null;
+      }
+      if (emailTo) {
+        sendPurchaseConfirmationEmail(emailTo, { ...result, customer_email: emailTo }).catch((e) =>
           console.error("GeniusPay webhook email failed:", e),
         );
       }

@@ -31,8 +31,11 @@ function SuccessPageContent() {
   const [pollStatus, setPollStatus]   = useState<PollStatus>(initialStatus);
   const [codes, setCodes]             = useState<PurchaseCode[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
-  const [copiedCode, setCopiedCode]   = useState<string | null>(null);
-  const [visible, setVisible]         = useState(false);
+  const [copiedCode, setCopiedCode]     = useState<string | null>(null);
+  const [visible, setVisible]           = useState(false);
+  const [resending, setResending]       = useState(false);
+  const [resendDone, setResendDone]     = useState(false);
+  const [resendError, setResendError]   = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Whether GeniusPay redirect URL indicated payment was confirmed on their side
@@ -134,6 +137,22 @@ function SuccessPageContent() {
     });
   };
 
+  const resendEmail = async () => {
+    if (!pid || resending || resendDone) return;
+    setResending(true);
+    setResendError(null);
+    try {
+      const res = await fetch(`/api/purchases/${pid}/resend-email`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setResendDone(true);
+    } catch (e) {
+      setResendError(e instanceof Error ? e.message : "Erreur lors de l'envoi");
+    } finally {
+      setResending(false);
+    }
+  };
+
   // ── Success state ────────────────────────────────────────────────────────────
   if (pollStatus === "paid") {
     return (
@@ -198,11 +217,32 @@ function SuccessPageContent() {
                 </div>
               )}
 
-              {/* Email notice */}
-              <div style={{ borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "10px 14px", marginBottom: 20 }}>
-                <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
-                  📧 Ces codes ont également été envoyés à votre adresse email.
-                </p>
+              {/* Email notice + resend */}
+              <div style={{ borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
+                    {resendDone
+                      ? "✅ Email renvoyé avec succès !"
+                      : "📧 Ces codes ont également été envoyés à votre adresse email."}
+                  </p>
+                  <button
+                    onClick={resendEmail}
+                    disabled={resending || resendDone}
+                    style={{
+                      flexShrink: 0, padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      border: resendDone ? "1px solid rgba(0,255,136,0.4)" : "1px solid rgba(0,255,224,0.3)",
+                      background: resendDone ? "rgba(0,255,136,0.08)" : "rgba(0,255,224,0.07)",
+                      color: resendDone ? "#00ff88" : "var(--cyan)",
+                      cursor: resending || resendDone ? "not-allowed" : "pointer",
+                      opacity: resending ? 0.6 : 1, transition: "all 0.2s",
+                    }}
+                  >
+                    {resending ? "Envoi…" : resendDone ? "✓ Envoyé" : "Renvoyer"}
+                  </button>
+                </div>
+                {resendError && (
+                  <p style={{ fontSize: 11, color: "#ef4444", marginTop: 6, marginBottom: 0 }}>{resendError}</p>
+                )}
               </div>
 
               {/* CTAs */}
