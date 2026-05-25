@@ -103,12 +103,18 @@ function PurchaseModal({
   purchase,
   onClose,
   onMarkPaid,
+  onResendEmail,
   updating,
+  resending,
+  resendOk,
 }: {
   purchase: Purchase;
   onClose: () => void;
   onMarkPaid: (id: string) => void;
+  onResendEmail: (id: string) => void;
   updating: boolean;
+  resending: boolean;
+  resendOk: boolean;
 }) {
   const status = STATUS_STYLES[purchase.status] ?? { label: purchase.status, bg: "rgba(255,255,255,0.05)", color: "var(--text-muted)" };
   const pm     = purchase.payment_method ? (PAYMENT_LABELS[purchase.payment_method] ?? { label: purchase.payment_method, icon: "💰" }) : null;
@@ -304,6 +310,23 @@ function PurchaseModal({
             >
               Fermer
             </button>
+            {purchase.status === "paid" && getDisplayEmail(purchase) && (
+              <button
+                onClick={() => onResendEmail(purchase.id)}
+                disabled={resending}
+                style={{
+                  flex: 2, padding: "10px", borderRadius: 10,
+                  border: `1px solid ${resendOk ? "rgba(16,185,129,0.5)" : "rgba(0,255,224,0.3)"}`,
+                  background: resendOk ? "rgba(16,185,129,0.12)" : "rgba(0,255,224,0.06)",
+                  color: resendOk ? "#10b981" : "var(--cyan)",
+                  fontSize: 13, fontWeight: 700,
+                  cursor: resending ? "not-allowed" : "pointer",
+                  opacity: resending ? 0.6 : 1, transition: "all 0.2s",
+                }}
+              >
+                {resending ? "Envoi…" : resendOk ? "✓ Envoyé !" : "📧 Renvoyer l'email"}
+              </button>
+            )}
             {isPending && (
               <button
                 onClick={() => onMarkPaid(purchase.id)}
@@ -826,6 +849,8 @@ export function PaymentsTab({ purchases, onUpdateStatus }: PaymentsTabProps) {
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+  const [resendSucceeded, setResendSucceeded] = useState<Set<string>>(new Set());
 
   useEffect(() => { setPage(0); }, [search, filterStatus, filterMethod]);
 
@@ -866,7 +891,6 @@ export function PaymentsTab({ purchases, onUpdateStatus }: PaymentsTabProps) {
     setUpdating(id);
     try {
       await onUpdateStatus(id, "paid");
-      // Update modal if it's open on this purchase
       if (selectedPurchase?.id === id) {
         setSelectedPurchase((prev) => prev ? { ...prev, status: "paid" } : prev);
       }
@@ -874,6 +898,23 @@ export function PaymentsTab({ purchases, onUpdateStatus }: PaymentsTabProps) {
       setUpdating(null);
     }
   };
+
+  const handleResendEmail = useCallback(async (purchaseId: string) => {
+    setResendingEmail(purchaseId);
+    try {
+      const res = await fetch(`/api/admin/purchases/${purchaseId}/resend-email`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur");
+      setResendSucceeded((prev) => new Set([...prev, purchaseId]));
+      setTimeout(() => {
+        setResendSucceeded((prev) => { const n = new Set(prev); n.delete(purchaseId); return n; });
+      }, 3000);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Erreur lors de l'envoi");
+    } finally {
+      setResendingEmail(null);
+    }
+  }, []);
 
   return (
     <>
@@ -1197,6 +1238,23 @@ export function PaymentsTab({ purchases, onUpdateStatus }: PaymentsTabProps) {
                             {updating === purchase.id ? "…" : "✓ Marquer payée"}
                           </button>
                         )}
+                        {purchase.status === "paid" && getDisplayEmail(purchase) && (
+                          <button
+                            onClick={() => handleResendEmail(purchase.id)}
+                            disabled={resendingEmail === purchase.id}
+                            style={{
+                              padding: "9px 18px", borderRadius: 10,
+                              border: `1px solid ${resendSucceeded.has(purchase.id) ? "rgba(16,185,129,0.5)" : "rgba(0,255,224,0.3)"}`,
+                              background: resendSucceeded.has(purchase.id) ? "rgba(16,185,129,0.12)" : "rgba(0,255,224,0.06)",
+                              color: resendSucceeded.has(purchase.id) ? "#10b981" : "var(--cyan)",
+                              fontSize: 12, fontWeight: 700,
+                              cursor: resendingEmail === purchase.id ? "not-allowed" : "pointer",
+                              opacity: resendingEmail === purchase.id ? 0.6 : 1, transition: "all 0.2s", flexShrink: 0,
+                            }}
+                          >
+                            {resendingEmail === purchase.id ? "Envoi…" : resendSucceeded.has(purchase.id) ? "✓ Envoyé !" : "📧 Renvoyer"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1223,7 +1281,10 @@ export function PaymentsTab({ purchases, onUpdateStatus }: PaymentsTabProps) {
           purchase={selectedPurchase}
           onClose={() => setSelectedPurchase(null)}
           onMarkPaid={handleMarkPaid}
+          onResendEmail={handleResendEmail}
           updating={updating === selectedPurchase.id}
+          resending={resendingEmail === selectedPurchase.id}
+          resendOk={resendSucceeded.has(selectedPurchase.id)}
         />
       )}
     </>
