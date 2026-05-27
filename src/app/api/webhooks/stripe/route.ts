@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getStripeServer } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendPurchaseConfirmationEmail } from "@/app/api/checkout/route";
+import { sendPurchaseConfirmationEmail, sendImplicitAccountActivationEmail } from "@/app/api/checkout/route";
 
 interface PurchaseResult {
   purchase_id: string;
@@ -84,10 +84,31 @@ export async function POST(request: Request) {
 
         const result = finalized as PurchaseResult;
 
+        let activationLink: string | null = null;
+        let customerName = result?.customer_name;
+        if (result?.purchase_id) {
+          const { data: pd } = await supabase
+            .from("purchases")
+            .select("activation_link, customer_name")
+            .eq("id", result.purchase_id)
+            .single();
+          activationLink = (pd as { activation_link?: string | null } | null)?.activation_link ?? null;
+          customerName = pd?.customer_name || customerName;
+        }
+
         if (result?.customer_email) {
-          sendPurchaseConfirmationEmail(result.customer_email, result).catch((e) =>
-            console.error("Webhook email failed:", e),
-          );
+          try {
+            await sendPurchaseConfirmationEmail(result.customer_email, result);
+          } catch (e) {
+            console.error("Stripe webhook confirmation email failed:", e);
+          }
+          if (activationLink) {
+            try {
+              await sendImplicitAccountActivationEmail(result.customer_email, customerName, activationLink);
+            } catch (e) {
+              console.error("Stripe webhook activation email failed:", e);
+            }
+          }
         }
 
         break;

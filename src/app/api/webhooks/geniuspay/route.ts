@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendPurchaseConfirmationEmail } from "@/app/api/checkout/route";
+import { sendPurchaseConfirmationEmail, sendImplicitAccountActivationEmail } from "@/app/api/checkout/route";
 
 interface PurchaseResult {
   purchase_id: string;
@@ -141,20 +141,37 @@ export async function POST(req: NextRequest) {
 
       const result = finalized as PurchaseResult;
       let emailTo = result?.customer_email;
-      if (!emailTo && result?.purchase_id) {
+      let activationLink: string | null = null;
+      let customerName = result?.customer_name;
+
+      if (result?.purchase_id) {
         const { data: pd } = await supabase
           .from("purchases")
-          .select("customer_email, user:user_id(email)")
+          .select("customer_email, customer_name, activation_link, user:user_id(email)")
           .eq("id", result.purchase_id)
           .single();
-        const rawUser = pd?.user;
-        const userEmail = ((Array.isArray(rawUser) ? rawUser[0] : rawUser) as { email?: string } | null)?.email ?? null;
-        emailTo = pd?.customer_email || userEmail || null;
+        if (!emailTo) {
+          const rawUser = pd?.user;
+          const userEmail = ((Array.isArray(rawUser) ? rawUser[0] : rawUser) as { email?: string } | null)?.email ?? null;
+          emailTo = pd?.customer_email || userEmail || null;
+        }
+        activationLink = (pd as { activation_link?: string | null } | null)?.activation_link ?? null;
+        customerName = pd?.customer_name || customerName;
       }
+
       if (emailTo) {
-        sendPurchaseConfirmationEmail(emailTo, { ...result, customer_email: emailTo }).catch((e) =>
-          console.error("GeniusPay webhook email failed:", e),
-        );
+        try {
+          await sendPurchaseConfirmationEmail(emailTo, { ...result, customer_email: emailTo });
+        } catch (e) {
+          console.error("GeniusPay webhook confirmation email failed:", e);
+        }
+        if (activationLink) {
+          try {
+            await sendImplicitAccountActivationEmail(emailTo, customerName, activationLink);
+          } catch (e) {
+            console.error("GeniusPay webhook activation email failed:", e);
+          }
+        }
       }
       break;
     }

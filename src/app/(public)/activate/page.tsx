@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 
-type Step = "loading" | "set-password" | "success" | "error";
+type Step = "loading" | "set-password" | "success" | "error" | "resent";
 
 export default function ActivatePage() {
   const router = useRouter();
@@ -16,6 +16,9 @@ export default function ActivatePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState("");
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkSession() {
@@ -36,6 +39,30 @@ export default function ActivatePage() {
 
     checkSession();
   }, []);
+
+  const handleResendActivation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResendError(null);
+    if (!resendEmail) return;
+    setResendLoading(true);
+    try {
+      const res = await fetch("/api/auth/resend-activation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resendEmail }),
+      });
+      if (res.ok) {
+        setStep("resent");
+      } else {
+        const data = await res.json();
+        setResendError(data.error || "Une erreur est survenue.");
+      }
+    } catch {
+      setResendError("Une erreur inattendue est survenue.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const strength = (() => {
     if (password.length === 0) return 0;
@@ -70,6 +97,8 @@ export default function ActivatePage() {
         setError(updateError.message);
         return;
       }
+      // Mark account as fully activated (Fix 3: use implicit_checkout flag)
+      await supabase!.auth.updateUser({ data: { implicit_checkout: false } });
       setStep("success");
     } catch {
       setError("Une erreur inattendue est survenue.");
@@ -90,21 +119,73 @@ export default function ActivatePage() {
     );
   }
 
-  if (step === "error") {
+  if (step === "resent") {
     return (
       <main style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1rem" }}>
         <div style={{ maxWidth: 420, width: "100%", textAlign: "center" }}>
-          <div style={{ fontSize: 48, marginBottom: 20 }}>⚠️</div>
+          <div style={{ fontSize: 48, marginBottom: 20 }}>📬</div>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text)", marginBottom: 12 }}>
-            Lien expiré ou invalide
+            Email envoyé !
           </h1>
           <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.65, marginBottom: 24 }}>
-            Le lien d&apos;activation a expiré ou est invalide. Vous pouvez demander un nouveau lien via la page de connexion.
+            Si un compte Adex Card existe pour cette adresse, vous recevrez un nouveau lien d&apos;activation dans quelques instants.
           </p>
-          <Link href="/forgot-password" className="btn-primary" style={{ display: "inline-flex" }}>
-            Renvoyer un lien
+          <Link href="/" style={{ color: "var(--cyan)", fontSize: 13, textDecoration: "none" }}>
+            Retour à l&apos;accueil
           </Link>
         </div>
+      </main>
+    );
+  }
+
+  if (step === "error") {
+    return (
+      <main style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1rem" }}>
+        <div style={{ maxWidth: 420, width: "100%" }}>
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+            <h1 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text)", marginBottom: 12 }}>
+              Lien expiré ou invalide
+            </h1>
+            <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.65 }}>
+              Le lien d&apos;activation a expiré. Renseignez votre email pour en recevoir un nouveau.
+            </p>
+          </div>
+
+          <form onSubmit={handleResendActivation} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <input
+              type="email"
+              value={resendEmail}
+              onChange={(e) => setResendEmail(e.target.value)}
+              placeholder="Votre adresse email"
+              required
+              style={{
+                width: "100%", borderRadius: 10, border: "1px solid var(--border)",
+                background: "rgba(255,255,255,0.04)", color: "var(--text)",
+                padding: "11px 14px", fontSize: 14, outline: "none",
+                boxSizing: "border-box",
+              }}
+              className="auth-input"
+            />
+            {resendError && (
+              <p style={{ fontSize: 13, color: "#ef4444", margin: 0 }}>{resendError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={resendLoading || !resendEmail}
+              className="btn-primary"
+              style={{ width: "100%", justifyContent: "center", opacity: (resendLoading || !resendEmail) ? 0.6 : 1 }}
+            >
+              {resendLoading ? "Envoi…" : "Renvoyer le lien d'activation"}
+            </button>
+          </form>
+          <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted)", marginTop: 16 }}>
+            <Link href="/login" style={{ color: "var(--cyan)", textDecoration: "none" }}>
+              Déjà un compte ? Se connecter
+            </Link>
+          </p>
+        </div>
+        <style>{`.auth-input::placeholder { color: rgba(255,255,255,0.2); } .auth-input:focus { border-color: rgba(0,255,224,0.4) !important; box-shadow: 0 0 0 3px rgba(0,255,224,0.07); }`}</style>
       </main>
     );
   }
