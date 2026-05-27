@@ -245,6 +245,14 @@ export async function POST(request: Request) {
     const expiresAt       = rpcResult.expires_at;
     const reservationMins = rpcResult.reservation_duration_min ?? 32;
 
+    // Store activation link so webhook handlers can send the email after payment confirmation
+    if (implicitAccountCreated && activationLink) {
+      await checkoutClient
+        .from("purchases")
+        .update({ activation_link: activationLink })
+        .eq("id", purchaseId);
+    }
+
     // 4a. Stripe card payment — webhook will finalize once paid
     if (paymentMethod === "card" && process.env.STRIPE_SECRET_KEY) {
       const { getStripeServer } = await import("@/lib/stripe/server");
@@ -383,14 +391,18 @@ export async function POST(request: Request) {
     const result = finalized as PurchaseResult;
 
     if (customer.email) {
-      sendPurchaseConfirmationEmail(customer.email, result).catch((e) =>
-        console.error("Email sending failed:", e),
-      );
+      try {
+        await sendPurchaseConfirmationEmail(customer.email, result);
+      } catch (e) {
+        console.error("Purchase confirmation email failed:", e);
+      }
 
       if (implicitAccountCreated) {
-        sendImplicitAccountActivationEmail(customer.email, result.customer_name, activationLink).catch((e) =>
-          console.error("Activation email sending failed:", e),
-        );
+        try {
+          await sendImplicitAccountActivationEmail(customer.email, result.customer_name, activationLink);
+        } catch (e) {
+          console.error("Activation email failed:", e);
+        }
       }
     }
 
@@ -406,7 +418,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function sendImplicitAccountActivationEmail(
+export async function sendImplicitAccountActivationEmail(
   email: string,
   customerName: string,
   activationLink: string | null,

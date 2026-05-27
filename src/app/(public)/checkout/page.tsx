@@ -191,6 +191,7 @@ export default function CheckoutPage() {
         <SuccessModal
           accountCreated={implicitAccountCreated}
           codes={purchasedCodes}
+          email={userData.email ?? ""}
           onClose={() => setShowSuccessModal(false)}
         />
       )}
@@ -566,19 +567,37 @@ export default function CheckoutPage() {
 function SuccessModal({
   accountCreated,
   codes,
+  email,
   onClose,
 }: {
   accountCreated: boolean;
   codes: Array<{ code: string; product_name: string; unit_price: number }>;
+  email: string;
   onClose: () => void;
 }) {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [resendState, setResendState] = useState<"idle" | "loading" | "sent" | "error">("idle");
 
   const copy = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
       setCopiedCode(code);
       setTimeout(() => setCopiedCode(null), 2000);
     });
+  };
+
+  const handleResend = async () => {
+    if (!email || resendState === "loading" || resendState === "sent") return;
+    setResendState("loading");
+    try {
+      const res = await fetch("/api/auth/resend-activation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setResendState(res.ok ? "sent" : "error");
+    } catch {
+      setResendState("error");
+    }
   };
 
   return (
@@ -751,9 +770,24 @@ function SuccessModal({
               borderRadius: 10, background: "rgba(0,255,224,0.05)", border: "1px solid rgba(0,255,224,0.2)",
               padding: "10px 14px", marginBottom: 20,
             }}>
-              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, lineHeight: 1.6, marginBottom: 8 }}>
                 🔑 Un email d&apos;activation a été envoyé. Cliquez sur le lien pour définir votre mot de passe et accéder à votre historique de commandes.
               </p>
+              {resendState === "sent" ? (
+                <p style={{ fontSize: 11, color: "var(--cyan)", margin: 0 }}>✓ Email renvoyé !</p>
+              ) : (
+                <button
+                  onClick={handleResend}
+                  disabled={resendState === "loading"}
+                  style={{
+                    background: "none", border: "none", cursor: resendState === "loading" ? "default" : "pointer",
+                    fontSize: 11, color: resendState === "error" ? "#ef4444" : "rgba(0,255,224,0.6)",
+                    padding: 0, textDecoration: "underline",
+                  }}
+                >
+                  {resendState === "loading" ? "Envoi…" : resendState === "error" ? "Erreur — réessayer" : "Vous n'avez pas reçu l'email ?"}
+                </button>
+              )}
             </div>
           )}
 
