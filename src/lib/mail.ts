@@ -10,10 +10,14 @@ interface MailOptions {
 }
 
 export async function sendMail({ to, subject, text, html, attachments }: MailOptions) {
+  const port = parseInt(process.env.MAIL_PORT || '587');
+  const isSSL = process.env.MAIL_ENCRYPTION === 'ssl';
+
   const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
-    port: parseInt(process.env.MAIL_PORT || '587'),
-    secure: process.env.MAIL_ENCRYPTION === 'ssl',
+    port,
+    secure: isSSL,
+    requireTLS: !isSSL,
     auth: {
       user: process.env.MAIL_USERNAME,
       pass: process.env.MAIL_PASSWORD,
@@ -42,6 +46,6 @@ export async function sendMail({ to, subject, text, html, attachments }: MailOpt
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Error sending email:', error);
-    throw new Error('Failed to send email');
+    throw error;
   }
 }
