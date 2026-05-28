@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { sendMail } from '@/lib/mail';
-import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +10,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data: user, error: userError } = await supabase
       .from('users')

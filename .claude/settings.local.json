@@ -16,7 +16,9 @@
       "Bash(node -e \"require\\('@supabase/ssr'\\); console.log\\('ok'\\)\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\" -Recurse -Name)",
       "Bash(Select-String -Pattern \"\\(checkout|cart|payment|reservation|modal|popup|success|failed\\)\")",
-      "Bash(Select-String -Pattern \"payments-tab|resend\")"
+      "Bash(Select-String -Pattern \"payments-tab|resend\")",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\AxelA\\\\Desktop\\\\Dev\\\\Web\\\\adex-card\")",
+      "Bash(xargs grep -l \"OTP\\\\|otp\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\AxelA\\Desktop\\Dev\\Web\\adex-card\\.github"
